@@ -1,4 +1,4 @@
-IBEXMAP – Prototyp v10 (privates Projekt)
+IBEXMAP – Prototyp v11 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -70,6 +70,9 @@ NEU IN v10
   (Antippen zoomt hinein). Im Filter ein-/ausschaltbar.
 - Menü-Knopf ⋮ jetzt oben rechts in der Kopfzeile.
 - Familienseite (verschlüsselt): Punkte als "Storypoint" markieren, Menü → Familienseite einrichten /
-  Storypoints veröffentlichen. Die Datei familie.html ist die Seite für die Familie (wird automatisch
+  Storypoints veröffentlichen. Die Datei ibexmap.intern.html ist die Seite für die Familie (wird automatisch
   ins Familien-Repository hochgeladen). Verschlüsselung AES-256-GCM, Schlüssel aus Passwort (PBKDF2, 250 000 Runden).
 - Neues App-Logo (Steinbock mit Kartenpin) für Startbildschirm, Kopfzeile und Browser-Tab.
+
+NEU IN v11
+- Seite für die Familie heisst jetzt ibexmap.intern.html (statt familie.html).

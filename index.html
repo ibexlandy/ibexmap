@@ -137,7 +137,7 @@ function bindStars(root){root.querySelectorAll(".stars").forEach(w=>w.querySelec
 function rateText(p){const cr=RATE[p.cat];if(!cr)return "";const r=p.rate||{};
   return [p.stars?"Gesamt "+starTxt(p.stars):"",...cr.map(([k,l])=>r[k]&&(r[k].s||r[k].t)?`${l}: ${starTxt(r[k].s)}${r[k].t?" – "+r[k].t:""}`:"")].filter(Boolean).join("\n");}
 const GROUP="ibexmap";
-const VERSION="v10";
+const VERSION="v11";
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
 const MA_SECTORS=[
  {n:"A Norden",zeit:"5.–10. April",klima:"Frühling, grün; 15–22 °C, im Rif Regen möglich, Nächte kühl",info:"Tanger Med, Chefchaouen, Fès, Meknès – ankommen, Städte, einkaufen. Eher Campings.",box:[[33.8,-5.9,35.95,-1.0]]},
@@ -785,7 +785,7 @@ async function famPublish(){const c=famCfg();if(!famReady())return famSettings()
     const tag=hex(unb64(c.salt)).slice(0,8);
     toast("Verschlüssle …",60000);const key=await famKey(c.pw,unb64(c.salt));
     /* 1. Familienseite selbst (nur Code, unverschlüsselt) */
-    const viewer=new TextEncoder().encode(await(await fetch("familie.html",{cache:"no-store"})).text());
+    const viewer=new TextEncoder().encode(await(await fetch("ibexmap.intern.html",{cache:"no-store"})).text());
     const exV=await gh(c,"index.html","GET",null,true);
     if(!exV||!exV.content||exV.content.replace(/\n/g,"")!==b64(viewer))
       await gh(c,"index.html","PUT",{message:"Familienseite",content:b64(viewer),sha:exV?exV.sha:undefined});
