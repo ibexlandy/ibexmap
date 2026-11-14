@@ -1,4 +1,4 @@
-IBEXMAP – v1.21 (privates Projekt)
+IBEXMAP – v1.22 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -125,3 +125,10 @@ NEU IN v1.21
 - Kategorie heisst nur noch «Wanderung».
 - Sehenswürdigkeit mit Gesamtbewertung 1–5 Sterne.
 - Detailansicht grösser, mit schlichten Symbolen statt Emojis.
+
+NEU IN v1.22
+- Suche (Lupe oben links): eigene Punkte und gespeicherte OSM-Orte sofort, auch offline; mit «Suchen» Orte weltweit (OpenStreetMap). Treffer zeigen, «Hier Punkt setzen».
+- Storypoints (werden publiziert) auf Karte und in Liste mit blauem Buch-Abzeichen.
+- Teilen aus Google Maps (oder anderen Apps) an ibexmap: Name, Adresse, Link werden übernommen, Ort gesucht, Fadenkreuz zum Bestätigen.
+- Import von Google-Orten (Google Takeout: Gespeicherte Orte .json oder Listen .csv).
+- Menü neu geordnet: Online-Abgleich, Familienseite, Reisen zuoberst.

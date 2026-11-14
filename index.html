@@ -96,6 +96,8 @@ textarea{min-height:110px;resize:vertical}
 .pinw{position:relative;width:30px;height:30px}
 .pin.visited{border-color:#2e9e44}
 .vchk{position:absolute;right:-7px;top:-7px;width:17px;height:17px;border-radius:50%;background:#2e9e44;border:2px solid #fff;color:#fff;font-size:11px;font-weight:900;line-height:13px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.4)}
+.vstory{position:absolute;left:-7px;top:-7px;width:17px;height:17px;border-radius:50%;background:#1e6fd9;border:2px solid #fff;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.4)}
+.lstory{display:inline-flex;align-items:center;justify-content:center;background:#1e6fd9;color:#fff;border-radius:50%;width:17px;height:17px;margin-right:4px;vertical-align:-3px}
 .lchk{display:inline-block;background:#2e9e44;color:#fff;border-radius:50%;width:17px;height:17px;font-size:11px;font-weight:900;line-height:17px;text-align:center;margin-right:4px;vertical-align:1px}
 .toast{position:fixed;left:50%;top:calc(64px + env(safe-area-inset-top));transform:translateX(-50%);background:#222;color:#fff;padding:10px 16px;border-radius:20px;z-index:2000;display:none;font-size:14px;max-width:90%}
 hr{border:0;border-top:1px solid var(--line);margin:16px 0}
@@ -107,6 +109,7 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 .placebar{position:absolute;left:8px;right:8px;bottom:calc(16px + var(--sb));z-index:650;background:#fff;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.35);padding:10px;display:none}
 .placebar .actions{margin-top:6px;flex-wrap:nowrap}.placebar .btn{padding:10px 12px}
 #map.placing .fab{display:none}
+.leaflet-popup-content .btn{font-size:14px;padding:8px 12px}
 #map.placing,#map.placing .leaflet-grab,#map.placing .leaflet-interactive,#map.placing .leaflet-dragging .leaflet-grab{cursor:crosshair !important}
 @media (pointer:coarse){:root{--sb:max(env(safe-area-inset-bottom,0px),48px)}}
 </style>
@@ -122,13 +125,14 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
     <button class="fab" id="navHere" title="Hier merken (aktueller Standort)" style="bottom:calc(200px + var(--sb))">📍</button>
     <button class="fab" id="navList" title="Liste" style="bottom:calc(140px + var(--sb))">☰</button>
     <button class="fab" id="locBtn" title="Mein Standort">◎</button>
+    <button class="fab" id="searchBtn" title="Ort suchen" style="top:12px;left:12px;right:auto;bottom:auto"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg></button>
     <button class="fab" id="filtBtn" title="Filter: was auf der Karte angezeigt wird" style="bottom:calc(80px + var(--sb))"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"><path d="M3 4h18l-7 8.5V19l-4 2v-8.5z"/></svg></button>
   </div>
 </div>
 
 <div class="sheet" id="sheet"><div class="panel" id="panel"></div></div>
 <div class="toast" id="toast"></div>
-<input type="file" id="fileImport" accept=".json,.gpx,application/json,application/gpx+xml" hidden>
+<input type="file" id="fileImport" accept=".json,.geojson,.gpx,.csv,application/json,application/geo+json,application/gpx+xml,text/csv" hidden>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
@@ -174,6 +178,7 @@ const MI={
   ruler:`<path d="M4 20 20 4M7 17l-2-2M10 14l-1.5-1.5M13 11l-2-2M16 8l-1.5-1.5"/>`,
   sec:`<path d="M4 6h16M4 12h10M4 18h13"/>`
 };
+const storyI=sz=>`<svg viewBox="0 0 24 24" width="${sz}" height="${sz}" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5C10 5 7 4.5 3.5 5v13c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5zM12 6.5v13"/></svg>`;
 const mi=(k,sz=17)=>`<svg viewBox="0 0 24 24" width="${sz}" height="${sz}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none;opacity:.75">${MI[k]}</svg>`;
 const svgI=(k,sz=18)=>`<svg viewBox="0 0 24 24" width="${sz}" height="${sz}" aria-hidden="true" style="display:block">${ICON[k]||ICON.other}</svg>`;
 const icoBadge=(k,color,sz=22)=>`<span class="ico" style="background:${color};width:${sz}px;height:${sz}px">${svgI(k,Math.round(sz*.68))}</span>`;
@@ -196,7 +201,7 @@ function bindStars(root){root.querySelectorAll(".stars").forEach(w=>w.querySelec
 function rateText(p){const cr=RATE[p.cat];if(!cr)return "";const r=p.rate||{};
   return [p.stars?"Gesamt "+starTxt(p.stars):"",...cr.map(([k,l,ty])=>ty?(isOn(r[k])?`${l}${r[k].t?" – "+r[k].t:""}`:""):r[k]&&(r[k].s||r[k].t)?`${l}: ${starTxt(r[k].s)}${r[k].t?" – "+r[k].t:""}`:"")].filter(Boolean).join("\n");}
 const GROUP="ibexmap";
-const VERSION="v1.21";
+const VERSION="v1.22";
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
 const MA_SECTORS=[
  {n:"A Norden",zeit:"5.–10. April",klima:"Frühling, grün; 15–22 °C, im Rif Regen möglich, Nächte kühl",info:"Tanger Med, Chefchaouen, Fès, Meknès – ankommen, Städte, einkaufen. Eher Campings.",box:[[33.8,-5.9,35.95,-1.0]]},
@@ -325,7 +330,7 @@ let points=[];const thumbs={};
 
 function pinIcon(p){const c=CATS[p.cat]||CATS.other;
   return L.divIcon({className:"",iconSize:[30,30],iconAnchor:[15,30],popupAnchor:[0,-28],
-    html:`<div class="pinw"><div class="pin ${p.status==="besucht"?"visited":""}" style="background:${c.c}"><span>${svgI(p.cat in CATS?p.cat:"other",16)}</span></div>${p.status==="besucht"?`<span class="vchk">✓</span>`:""}</div>`});}
+    html:`<div class="pinw"><div class="pin ${p.status==="besucht"?"visited":""}" style="background:${c.c}"><span>${svgI(p.cat in CATS?p.cat:"other",16)}</span></div>${p.status==="besucht"?`<span class="vchk">✓</span>`:""}${p.story?`<span class="vstory">${storyI(9)}</span>`:""}</div>`});}
 let hiddenCats=[];try{hiddenCats=JSON.parse(localStorage.getItem("rb_hidden")||"[]");}catch(e){}
 let mapTrip="",mapCountry="";try{mapTrip=localStorage.getItem("rb_mtrip")||"";mapCountry=localStorage.getItem("rb_mcountry")||"";}catch(e){}
 const saveMapScope=()=>{try{localStorage.setItem("rb_mtrip",mapTrip);localStorage.setItem("rb_mcountry",mapCountry);}catch(e){}};
@@ -473,6 +478,95 @@ window.addEventListener("popstate",()=>{if(ignorePop){ignorePop=false;return;}if
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&isPanelOpen())closePanel();});
 $("#sheet").addEventListener("click",e=>{if(e.target.id==="sheet")closePanel();});
 
+/* ---------- Suche: eigene Punkte, gespeicherte OSM-Orte (offline) und Orte weltweit (online, OpenStreetMap/Nominatim) ---------- */
+let searchMark=null,lastQ="";
+function goTo(lat,lon,z,label){closePanel();map.setView([lat,lon],z||14);
+  if(searchMark)map.removeLayer(searchMark);
+  searchMark=L.marker([lat,lon],{icon:L.divIcon({className:"",iconSize:[26,26],iconAnchor:[13,13],html:`<div style="width:26px;height:26px;border-radius:50%;border:4px solid #c8742c;background:rgba(200,116,44,.25)"></div>`}),zIndexOffset:1500}).addTo(map)
+    .bindPopup(`<b>${esc(label)}</b><br><button class="btn" style="margin-top:6px" id="sHere">＋ Hier Punkt setzen</button>`).openPopup();
+  setTimeout(()=>{const b=document.getElementById("sHere");if(b)b.onclick=()=>{map.closePopup();setPlacing(false);setPlacing(true);putCross(L.latLng(lat,lon));};},50);}
+map.on("click",()=>{if(searchMark&&!placing){map.removeLayer(searchMark);searchMark=null;}});
+function showSearch(){
+  openPanel(`<h2>Suchen</h2>
+   <div class="row"><input id="sQ" type="search" placeholder="Ort, Stadt, eigener Punkt …" value="${esc(lastQ)}" enterkeyhint="search" autocomplete="off"><button class="btn" id="sGo" style="flex:none">Suchen</button></div>
+   <div id="sRes"></div>`);
+  const q=$("#sQ");setTimeout(()=>q.focus(),150);
+  const local=()=>{const t=q.value.trim().toLowerCase();lastQ=q.value;if(t.length<2){$("#sRes").innerHTML=`<p class="muted">Tippen, um eigene Punkte zu finden. Mit «Suchen» auch Orte weltweit (braucht Internet).</p>`;return;}
+    const own=points.filter(p=>(ptTitle(p)+" "+(p.desc||"")+" "+(p.region||"")+" "+(p.section||"")).toLowerCase().includes(t)).slice(0,15);
+    const osm=(osmData.items||[]).filter(x=>{const n=(x.t.name||x.t["name:fr"]||x.t.brand||"").toLowerCase();return n&&n.includes(t);}).slice(0,15);
+    let h="";
+    if(own.length)h+=`<h3>Eigene Punkte</h3>`+own.map(p=>{const c=CATS[p.cat]||CATS.other;return `<div class="item" data-own="${p.id}">${icoBadge(p.cat in CATS?p.cat:"other",c.c,30)}<div><div class="t">${esc(ptTitle(p))}</div><div class="s">${esc(c.n)}${p.region?" · "+esc(p.region):""}</div></div></div>`;}).join("");
+    if(osm.length)h+=`<h3>Gespeicherte OSM-Orte</h3>`+osm.map((x,i)=>`<div class="item" data-osm="${i}">${icoBadge(x.ty,OSM[x.ty].c,30)}<div><div class="t">${esc(x.t.name||x.t["name:fr"]||x.t.brand)}</div><div class="s">${esc(osmKind(x.t))}</div></div></div>`).join("");
+    $("#sRes").innerHTML=h+`<div id="sWeb"><p class="muted">${navigator.onLine?"Für Orte weltweit «Suchen» tippen.":"Offline: nur eigene und gespeicherte Orte."}</p></div>`;
+    $("#sRes").querySelectorAll("[data-own]").forEach(e=>e.onclick=()=>{const p=points.find(x=>x.id===e.dataset.own);closePanel();map.setView([p.lat,p.lon],15);setTimeout(()=>showDetail(p.id),300);});
+    $("#sRes").querySelectorAll("[data-osm]").forEach(e=>e.onclick=()=>{const x=osm[+e.dataset.osm];closePanel();map.setView([x.lat,x.lon],16);setTimeout(()=>showOsm(x),300);});};
+  const web=async()=>{const t=q.value.trim();if(t.length<2)return;local();if(!navigator.onLine)return;
+    $("#sWeb").innerHTML=`<p class="muted">Suche weltweit …</p>`;
+    try{const r=await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=10&accept-language=de&q=${encodeURIComponent(t)}`);
+      const j=await r.json();
+      $("#sWeb").innerHTML=`<h3>Orte (OpenStreetMap)</h3>`+(j.length?j.map((x,i)=>`<div class="item" data-web="${i}"><span class="ico" style="background:#6b6b6b;width:30px;height:30px;color:#fff">${mi("pin",18)}</span><div><div class="t">${esc(x.name||x.display_name.split(",")[0])}</div><div class="s">${esc(x.display_name)}</div></div></div>`).join(""):`<p class="muted">Nichts gefunden.</p>`);
+      $("#sWeb").querySelectorAll("[data-web]").forEach(e=>e.onclick=()=>{const x=j[+e.dataset.web];const z=x.addresstype==="country"?6:/state|region|province/.test(x.addresstype)?8:/city|town/.test(x.addresstype)?13:15;goTo(+x.lat,+x.lon,z,x.name||x.display_name.split(",")[0]);});
+    }catch(err){$("#sWeb").innerHTML=`<p class="muted">Suche nicht erreichbar.</p>`;}};
+  q.oninput=local;q.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();web();q.blur();}};$("#sGo").onclick=web;local();}
+$("#searchBtn").onclick=showSearch;
+
+/* ---------- Von Google Maps übernehmen: Teilen-Ziel und Google-Takeout-Import ---------- */
+function guessCat(t){t=(t||"").toLowerCase();
+  if(/camping|campsite|camp\b|caravan|wohnmobil|aire de|stellplatz/.test(t))return "camp";
+  if(/afriquia|shell|total|petrom|ziz|winxo|station[- ]service|tankstelle|gas station|fuel/.test(t))return "fuel";
+  if(/marjane|carrefour|bim\b|aswak|supermar|épicerie|hanout|supermarket|lidl|aldi|migros|coop/.test(t))return "shop";
+  if(/garage|mécani|mecani|pneu|vulcan|werkstatt|repair|auto parts/.test(t))return "service";
+  if(/source|fontaine|brunnen|water|eau potable/.test(t))return "water";
+  if(/trail|randonn|wander|hike|gorge|sommet|peak/.test(t))return "hike";
+  return "sight";}
+function coordsFromUrl(u){if(!u)return null;let m;
+  if((m=u.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/)))return [+m[1],+m[2]];
+  if((m=u.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)))return [+m[1],+m[2]];
+  if((m=u.match(/[?&](?:q|query|ll|destination)=(-?\d+\.\d+)(?:,|%2C)\s*(-?\d+\.\d+)/i)))return [+m[1],+m[2]];
+  if((m=u.match(/\/search\/(-?\d+\.\d+),\+?(-?\d+\.\d+)/)))return [+m[1],+m[2]];
+  return null;}
+async function geocode(q){if(!q||!navigator.onLine)return null;
+  try{const r=await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&accept-language=de&q=${encodeURIComponent(q)}`);const j=await r.json();
+    return j[0]?[+j[0].lat,+j[0].lon]:null;}catch(e){return null;}}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+/* 1. Teilen aus Google Maps (oder jeder anderen App) an ibexmap */
+async function handleShare(){const q=new URLSearchParams(location.search);if(!q.has("st")&&!q.has("sx")&&!q.has("su"))return;
+  history.replaceState(null,"",location.pathname);
+  const title=(q.get("st")||"").trim(),text=(q.get("sx")||"").trim();let url=(q.get("su")||"").trim();
+  const um=text.match(/https?:\/\/\S+/);if(!url&&um)url=um[0];
+  const lines=text.replace(/https?:\/\/\S+/g,"").split(/\n+/).map(x=>x.trim()).filter(Boolean);
+  const name=(title&&!/^https?:/.test(title)?title:lines[0])||"Geteilter Ort";const addr=lines.filter(x=>x!==name).join(", ");
+  placeExtra={title:name,desc:addr,source:url,cat:guessCat(name+" "+addr),status:"idee"};
+  let ll=coordsFromUrl(url)||coordsFromUrl(text);
+  if(!ll){toast("Suche den Ort …",4000);ll=await geocode([name,addr].filter(Boolean).join(", "))||await geocode(addr)||await geocode(name);}
+  setPlacing(false);setPlacing(true);
+  if(ll){map.setView(ll,16);putCross(L.latLng(ll[0],ll[1]));toast(`«${name}» – Position prüfen, dann «Punkt hier setzen»`,6000);}
+  else{putCross(map.getCenter());toast("Ort nicht automatisch gefunden – Kreuz an die richtige Stelle ziehen",7000);}}
+/* 3. Google Takeout: «Gespeicherte Orte.json» (GeoJSON) oder Listen als .csv */
+function parseCSV(t){const rows=[];let row=[],f="",q=false;
+  for(let i=0;i<t.length;i++){const c=t[i];
+    if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++;}else q=false;}else f+=c;}
+    else if(c==='"')q=true;else if(c===","){row.push(f);f="";}else if(c==="\n"||c==="\r"){if(c==="\r"&&t[i+1]==="\n")i++;row.push(f);rows.push(row);row=[];f="";}else f+=c;}
+  if(f||row.length){row.push(f);rows.push(row);}return rows.filter(r=>r.some(x=>x.trim()));}
+async function importGoogle(items,label){
+  const known=new Set(points.map(p=>p.source).filter(Boolean));
+  const todo=items.filter(x=>!(x.url&&known.has(x.url)));const skipped=items.length-todo.length;
+  const needGeo=todo.filter(x=>!x.ll).length;
+  confirmBox(`${todo.length} Orte aus ${esc(label)} in die Reise «${esc(curTripObj().name)}» übernehmen?${skipped?`<br>${skipped} sind schon vorhanden.`:""}${needGeo?`<br>${needGeo} ohne Koordinaten werden über OpenStreetMap gesucht (ca. ${needGeo} Sekunden, braucht Internet).`:""}`,async()=>{
+    let n=0,miss=[];
+    for(let i=0;i<todo.length;i++){const x=todo[i];let ll=x.ll;
+      if(!ll){toast(`Suche Orte … (${i+1}/${todo.length})`,60000);ll=await geocode([x.name,x.addr].filter(Boolean).join(", "))||(x.addr?await geocode(x.addr):null);await sleep(1100);}
+      if(!ll){miss.push(x.name);continue;}
+      await put("points",newPoint(+(+ll[0]).toFixed(6),+(+ll[1]).toFixed(6),{title:x.name||"",desc:[x.addr,x.note].filter(Boolean).join("\n"),source:x.url||"",cat:guessCat((x.name||"")+" "+(x.addr||"")),status:"idee"}));n++;}
+    await loadPoints();
+    if(miss.length)openPanel(`<h2>Google-Import</h2><p>${n} Orte übernommen.</p><p class="muted">Nicht gefunden (bitte von Hand setzen):</p><ul>${miss.map(m=>`<li>${esc(m)}</li>`).join("")}</ul>`);
+    else toast(`${n} Orte übernommen`,5000);});}
+function googleFromGeoJSON(fc){return (fc.features||[]).map(f=>{const P=f.properties||{},L0=P.location||P.Location||{};const g=f.geometry&&f.geometry.coordinates;
+  let ll=g&&g.length>=2&&(g[0]||g[1])?[g[1],g[0]]:null;const url=P.google_maps_url||P["Google Maps URL"]||"";if(!ll)ll=coordsFromUrl(url);
+  return {name:L0.name||L0["Business Name"]||P.Title||P.name||"",addr:L0.address||L0.Address||P.address||"",note:P.Comment||P.comment||"",url,ll};}).filter(x=>x.name||x.ll);}
+function googleFromCSV(t){const rows=parseCSV(t);if(rows.length<2)return [];const h=rows[0].map(x=>x.trim().toLowerCase());
+  const ix=k=>h.findIndex(x=>k.includes(x));const iT=ix(["title","titel","name"]),iN=ix(["note","notiz","comment","kommentar"]),iU=ix(["url"]);
+  return rows.slice(1).map(r=>{const url=iU>=0?r[iU]:"";return {name:iT>=0?r[iT]:"",note:iN>=0?r[iN]:"",url,addr:"",ll:coordsFromUrl(url)};}).filter(x=>x.name);}
 /* ---------- Kartenfilter ---------- */
 $("#filtBtn").onclick=showMapFilter;
 function showMapFilter(){
@@ -527,7 +621,7 @@ async function showDetail(id){const p=points.find(x=>x.id===id);if(!p)return;con
       <div class="mrow">${mi("globe")}<span>${esc(countryName(p.country)||"Land unbekannt")}${p.region?" · "+esc(p.region):""}</span></div>
       ${me?`<div class="mrow">${mi("ruler")}<span>${distKm(me,p).toFixed(1)} km Luftlinie</span></div>`:""}
       ${p.cat==="water"?`<div class="mrow">${icoBadge("water","#0288d1",24)}<span><b>${esc(WATERQ[p.water||"unklar"])}</b></span></div>`:""}
-      ${p.story?`<div class="mrow">${mi("book")}<span>Storypoint – wird publiziert</span></div>`:""}
+      ${p.story?`<div class="mrow"><span class="lstory" style="width:22px;height:22px;margin:0">${storyI(13)}</span><span>Storypoint – wird publiziert</span></div>`:""}
     </div>
     ${RATE[p.cat]&&(p.stars||Object.keys(p.rate||{}).length)?`<div class="rate">${p.stars?`<div class="rrow"><b>Gesamt</b><span class="sv" style="font-size:20px">${starTxt(p.stars)}</span></div>`:""}
       ${RATE[p.cat].map(([k,l,ty])=>{const v=(p.rate||{})[k];if(ty)return isOn(v)?`<div class="rrow"><b>${icoBadge("lake","#0288d1",22)} ${l}</b><span>✓</span></div>${v.t?`<div class="muted">${esc(v.t)}</div>`:""}`:"";return v&&(v.s||v.t)?`<div class="rrow"><b>${l}</b><span class="sv">${starTxt(v.s)}</span></div>${v.t?`<div class="muted">${esc(v.t)}</div>`:""}`:"";}).join("")}</div>`:""}
@@ -655,15 +749,17 @@ function putCross(ll){if(!cross){cross=L.marker(ll,{icon:crossIcon,draggable:tru
   else cross.setLatLng(ll);$("#hint").style.display="none";$("#placebar").style.display="block";pbInfo();}
 $("#navAdd").onclick=()=>{setPlacing(false);setPlacing(true);putCross(map.getCenter());};
 $("#hintCancel").onclick=e=>{e.stopPropagation();setPlacing(false);};
-$("#pbNo").onclick=e=>{e.stopPropagation();setPlacing(false);};
-$("#pbOk").onclick=e=>{e.stopPropagation();if(!cross)return;const ll=cross.getLatLng();setPlacing(false);editPoint(newPoint(+ll.lat.toFixed(6),+ll.lng.toFixed(6)),true);};
+$("#pbNo").onclick=e=>{e.stopPropagation();placeExtra=null;setPlacing(false);};
+let placeExtra=null;
+$("#pbOk").onclick=e=>{e.stopPropagation();if(!cross)return;const ll=cross.getLatLng();const ex=placeExtra;placeExtra=null;setPlacing(false);
+  const p=newPoint(+ll.lat.toFixed(6),+ll.lng.toFixed(6),ex||{});if(ex&&ex.cat==="camp"&&!p.section)p.section=sectorOf(p.lat,p.lon);editPoint(p,true);};
 L.DomEvent.disableClickPropagation($("#placebar"));
 map.on("click",e=>{if(!placing)return;putCross(e.latlng);});
 map.on("contextmenu",e=>{setPlacing(false);setPlacing(true);putCross(e.latlng);});
 $("#navHere").onclick=()=>{
   const go=pos=>{const d=new Date();const t=`Stellplatz ${d.toLocaleDateString("de-CH")} ${d.toLocaleTimeString("de-CH",{hour:"2-digit",minute:"2-digit"})}`;
     editPoint(newPoint(+pos.lat.toFixed(6),+pos.lon.toFixed(6),{title:t,cat:"wild",status:"besucht",visited:d.toISOString().slice(0,10)}),true);};
-  showHeaderTrip();setTimeout(async()=>{if(!countryData){await ensureCountries();}else{await assignCountries();}},1500);
+  showHeaderTrip();setTimeout(handleShare,600);setTimeout(async()=>{if(!countryData){await ensureCountries();}else{await assignCountries();}},1500);
   startGPS();
   if(me&&me.acc<200)return go(me);
   toast("Suche GPS-Position …",4000);
@@ -702,7 +798,7 @@ async function renderItems(){
   let h="";
   for(const p of list){const c=CATS[p.cat]||CATS.other;const u=p.photos?.length?await photoURL(p.photos[0]):"";
     h+=`<div class="item" data-id="${p.id}">${u?`<img src="${u}">`:`<div class="noimg" style="background:${c.c}">${svgI(p.cat in CATS?p.cat:"other",34)}</div>`}
-      <div><div class="t">${p.status==="besucht"?`<span class="lchk">✓</span>`:""}${esc(ptTitle(p))}${p.stars&&RATE[p.cat]?` <span class="sv" style="font-weight:400;font-size:13px">${starTxt(p.stars)}</span>`:""}</div><div class="s"><span class="dot" style="background:${c.c}"></span>${esc(c.n)} · ${esc(STATUS[p.status]||"")}${p.section?" · "+esc(p.section):""} · ${esc(fmtD(p.visited||p.created))}${me?" · "+distKm(me,p).toFixed(0)+" km":""}</div></div></div>`;}
+      <div><div class="t">${p.status==="besucht"?`<span class="lchk">✓</span>`:""}${p.story?`<span class="lstory">${storyI(10)}</span>`:""}${esc(ptTitle(p))}${p.stars&&RATE[p.cat]?` <span class="sv" style="font-weight:400;font-size:13px">${starTxt(p.stars)}</span>`:""}</div><div class="s"><span class="dot" style="background:${c.c}"></span>${esc(c.n)} · ${esc(STATUS[p.status]||"")}${p.section?" · "+esc(p.section):""} · ${esc(fmtD(p.visited||p.created))}${me?" · "+distKm(me,p).toFixed(0)+" km":""}</div></div></div>`;}
   $("#lItems").innerHTML=h||`<p class="muted">Keine Punkte gefunden.</p>`;
   $("#lItems").querySelectorAll(".item").forEach(e=>e.onclick=()=>showDetail(e.dataset.id));
 }
@@ -712,19 +808,6 @@ $("#navMenu").onclick=async()=>{
   let est="";try{const s=await navigator.storage.estimate();est=`Belegter Speicher: ${(s.usage/1048576).toFixed(1)} MB`;}catch(e){}
   openPanel(`<h2>Menü</h2>
    <p class="muted">${points.length} Punkte gespeichert. ${est}</p>
-   <h3>Sichern und abgleichen</h3>
-   <p class="muted">Das Reisepaket enthält alle Punkte mit Fotos. So bringst du die Daten auf ein anderes Gerät oder machst ein Backup.</p>
-   <div class="actions"><button class="btn" id="mExport">Reisepaket exportieren</button>
-   <button class="btn sec" id="mImport">Reisepaket / GPX importieren</button></div>
-   <h3>Reisen</h3>
-   <p class="muted">Aktuelle Reise: <b>${esc(curTripObj()?curTripObj().name:"–")}</b> – neue Punkte kommen dorthin. Jede Reise hat eigene Abschnitte.</p>
-   <div class="actions"><button class="btn sec" id="mTrips">Reisen verwalten (${trips.length})</button><button class="btn sec" id="mSec">Abschnitte der aktuellen Reise (${sections.length})</button></div>
-   <h3>Länder automatisch</h3>
-   <p class="muted">${countryData?`Ländergrenzen geladen (${countryData.length} Länder) – das Land wird jedem Punkt automatisch zugeordnet, auch offline.`:"Noch nicht geladen – passiert automatisch beim nächsten Start mit Internet, oder hier:"}</p>
-   <div class="actions"><button class="btn sec" id="mCountries">${countryData?"Ländergrenzen neu laden":"Ländergrenzen laden"}</button></div>
-   <h3>Regionen Marokko (Provinzen)</h3>
-   <p class="muted">${regionData?`Regionsgrenzen geladen (${(regionData.prov||[]).length} Provinzen, ${(regionData.reg||[]).length} Regionen) – funktioniert offline.`:"Einmalig mit Internet laden (Marokko: Provinzen und Regionen). Danach offline."}</p>
-   <div class="actions"><button class="btn sec" id="mReg">${regionData?"Neu laden":"Regionsgrenzen laden"}</button>${regionData?`<button class="btn sec" id="mRegAll">Region für alle Punkte ermitteln</button>`:""}</div>
    <h3>Online-Abgleich (Google Drive)</h3>
    ${gdClient()?`<p class="muted">Eingerichtet. Letzter Abgleich: ${lastSync()}. Mit ⟳ oben rechts oder hier abgleichen – nur mit Internet.</p>
    <div class="actions"><button class="btn" id="mSync">Jetzt synchronisieren</button><button class="btn sec" id="mGset">Einstellungen</button></div>`
@@ -733,12 +816,26 @@ $("#navMenu").onclick=async()=>{
    <h3>Familienseite</h3>
    <p class="muted">${points.filter(p=>p.story&&(!famCfg().trip||p.trip===famCfg().trip)).length} Storypoints markiert${famCfg().trip?" (Reise "+esc(tripName(famCfg().trip))+")":""}. Verschlüsselt mit eurem Familien-Passwort veröffentlicht – ohne Passwort nicht lesbar.${famCfg().last?" Zuletzt veröffentlicht: "+new Date(famCfg().last).toLocaleString("de-CH",{dateStyle:"short",timeStyle:"short"})+".":""}</p>
    <div class="actions">${famReady()?`<button class="btn" id="mFamPub">Storypoints veröffentlichen</button>`:""}<button class="btn sec" id="mFamSet">${famReady()?"Einstellungen":"Familienseite einrichten"}</button></div>
+   <h3>Reisen</h3>
+   <p class="muted">Aktuelle Reise: <b>${esc(curTripObj()?curTripObj().name:"–")}</b> – neue Punkte kommen dorthin. Jede Reise hat eigene Abschnitte.</p>
+   <div class="actions"><button class="btn sec" id="mTrips">Reisen verwalten (${trips.length})</button><button class="btn sec" id="mSec">Abschnitte der aktuellen Reise (${sections.length})</button></div>
+   <h3>Sichern und abgleichen</h3>
+   <p class="muted">Das Reisepaket enthält alle Punkte mit Fotos. So bringst du die Daten auf ein anderes Gerät oder machst ein Backup.</p>
+   <div class="actions"><button class="btn" id="mExport">Reisepaket exportieren</button>
+   <button class="btn sec" id="mImport">Importieren (Reisepaket, GPX, Google-Orte)</button></div>
+   <p class="muted">Google-Orte: über Google Takeout «Maps (Meine Orte)» bzw. «Gespeichert» exportieren, dann die .json- oder .csv-Datei hier importieren.</p>
    <h3>Karte offline</h3>
    <p class="muted">Kartenbilder rund um eure Punkte vorab speichern (zu Hause im WLAN), damit die Karte in Marokko ohne Netz geht.</p>
    <div class="actions"><button class="btn sec" id="mOff">Karte offline speichern</button></div>
    <h3>Für OsmAnd</h3>
    <p class="muted">Alle Punkte als GPX in einer einzigen Gruppe «${GROUP}».</p>
    <div class="actions"><button class="btn sec" id="mGpx">GPX exportieren</button></div>
+   <h3>Länder automatisch</h3>
+   <p class="muted">${countryData?`Ländergrenzen geladen (${countryData.length} Länder) – das Land wird jedem Punkt automatisch zugeordnet, auch offline.`:"Noch nicht geladen – passiert automatisch beim nächsten Start mit Internet, oder hier:"}</p>
+   <div class="actions"><button class="btn sec" id="mCountries">${countryData?"Ländergrenzen neu laden":"Ländergrenzen laden"}</button></div>
+   <h3>Regionen Marokko (Provinzen)</h3>
+   <p class="muted">${regionData?`Regionsgrenzen geladen (${(regionData.prov||[]).length} Provinzen, ${(regionData.reg||[]).length} Regionen) – funktioniert offline.`:"Einmalig mit Internet laden (Marokko: Provinzen und Regionen). Danach offline."}</p>
+   <div class="actions"><button class="btn sec" id="mReg">${regionData?"Neu laden":"Regionsgrenzen laden"}</button>${regionData?`<button class="btn sec" id="mRegAll">Region für alle Punkte ermitteln</button>`:""}</div>
    <h3>Version</h3>
    <p class="muted">ibexmap ${VERSION}. Neue Versionen werden beim Öffnen mit Internet automatisch geladen.</p>
    <div class="actions"><button class="btn sec" id="mUpd">Nach Update suchen</button></div>
@@ -801,7 +898,9 @@ function writeGPX(list,label){const x=s=>esc(s);
   download(`ibexmap_${label.replace(/[^\wäöüÄÖÜ-]+/g,"_")}_${stamp()}.gpx`,new Blob([g],{type:"application/gpx+xml"}));toast(`GPX exportiert (${list.length} Punkte)`);}
 $("#fileImport").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f)return;const text=await f.text();
   if(f.name.toLowerCase().endsWith(".gpx"))return importGPX(text);
+  if(f.name.toLowerCase().endsWith(".csv")){const it=googleFromCSV(text);return it.length?importGoogle(it,f.name):toast("Keine Orte in der CSV-Datei gefunden");}
   let pkg;try{pkg=JSON.parse(text);}catch(err){return toast("Datei nicht lesbar");}
+  if(pkg&&pkg.type==="FeatureCollection"){const it=googleFromGeoJSON(pkg);return it.length?importGoogle(it,f.name):toast("Keine Orte in der Datei gefunden");}
   if(!["ibexmap","Reisebuch"].includes(pkg.app)||!Array.isArray(pkg.points))return toast("Kein ibexmap-Paket");
   openPanel(`<h2>Reisepaket importieren</h2><p>${pkg.points.filter(p=>!p.deleted).length} Punkte${pkg.points.some(p=>p.deleted)?" (+ "+pkg.points.filter(p=>p.deleted).length+" Löschungen)":""}, exportiert am ${esc(new Date(pkg.exported).toLocaleString("de-CH"))}.</p>
     <p class="muted"><b>Zusammenführen:</b> neue Punkte kommen dazu, bei gleichen Punkten gewinnt die neuere Version. Auch Löschungen werden übernommen, wenn sie neuer sind.<br><b>Ersetzen:</b> alle Punkte auf diesem Gerät werden gelöscht und durch das Paket ersetzt.</p>
