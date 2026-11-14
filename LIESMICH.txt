@@ -1,4 +1,4 @@
-REISEBUCH – Prototyp v8 (privates Projekt)
+IBEXMAP – Prototyp v9 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -29,7 +29,7 @@ Inhalt des Ordners
 
 4) OsmAnd
   - Im Punkt "Navigieren (OsmAnd)" antippen -> Android fragt nach der App.
-  - Menü -> "GPX exportieren": alle Punkte in EINER Gruppe "Reisebuch".
+  - Menü -> "GPX exportieren": alle Punkte in EINER Gruppe "ibexmap".
   - Die bisherige Datei Marokko_2027_Fixpunkte.gpx kann über "importieren" geladen werden.
 
 Noch nicht enthalten (nächste Schritte)
@@ -37,7 +37,7 @@ Noch nicht enthalten (nächste Schritte)
   - Automatischer Abgleich über einen eigenen Server
 
 NEU IN v6
-- Kartenfilter ⛃: Orte aus OpenStreetMap wie in OsmAnd (Einkauf, Tankstelle,
+- Kartenfilter (Trichter-Knopf): Orte aus OpenStreetMap wie in OsmAnd (Einkauf, Tankstelle,
   Werkstatt/Reifen). Einmal "Ganz Marokko herunterladen" mit Internet, danach offline.
   Sichtbar ab Zoomstufe 10. Antippen: Infos, Navigieren, als eigenen Punkt übernehmen.
 - Abschnitte: 10 Marokko-Sektoren (A Norden … J Rückweg Nord) mit Zeitfenster,
@@ -53,3 +53,11 @@ NEU IN v8
   Alle Geräte müssen dasselbe Google-Konto verwenden.
 - Karte offline: Menü → Karte offline speichern (Marokko grob, rund um die Punkte detailliert).
 - App bittet Android, den Speicher dauerhaft zu behalten.
+
+NEU IN v9
+- Punkt setzen: Fadenkreuz mit Griff darunter (Finger verdeckt das Kreuz nicht),
+  Kreuz ziehen bis es stimmt, dann "Punkt hier setzen". Lange drücken auf die Karte startet ebenfalls das Kreuz.
+- App heisst jetzt "ibexmap" (Titel, Startbildschirm, Exportdateien, GPX-Gruppe).
+  Interne Speichernamen bleiben gleich – vorhandene Daten bleiben erhalten.
+- Bewertung 1–5 Sterne bei Stellplatz (vorher "Wildcamp") und Camping, plus Einzelbewertungen mit Notiz:
+  Stellplatz: Umgebung, Wohlfühlen, Am Wasser – Camping: Sanitär, Stellplatz, Kosten/Nutzen, Restaurant, Am Wasser.

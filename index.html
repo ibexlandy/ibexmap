@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#2f3b2f">
-<title>Reisebuch</title>
+<title>ibexmap</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
@@ -25,9 +25,17 @@ nav button{border:0;background:none;padding:10px 4px 12px;font-size:13px;color:v
 nav button .ic{font-size:22px;line-height:1}
 nav button.primary{color:var(--accent2);font-weight:700}
 nav button.on{color:var(--accent2)}
-.fab{position:absolute;right:12px;bottom:20px;z-index:500;width:48px;height:48px;border-radius:50%;border:0;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.3);font-size:22px}
+.fab{display:flex;align-items:center;justify-content:center;color:var(--ink);position:absolute;right:12px;bottom:20px;z-index:500;width:48px;height:48px;border-radius:50%;border:0;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.3);font-size:22px}
 .fab.follow{background:var(--accent2);color:#fff}
 .fab.active{background:var(--accent);color:#fff}
+.stars{display:inline-flex;gap:2px;vertical-align:middle}
+.stars button{border:0;background:none;font-size:26px;line-height:1;padding:2px;color:#cfc8b8}
+.stars button.on{color:#e0a100}
+.rate{background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-top:8px}
+.rate .rrow{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px;flex-wrap:wrap}
+.rate .rrow b{font-weight:600;font-size:14px}
+.rate input{margin-top:4px;padding:6px 8px;font-size:14px}
+.sv{color:#e0a100;letter-spacing:1px}
 .hint{position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:600;background:var(--accent2);color:#fff;padding:8px 14px;border-radius:20px;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.3);display:none}
 .sheet{position:fixed;left:0;right:0;top:0;height:100vh;height:100dvh;z-index:1000;background:rgba(0,0,0,.35);display:none}
 .sheet.open{display:block}
@@ -67,16 +75,25 @@ textarea{min-height:110px;resize:vertical}
 .pin.visited{opacity:.55}
 .toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#222;color:#fff;padding:10px 16px;border-radius:20px;z-index:2000;display:none;font-size:14px;max-width:90%}
 hr{border:0;border-top:1px solid var(--line);margin:16px 0}
+
+.xh{position:relative;width:64px;height:120px}
+.xh svg{position:absolute;left:0;top:0}
+.xh .grip{position:absolute;left:12px;top:70px;width:40px;height:40px;border-radius:50%;background:rgba(200,116,44,.9);border:3px solid #fff;box-shadow:0 1px 6px rgba(0,0,0,.5);color:#fff;font-size:20px;display:flex;align-items:center;justify-content:center}
+.xh .stem{position:absolute;left:31px;top:52px;width:2px;height:20px;background:#fff;box-shadow:0 0 2px #000}
+.placebar{position:absolute;left:8px;right:8px;bottom:12px;z-index:650;background:#fff;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.35);padding:10px;display:none}
+.placebar .actions{margin-top:8px}
 #map.placing,#map.placing .leaflet-grab,#map.placing .leaflet-interactive,#map.placing .leaflet-dragging .leaflet-grab{cursor:crosshair !important}
 </style>
 </head>
 <body>
 <div id="app">
-  <header><h1>Reisebuch</h1><span class="gps" id="gpsInfo">GPS aus</span><button class="hbtn" id="syncBtn" title="Mit Google Drive abgleichen" style="display:none">⟳</button></header>
+  <header><h1>ibexmap</h1><span class="gps" id="gpsInfo">GPS aus</span><button class="hbtn" id="syncBtn" title="Mit Google Drive abgleichen" style="display:none">⟳</button></header>
   <div id="map">
-    <div class="hint" id="hint">Tippe auf die Karte, um den Punkt zu setzen · <u id="hintCancel">Abbrechen</u></div>
+    <div class="hint" id="hint">Tippe ungefähr auf die Stelle – danach fein einstellen · <u id="hintCancel">Abbrechen</u></div>
+    <div class="placebar" id="placebar"><div class="muted" id="pbInfo">Kreuz am Griff ● ziehen, bis es genau stimmt. Zoomen geht weiterhin.</div>
+      <div class="actions"><button class="btn" id="pbOk">✓ Punkt hier setzen</button><button class="btn sec" id="pbNo">Abbrechen</button></div></div>
     <button class="fab" id="locBtn" title="Mein Standort">◎</button>
-    <button class="fab" id="filtBtn" title="Kategorien auf der Karte" style="bottom:80px">⛃</button>
+    <button class="fab" id="filtBtn" title="Filter: was auf der Karte angezeigt wird" style="bottom:80px"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"><path d="M3 4h18l-7 8.5V19l-4 2v-8.5z"/></svg></button>
   </div>
   <nav>
     <button id="navList"><span class="ic">☰</span>Liste</button>
@@ -95,7 +112,7 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 "use strict";
 /* ---------- Konstanten ---------- */
 const CATS={
-  wild:{n:"Wildcamp",c:"#2e7d32",i:"⛺"},
+  wild:{n:"Stellplatz",c:"#2e7d32",i:"⛺"},
   camp:{n:"Camping",c:"#1565c0",i:"🚿"},
   sight:{n:"Sehenswürdigkeit",c:"#8e24aa",i:"★"},
   hike:{n:"Wanderung / Hochtour",c:"#6d4c41",i:"⛰"},
@@ -107,7 +124,17 @@ const CATS={
   other:{n:"Sonstiges",c:"#757575",i:"•"}
 };
 const STATUS={idee:"Idee",fix:"Fixpunkt",besucht:"Besucht"};
-const GROUP="Reisebuch";
+const RATE={
+  wild:[["umgebung","Umgebung"],["wohl","Wohlfühlen"],["wasser","Am Wasser"]],
+  camp:[["sanitaer","Sanitär"],["platz","Stellplatz"],["preis","Kosten/Nutzen"],["resto","Restaurant"],["wasser","Am Wasser"]]
+};
+const starTxt=n=>n?"★".repeat(n)+"☆".repeat(5-n):"";
+function starsWidget(name,val){return `<span class="stars" data-name="${name}" data-v="${val||0}">${[1,2,3,4,5].map(i=>`<button type="button" data-i="${i}" class="${i<=(val||0)?"on":""}">★</button>`).join("")}</span>`;}
+function bindStars(root){root.querySelectorAll(".stars").forEach(w=>w.querySelectorAll("button").forEach(b=>b.onclick=()=>{
+  const i=+b.dataset.i,v=+w.dataset.v===i?0:i;w.dataset.v=v;w.querySelectorAll("button").forEach(x=>x.classList.toggle("on",+x.dataset.i<=v));}));}
+function rateText(p){const cr=RATE[p.cat];if(!cr)return "";const r=p.rate||{};
+  return [p.stars?"Gesamt "+starTxt(p.stars):"",...cr.map(([k,l])=>r[k]&&(r[k].s||r[k].t)?`${l}: ${starTxt(r[k].s)}${r[k].t?" – "+r[k].t:""}`:"")].filter(Boolean).join("\n");}
+const GROUP="ibexmap";
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
 const MA_SECTORS=[
  {n:"A Norden",zeit:"5.–10. April",klima:"Frühling, grün; 15–22 °C, im Rif Regen möglich, Nächte kühl",info:"Tanger Med, Chefchaouen, Fès, Meknès – ankommen, Städte, einkaufen. Eher Campings.",box:[[33.8,-5.9,35.95,-1.0]]},
@@ -183,9 +210,10 @@ function pinIcon(p){const c=CATS[p.cat]||CATS.other;
   return L.divIcon({className:"",iconSize:[30,30],iconAnchor:[15,30],popupAnchor:[0,-28],
     html:`<div class="pin ${p.status==="besucht"?"visited":""}" style="background:${c.c}"><span>${c.i}</span></div>`});}
 let hiddenCats=[];try{hiddenCats=JSON.parse(localStorage.getItem("rb_hidden")||"[]");}catch(e){}
+let hiddenStat=[];try{hiddenStat=JSON.parse(localStorage.getItem("rb_hidstat")||"[]");}catch(e){}
 function drawPoints(){layer.clearLayers();
-  $("#filtBtn").classList.toggle("active",hiddenCats.length>0||osmShow.length>0);
-  points.filter(p=>!hiddenCats.includes(p.cat in CATS?p.cat:"other")).forEach(p=>{L.marker([p.lat,p.lon],{icon:pinIcon(p)}).addTo(layer).on("click",()=>showDetail(p.id));});}
+  $("#filtBtn").classList.toggle("active",hiddenCats.length>0||hiddenStat.length>0||osmShow.length>0);
+  points.filter(p=>!hiddenCats.includes(p.cat in CATS?p.cat:"other")&&!hiddenStat.includes(p.status||"idee")).forEach(p=>{L.marker([p.lat,p.lon],{icon:pinIcon(p)}).addTo(layer).on("click",()=>showDetail(p.id));});}
 
 async function loadPoints(){points=(await getAll("points")).filter(p=>!p.deleted);points.sort((a,b)=>(a.title||"").localeCompare(b.title||""));drawPoints();}
 
@@ -227,7 +255,7 @@ async function osmLoad(scope,label){
   catch(e){toast("Laden fehlgeschlagen – Internet? Später nochmals versuchen.",5000);return false;}}
 function saveOsmShow(){try{localStorage.setItem("rb_osm",JSON.stringify(osmShow));}catch(e){}}
 function drawOsm(){osmLayer.clearLayers();
-  $("#filtBtn").classList.toggle("active",hiddenCats.length>0||osmShow.length>0);
+  $("#filtBtn").classList.toggle("active",hiddenCats.length>0||hiddenStat.length>0||osmShow.length>0);
   if(!osmShow.length||!osmData.items.length||map.getZoom()<OSM_MINZOOM)return;
   const b=map.getBounds().pad(.2);
   osmData.items.forEach(x=>{if(!osmShow.includes(x.ty)||!b.contains([x.lat,x.lon]))return;const c=OSM[x.ty];
@@ -291,6 +319,9 @@ function showMapFilter(){
   openPanel(`<h2>Auf der Karte anzeigen</h2>
     <h3>Eigene Punkte</h3>
     <div class="chips">${Object.entries(CATS).map(([k,v])=>`<button class="chip ${hiddenCats.includes(k)?"":"on"}" data-k="${k}"><span class="dot" style="background:${v.c}"></span>${v.i} ${v.n} (${cnt(k)})</button>`).join("")}</div>
+    <h3>Status</h3>
+    <div class="chips">${Object.entries(STATUS).map(([k,v])=>`<button class="chip ${hiddenStat.includes(k)?"":"on"}" data-st="${k}">${{idee:"💡",fix:"📌",besucht:"✔️"}[k]||""} ${v} (${points.filter(p=>(p.status||"idee")===k).length})</button>`).join("")}</div>
+    <p class="muted">Antippen blendet ein oder aus – z. B. «Besucht» ausschalten, um nur noch offene Ziele zu sehen.</p>
     <h3>Orte aus OpenStreetMap (wie OsmAnd)</h3>
     <div class="chips">${Object.entries(OSM).map(([k,v])=>`<button class="chip ${osmShow.includes(k)?"on":""}" data-o="${k}"><span class="dot" style="background:${v.c}"></span>${v.i} ${v.n} (${osmData.items.filter(x=>x.ty===k).length})</button>`).join("")}</div>
     <p class="muted">${osmData.items.length?`${osmData.items.length} Orte gespeichert (${esc(osmData.scope)}, Stand ${new Date(osmData.loaded).toLocaleDateString("de-CH")}) – funktioniert offline. Sichtbar ab Zoomstufe ${OSM_MINZOOM}, damit die Karte übersichtlich bleibt.`:"Noch keine Orte gespeichert. Einmal mit Internet laden, danach offline."}</p>
@@ -300,10 +331,12 @@ function showMapFilter(){
   const save=()=>{try{localStorage.setItem("rb_hidden",JSON.stringify(hiddenCats));}catch(e){}drawPoints();showMapFilter();};
   $("#panel").querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{const k=b.dataset.k;hiddenCats=hiddenCats.includes(k)?hiddenCats.filter(x=>x!==k):[...hiddenCats,k];save();});
   const only=keep=>{hiddenCats=Object.keys(CATS).filter(k=>!keep.includes(k));save();};
-  $("#mfAll").onclick=()=>{hiddenCats=[];save();};
+  $("#mfAll").onclick=()=>{hiddenCats=[];hiddenStat=[];try{localStorage.setItem("rb_hidstat","[]");}catch(e){}save();};
   $("#mfSupply").onclick=()=>{osmShow=Object.keys(OSM);saveOsmShow();drawOsm();only(["shop","fuel","service"]);};
   $("#mfNight").onclick=()=>only(["wild","camp"]);
   $("#mfClose").onclick=closePanel;
+  $("#panel").querySelectorAll("[data-st]").forEach(b=>b.onclick=()=>{const k=b.dataset.st;hiddenStat=hiddenStat.includes(k)?hiddenStat.filter(x=>x!==k):[...hiddenStat,k];
+    try{localStorage.setItem("rb_hidstat",JSON.stringify(hiddenStat));}catch(e){}drawPoints();showMapFilter();});
   $("#panel").querySelectorAll("[data-o]").forEach(b=>b.onclick=()=>{const k=b.dataset.o;osmShow=osmShow.includes(k)?osmShow.filter(x=>x!==k):[...osmShow,k];saveOsmShow();drawOsm();
     if(osmShow.includes(k)&&!osmData.items.length)toast("Zuerst Orte herunterladen (Knopf unten)",4000);
     else if(osmShow.includes(k)&&map.getZoom()<OSM_MINZOOM)toast("Näher hineinzoomen, dann erscheinen die Orte",4000);showMapFilter();});
@@ -320,6 +353,8 @@ async function showDetail(id){const p=points.find(x=>x.id===id);if(!p)return;con
     <h2>${esc(p.title)}</h2>
     <div class="muted"><span class="dot" style="background:${c.c}"></span>${esc(c.n)} · ${esc(STATUS[p.status]||"")}${p.section?" · "+esc(p.section):""}${d}</div>
     ${p.region?`<div class="muted">📍 ${esc(p.region)}</div>`:""}
+    ${RATE[p.cat]&&(p.stars||Object.keys(p.rate||{}).length)?`<div class="rate">${p.stars?`<div class="rrow"><b>Gesamt</b><span class="sv" style="font-size:20px">${starTxt(p.stars)}</span></div>`:""}
+      ${RATE[p.cat].map(([k,l])=>{const v=(p.rate||{})[k];return v&&(v.s||v.t)?`<div class="rrow"><b>${l}</b><span class="sv">${starTxt(v.s)}</span></div>${v.t?`<div class="muted">${esc(v.t)}</div>`:""}`:"";}).join("")}</div>`:""}
     <hr>${imgs}
     ${p.desc?`<div class="desc">${esc(p.desc)}</div>`:""}
     ${p.note?`<label>Notiz unterwegs</label><div class="desc">${esc(p.note)}</div>`:""}
@@ -340,7 +375,7 @@ async function showDetail(id){const p=points.find(x=>x.id===id);if(!p)return;con
 let draftPhotos=[];
 async function editPoint(p,isNew=false){
   draftPhotos=[...(p.photos||[])];
-  const catOpts=Object.entries(CATS).map(([k,v])=>`<option value="${k}" ${p.cat===k?"selected":""}>${v.n}</option>`).join("");
+  const catOpts=Object.entries(CATS).map(([k,v])=>`<option value="${k}" ${p.cat===k?"selected":""}>${v.i} ${v.n}</option>`).join("");
   const stOpts=Object.entries(STATUS).map(([k,v])=>`<option value="${k}" ${p.status===k?"selected":""}>${v}</option>`).join("");
   openPanel(`<h2>${isNew?"Neuer Punkt":"Punkt bearbeiten"}</h2>
    <label>Titel</label><input id="fTitle" value="${esc(p.title)}">
@@ -351,6 +386,7 @@ async function editPoint(p,isNew=false){
      ${p.section&&!sections.includes(p.section)?`<option selected>${esc(p.section)}</option>`:""}<option value="__new">+ Neuer Abschnitt …</option></select>
    <input id="fSectionNew" placeholder="Name des neuen Abschnitts" style="display:none;margin-top:6px">
    <label>Region (automatisch)</label><div class="muted" id="fRegion">${esc(p.region||regionOf(p.lat,p.lon)||(regionData?"ausserhalb der Regionsdaten":"Regionsgrenzen noch nicht geladen (Menü)"))}</div>
+   <div id="fRateBox"></div>
    <label>Beschreibung</label><textarea id="fDesc">${esc(p.desc)}</textarea>
    <label>Notiz unterwegs</label><textarea id="fNote" style="min-height:70px">${esc(p.note)}</textarea>
    <label>Quelle</label><input id="fSource" value="${esc(p.source)}" placeholder="Reiseführer S. …, Webseite …">
@@ -364,6 +400,17 @@ async function editPoint(p,isNew=false){
    <div class="actions"><button class="btn" id="fSave">Speichern</button><button class="btn sec" id="fCancel">Abbrechen</button>
    ${isNew?"":`<button class="btn warn" id="fDel">Löschen</button>`}</div>`);
   await renderDraftPhotos();
+  const draftRate=JSON.parse(JSON.stringify(p.rate||{}));let draftStars=p.stars||0;
+  const readRate=()=>{const box=$("#fRateBox");const g=box.querySelector('[data-name="__all"]');if(g)draftStars=+g.dataset.v;
+    box.querySelectorAll(".stars[data-name]").forEach(w=>{const k=w.dataset.name;if(k==="__all")return;draftRate[k]=Object.assign(draftRate[k]||{},{s:+w.dataset.v});});
+    box.querySelectorAll("input[data-note]").forEach(i=>{const k=i.dataset.note;draftRate[k]=Object.assign(draftRate[k]||{},{t:i.value.trim()});});};
+  const renderRate=()=>{const cr=RATE[$("#fCat").value],box=$("#fRateBox");
+    if(!cr){box.innerHTML="";return;}
+    box.innerHTML=`<label>Bewertung</label><div class="rate"><div class="rrow"><b>Gesamt</b>${starsWidget("__all",draftStars)}</div>
+      ${cr.map(([k,l])=>`<div class="rrow"><b>${l}</b>${starsWidget(k,(draftRate[k]||{}).s)}</div><input data-note="${k}" placeholder="Notiz zu ${l} (optional)" value="${esc((draftRate[k]||{}).t||"")}">`).join("")}
+      <div class="muted" style="margin-top:6px">Stern nochmals antippen = Bewertung entfernen.</div></div>`;bindStars(box);};
+  renderRate();
+  $("#fCat").onchange=()=>{readRate();renderRate();};
   $("#fSection").onchange=e=>{$("#fSectionNew").style.display=e.target.value==="__new"?"block":"none";if(e.target.value==="__new")$("#fSectionNew").focus();};
   const updReg=()=>{const la=parseFloat($("#fLat").value.replace(",",".")),lo=parseFloat($("#fLon").value.replace(",","."));if(regionData&&isFinite(la)&&isFinite(lo))$("#fRegion").textContent=regionOf(la,lo)||"ausserhalb der Regionsdaten";};
   $("#fLat").oninput=updReg;$("#fLon").oninput=updReg;
@@ -384,6 +431,8 @@ async function editPoint(p,isNew=false){
     if(!isFinite(lat)||!isFinite(lon)){toast("Koordinaten ungültig");return;}
     for(const id of (p.photos||[]))if(!draftPhotos.includes(id))await del("photos",id);
     let sec=$("#fSection").value;if(sec==="__new")sec=await addSection($("#fSectionNew").value);
+    readRate();const cr=RATE[$("#fCat").value];
+    if(cr){const r={};for(const[k]of cr){const v=draftRate[k]||{};if(v.s||v.t)r[k]={s:v.s||0,t:v.t||""};}p.rate=r;p.stars=draftStars||0;}
     Object.assign(p,{title:$("#fTitle").value.trim(),cat:$("#fCat").value,status:$("#fStatus").value,section:sec,region:regionOf(lat,lon)||p.region||"",
       desc:$("#fDesc").value,note:$("#fNote").value,source:$("#fSource").value.trim(),lat,lon,photos:draftPhotos,updated:Date.now()});
     if(p.status==="besucht"&&!p.visited)p.visited=new Date().toISOString().slice(0,10);
@@ -404,12 +453,24 @@ function confirmBox(text,onYes){const prev=$("#panel").innerHTML;
 function newPoint(lat,lon,extra={}){return Object.assign({id:uid(),title:"",cat:"sight",status:"idee",section:sectorOf(lat,lon),region:regionOf(lat,lon),desc:"",note:"",source:"",lat,lon,photos:[],created:Date.now(),updated:Date.now()},extra);}
 
 /* ---------- Punkt setzen / Hier merken ---------- */
-let placing=false;
-function setPlacing(on){placing=on;$("#hint").style.display=on?"block":"none";map.getContainer().classList.toggle("placing",on);}
-$("#navAdd").onclick=()=>setPlacing(true);
+let placing=false,cross=null;
+const crossIcon=L.divIcon({className:"",iconSize:[64,120],iconAnchor:[32,32],html:`<div class="xh">
+  <svg width="64" height="64" viewBox="0 0 64 64"><g stroke="#fff" stroke-width="5"><line x1="32" y1="2" x2="32" y2="24"/><line x1="32" y1="40" x2="32" y2="62"/><line x1="2" y1="32" x2="24" y2="32"/><line x1="40" y1="32" x2="62" y2="32"/></g>
+  <g stroke="#c62828" stroke-width="2.5"><line x1="32" y1="2" x2="32" y2="24"/><line x1="32" y1="40" x2="32" y2="62"/><line x1="2" y1="32" x2="24" y2="32"/><line x1="40" y1="32" x2="62" y2="32"/></g>
+  <circle cx="32" cy="32" r="3" fill="#c62828" stroke="#fff" stroke-width="1.5"/><circle cx="32" cy="32" r="12" fill="none" stroke="#c62828" stroke-width="1.5" stroke-dasharray="3 3"/></svg>
+  <div class="stem"></div><div class="grip">✥</div></div>`});
+function pbInfo(){if(!cross)return;const ll=cross.getLatLng();$("#pbInfo").textContent=`${ll.lat.toFixed(5)}, ${ll.lng.toFixed(5)} – Kreuz am Griff ● ziehen, bis es genau stimmt. Tippen auf die Karte setzt das Kreuz neu.`;}
+function setPlacing(on){placing=on;$("#hint").style.display=on&&!cross?"block":"none";map.getContainer().classList.toggle("placing",on);
+  if(!on){if(cross){map.removeLayer(cross);cross=null;}$("#placebar").style.display="none";}}
+function putCross(ll){if(!cross){cross=L.marker(ll,{icon:crossIcon,draggable:true,autoPan:true,zIndexOffset:2000,keyboard:false}).addTo(map);cross.on("drag",pbInfo);}
+  else cross.setLatLng(ll);$("#hint").style.display="none";$("#placebar").style.display="block";pbInfo();}
+$("#navAdd").onclick=()=>{setPlacing(false);setPlacing(true);};
 $("#hintCancel").onclick=e=>{e.stopPropagation();setPlacing(false);};
-map.on("click",e=>{if(!placing)return;setPlacing(false);editPoint(newPoint(+e.latlng.lat.toFixed(6),+e.latlng.lng.toFixed(6)),true);});
-map.on("contextmenu",e=>editPoint(newPoint(+e.latlng.lat.toFixed(6),+e.latlng.lng.toFixed(6)),true));
+$("#pbNo").onclick=e=>{e.stopPropagation();setPlacing(false);};
+$("#pbOk").onclick=e=>{e.stopPropagation();if(!cross)return;const ll=cross.getLatLng();setPlacing(false);editPoint(newPoint(+ll.lat.toFixed(6),+ll.lng.toFixed(6)),true);};
+L.DomEvent.disableClickPropagation($("#placebar"));
+map.on("click",e=>{if(!placing)return;putCross(e.latlng);});
+map.on("contextmenu",e=>{setPlacing(false);setPlacing(true);putCross(e.latlng);});
 $("#navHere").onclick=()=>{
   const go=pos=>{const d=new Date();const t=`Stellplatz ${d.toLocaleDateString("de-CH")} ${d.toLocaleTimeString("de-CH",{hour:"2-digit",minute:"2-digit"})}`;
     editPoint(newPoint(+pos.lat.toFixed(6),+pos.lon.toFixed(6),{title:t,cat:"wild",status:"besucht",visited:d.toISOString().slice(0,10)}),true);};
@@ -424,7 +485,7 @@ $("#navHere").onclick=()=>{
 let fCat="",fStatus="",fText="",fSec="";
 $("#navList").onclick=()=>showList();
 async function showList(){
-  const catChips=Object.entries(CATS).map(([k,v])=>`<button class="chip ${fCat===k?"on":""}" data-c="${k}"><span class="dot" style="background:${v.c}"></span>${v.n}</button>`).join("");
+  const catChips=Object.entries(CATS).map(([k,v])=>`<button class="chip ${fCat===k?"on":""}" data-c="${k}"><span class="dot" style="background:${v.c}"></span>${v.i} ${v.n}</button>`).join("");
   const stChips=Object.entries(STATUS).map(([k,v])=>`<button class="chip ${fStatus===k?"on":""}" data-s="${k}">${v}</button>`).join("");
   openPanel(`<h2>Punkte (${points.length})</h2>
     <input id="lSearch" placeholder="Suchen …" value="${esc(fText)}">
@@ -442,7 +503,7 @@ async function renderItems(){
   let h="";
   for(const p of list){const c=CATS[p.cat]||CATS.other;const u=p.photos?.length?await photoURL(p.photos[0]):"";
     h+=`<div class="item" data-id="${p.id}">${u?`<img src="${u}">`:`<div class="noimg" style="background:${c.c}22">${c.i}</div>`}
-      <div><div class="t">${esc(p.title)}</div><div class="s"><span class="dot" style="background:${c.c}"></span>${esc(c.n)} · ${esc(STATUS[p.status]||"")}${p.section?" · "+esc(p.section):""}${me?" · "+distKm(me,p).toFixed(0)+" km":""}</div></div></div>`;}
+      <div><div class="t">${esc(p.title)}${p.stars&&RATE[p.cat]?` <span class="sv" style="font-weight:400;font-size:13px">${starTxt(p.stars)}</span>`:""}</div><div class="s"><span class="dot" style="background:${c.c}"></span>${esc(c.n)} · ${esc(STATUS[p.status]||"")}${p.section?" · "+esc(p.section):""}${me?" · "+distKm(me,p).toFixed(0)+" km":""}</div></div></div>`;}
   $("#lItems").innerHTML=h||`<p class="muted">Keine Punkte gefunden.</p>`;
   $("#lItems").querySelectorAll(".item").forEach(e=>e.onclick=()=>showDetail(e.dataset.id));
 }
@@ -511,17 +572,17 @@ const blobToData=b=>new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.re
 async function dataToBlob(d){return (await fetch(d)).blob();}
 async function exportPackage(){toast("Paket wird erstellt …");
   const photos={};for(const p of points)for(const id of p.photos||[]){const ph=await getOne("photos",id);if(ph)photos[id]=await blobToData(ph.blob);}
-  const all=await getAll("points");const pkg={app:"Reisebuch",format:3,exported:new Date().toISOString(),sections,points:all,photos};
-  download(`Reisebuch_Paket_${stamp()}.json`,new Blob([JSON.stringify(pkg)],{type:"application/json"}));toast("Reisepaket exportiert");}
+  const all=await getAll("points");const pkg={app:"ibexmap",format:3,exported:new Date().toISOString(),sections,points:all,photos};
+  download(`ibexmap_Paket_${stamp()}.json`,new Blob([JSON.stringify(pkg)],{type:"application/json"}));toast("Reisepaket exportiert");}
 function exportGPX(){const x=s=>esc(s);
-  const w=points.map(p=>{const c=CATS[p.cat]||CATS.other;const desc=[c.n+" · "+(STATUS[p.status]||""),p.section,p.region,p.desc,p.note].filter(Boolean).join("\n");
+  const w=points.map(p=>{const c=CATS[p.cat]||CATS.other;const desc=[c.n+" · "+(STATUS[p.status]||""),p.section,p.region,rateText(p),p.desc,p.note].filter(Boolean).join("\n");
     return `<wpt lat="${p.lat}" lon="${p.lon}"><name>${x(p.title)}</name><desc>${x(desc)}</desc><type>${GROUP}</type></wpt>`;}).join("\n");
-  const g=`<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Reisebuch" xmlns="http://www.topografix.com/GPX/1/1">\n<metadata><name>${GROUP}</name></metadata>\n${w}\n</gpx>`;
-  download(`Reisebuch_${stamp()}.gpx`,new Blob([g],{type:"application/gpx+xml"}));toast("GPX exportiert");}
+  const g=`<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="ibexmap" xmlns="http://www.topografix.com/GPX/1/1">\n<metadata><name>${GROUP}</name></metadata>\n${w}\n</gpx>`;
+  download(`ibexmap_${stamp()}.gpx`,new Blob([g],{type:"application/gpx+xml"}));toast("GPX exportiert");}
 $("#fileImport").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f)return;const text=await f.text();
   if(f.name.toLowerCase().endsWith(".gpx"))return importGPX(text);
   let pkg;try{pkg=JSON.parse(text);}catch(err){return toast("Datei nicht lesbar");}
-  if(pkg.app!=="Reisebuch"||!Array.isArray(pkg.points))return toast("Kein Reisebuch-Paket");
+  if(!["ibexmap","Reisebuch"].includes(pkg.app)||!Array.isArray(pkg.points))return toast("Kein ibexmap-Paket");
   openPanel(`<h2>Reisepaket importieren</h2><p>${pkg.points.filter(p=>!p.deleted).length} Punkte${pkg.points.some(p=>p.deleted)?" (+ "+pkg.points.filter(p=>p.deleted).length+" Löschungen)":""}, exportiert am ${esc(new Date(pkg.exported).toLocaleString("de-CH"))}.</p>
     <p class="muted"><b>Zusammenführen:</b> neue Punkte kommen dazu, bei gleichen Punkten gewinnt die neuere Version. Auch Löschungen werden übernommen, wenn sie neuer sind.<br><b>Ersetzen:</b> alle Punkte auf diesem Gerät werden gelöscht und durch das Paket ersetzt.</p>
     <div class="actions"><button class="btn" id="iMerge">Zusammenführen</button><button class="btn warn" id="iRepl">Alles ersetzen</button><button class="btn sec" id="iNo">Abbrechen</button></div>`);
@@ -541,7 +602,7 @@ $("#fileImport").onchange=async e=>{const f=e.target.files[0];e.target.value="";
 };
 async function importGPX(text){const doc=new DOMParser().parseFromString(text,"application/xml");const w=[...doc.getElementsByTagName("wpt")];
   if(!w.length)return toast("Keine Wegpunkte gefunden");let n=0;
-  for(const el of w){const g=t=>el.getElementsByTagName(t)[0]?.textContent||"";const typ=g("type");const sec=typ&&typ!==GROUP?typ:"";if(sec)await addSection(sec);
+  for(const el of w){const g=t=>el.getElementsByTagName(t)[0]?.textContent||"";const typ=g("type");const sec=typ&&typ!==GROUP&&typ!=="Reisebuch"?typ:"";if(sec)await addSection(sec);
     const la=+el.getAttribute("lat"),lo=+el.getAttribute("lon");
     await put("points",newPoint(la,lo,{title:g("name")||"Wegpunkt",desc:g("desc"),section:sec,region:regionOf(la,lo),status:/option/i.test(typ)?"idee":"fix"}));n++;}
   await loadPoints();closePanel();toast(`${n} Wegpunkte aus GPX importiert`);}
@@ -589,7 +650,7 @@ async function syncDrive(){if(syncing)return;
     for(const id of need){const fn="foto_"+id+".jpg";i++;
       if(have.has(id)&&!byName[fn]){const ph=await getOne("photos",id);if(ph){toast(`Fotos hochladen … (${i}/${need.size})`,120000);await gdUpload(fn,ph.blob);up++;}}
       else if(!have.has(id)&&byName[fn]){toast(`Fotos herunterladen … (${i}/${need.size})`,120000);await put("photos",{id,blob:await(await gd(`drive/v3/files/${byName[fn].id}?alt=media`)).blob()});down++;}}
-    await gdUpload(GD_DATA,new Blob([JSON.stringify({app:"Reisebuch",format:3,updated:Date.now(),sections,points:Object.values(local)})],{type:"application/json"}),byName[GD_DATA]&&byName[GD_DATA].id);
+    await gdUpload(GD_DATA,new Blob([JSON.stringify({app:"ibexmap",format:3,updated:Date.now(),sections,points:Object.values(local)})],{type:"application/json"}),byName[GD_DATA]&&byName[GD_DATA].id);
     for(const f of files)if(/^foto_.+\.jpg$/.test(f.name)&&!need.has(f.name.slice(5,-4)))await gd(`drive/v3/files/${f.id}`,{method:"DELETE"}).catch(()=>{});
     ls("rb_lastsync",String(Date.now()));await loadPoints();
     toast(`Abgeglichen: ${nIn} Änderungen geholt, ${up} Fotos hoch-, ${down} heruntergeladen`,5000);
