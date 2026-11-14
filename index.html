@@ -220,7 +220,7 @@ function bindStars(root){root.querySelectorAll(".stars").forEach(w=>w.querySelec
 function rateText(p){const cr=RATE[p.cat];if(!cr)return "";const r=p.rate||{};
   return [p.stars?"Gesamt "+starTxt(p.stars):"",...cr.map(([k,l,ty])=>ty?(isOn(r[k])?`${l}${r[k].t?" – "+r[k].t:""}`:""):r[k]&&(r[k].s||r[k].t)?`${l}: ${starTxt(r[k].s)}${r[k].t?" – "+r[k].t:""}`:"")].filter(Boolean).join("\n");}
 const GROUP="IbexMap";
-const VERSION="v1.26";
+const VERSION="v1.27";
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
 const MA_SECTORS=[
  {n:"A Norden",zeit:"5.–10. April",klima:"Frühling, grün; 15–22 °C, im Rif Regen möglich, Nächte kühl",info:"Tanger Med, Chefchaouen, Fès, Meknès – ankommen, Städte, einkaufen. Eher Campings.",box:[[33.8,-5.9,35.95,-1.0]]},
@@ -1059,6 +1059,12 @@ $("#fileImport").onchange=async e=>{const f=e.target.files[0];e.target.value="";
 
 
 
+
+/* Sichtbarer Fortschritt für lange Arbeiten (Import, Fotos) */
+function progress(title,done,total,text){let b=$("#progBox");
+  if(!b||!isPanelOpen()){openPanel(`<h2 id="progT"></h2><div id="progBox"><div class="bar" style="height:14px"><div id="progBar"></div></div><p id="progTxt" style="font-size:15px"></p><p class="muted">Bitte die App offen und den Bildschirm an lassen.</p></div>`);b=$("#progBox");}
+  $("#progT").textContent=title;const pc=total?Math.round(done/total*100):0;$("#progBar").style.width=(total?pc:100)+"%";
+  $("#progTxt").textContent=(total?`${done} von ${total} (${pc} %)`:"")+(text?(total?" – ":"")+text:"");}
 /* ---------- OsmAnd-Backup (.osf = ZIP) lesen: Favoriten und Fotos ---------- */
 async function isZip(f){try{const b=new Uint8Array(await f.slice(0,4).arrayBuffer());return b[0]===0x50&&b[1]===0x4B&&b[2]===3&&b[3]===4;}catch(e){return false;}}
 async function zipEntries(file){const sz=file.size;const tail=new DataView(await file.slice(Math.max(0,sz-70000),sz).arrayBuffer());
@@ -1082,14 +1088,15 @@ async function zipRead(file,en){const h=new DataView(await file.slice(en.lo,en.l
   return await new Response(raw.stream().pipeThrough(new DecompressionStream("deflate-raw"))).blob();}
 async function importOsf(file,photosOnly){try{await importOsf2(file,photosOnly);}catch(e){toast("Fehler beim Lesen der OsmAnd-Datei: "+(e&&e.message||e),9000);}}
 async function importOsf2(file,photosOnly){
-  toast("Öffne OsmAnd-Datei …",20000);let ents;try{ents=await zipEntries(file);}catch(e){return toast(e.message,6000);}
+  progress("OsmAnd-Datei öffnen",0,0,`«${file.name}» (${MB(file.size)}) wird gelesen …`);let ents;try{ents=await zipEntries(file);}catch(e){return toast(e.message,6000);}
   const imgs=ents.filter(x=>/\.(jpe?g)$/i.test(x.name)&&x.usz>0);const gpxs=ents.filter(x=>/\.gpx$/i.test(x.name));
   /* Fotos nicht alle auf einmal entpacken: jedes Foto wird erst bei Bedarf gelesen und gleich wieder freigegeben */
   const getImgs=async()=>imgs.map(en=>({name:en.name.split("/").pop(),lastModified:en.date,size:en.usz,lazy:()=>zipRead(file,en)}));
+  progress("OsmAnd-Datei öffnen",0,0,`${imgs.length} Fotos und ${gpxs.length} GPX-Dateien gefunden – suche Favoriten …`);
   let fav=null;if(!photosOnly)for(const en of gpxs){try{const t=await(await zipRead(file,en)).text();if(/creator="OsmAnd/i.test(t)&&(/<name>favorites<\/name>/i.test(t)||/points_groups/.test(t))){fav=t;break;}}catch(e){}}
   if(fav){const w=[...new DOMParser().parseFromString(fav,"application/xml").getElementsByTagName("wpt")];
     importOsmandFav(w,imgs.length?async()=>{assignPhotos(await getImgs());}:null,imgs.length);return;}
-  if(!imgs.length)return toast("In der Datei wurden keine Fotos oder Favoriten gefunden",6000);
+  if(!imgs.length){closePanel();return toast("In der Datei wurden keine Fotos oder Favoriten gefunden",6000);}
   assignPhotos(await getImgs());}
 /* ---------- Fotos automatisch den nächsten Punkten zuordnen (Ort aus EXIF oder OsmAnd-Dateiname) ---------- */
 async function exifGPS(file){try{const buf=await file.slice(0,524288).arrayBuffer();const v=new DataView(buf);if(v.byteLength<4||v.getUint16(0)!==0xFFD8)return null;let o=2;
@@ -1112,9 +1119,9 @@ $("#photoAssign").onchange=async e=>{const fl=[...e.target.files];e.target.value
   let osf=fl.find(f=>/\.(osf|zip)$/i.test(f.name));if(!osf)for(const f of fl)if(!/^image\//.test(f.type)&&await isZip(f)){osf=f;break;}
   if(osf)return importOsf(osf,true);assignPhotos(fl.filter(f=>/^image\//.test(f.type)||/\.jpe?g$/i.test(f.name)));};
 async function assignPhotos(files){if(!files.length)return toast("Keine Fotos gefunden");
-  toast(`Lese ${files.length} Fotos …`,20000);
+  progress("Fotos zuordnen",0,files.length,"Aufnahmeorte werden gelesen …");
   const live=points.filter(p=>!p.deleted);const R=0.3;
-  const rows=[];let k=0;for(const f of files){k++;if(files.length>5)toast(`Lese Aufnahmeorte … (${k}/${files.length})`,60000);
+  const rows=[];let k=0;for(const f of files){k++;progress("Fotos zuordnen",k,files.length,"Aufnahmeorte werden gelesen …");
     const near=ll=>{let b=null;if(ll)for(const p of live){const d=distKm({lat:ll[0],lon:ll[1]},p);if(!b||d<b.d)b={p,d};}return b;};
     let ll=nameGPS(f.name),how="OsmAnd-Dateiname",best=near(ll);
     if(!best||best.d>R){try{const b=f.lazy?await f.lazy():f;const ex=await exifGPS(b);if(ex){ll=ex;how="Foto-Standort";best=near(ll);}}catch(e){}}
@@ -1132,10 +1139,10 @@ async function assignPhotos(files){if(!files.length)return toast("Keine Fotos ge
   $("#paGo").onclick=async()=>{const mk=newSel();let n=0,i=0;const touched=new Map();
     for(const [idx,r] of rows.entries()){let p=r.best&&r.best.p;
       if(!p&&mk.includes(idx)){p=newPoint(+r.ll[0].toFixed(6),+r.ll[1].toFixed(6),{cat:"wild",status:"besucht",trip:"",section:"",visited:new Date(r.f.lastModified||Date.now()).toISOString().slice(0,10)});}
-      if(!p)continue;i++;toast(`Speichere Fotos … (${i} von ${ok.length+mk.length})`,120000);
+      if(!p)continue;i++;progress("Fotos speichern",i,ok.length+mk.length,`→ ${ptTitle(p)}`);
       try{const src=r.f.lazy?await r.f.lazy():r.f;const b=await resize(src);const id=uid();await put("photos",{id,blob:b});p.photos=p.photos||[];p.photos.push(id);p.updated=Date.now();touched.set(p.id,p);n++;}catch(err){}}
     for(const p of touched.values())await put("points",p);
-    await loadPoints();closePanel();toast(`${n} Fotos zugeordnet`,5000);};}
+    await loadPoints();openPanel(`<h2>Fertig</h2><p style="font-size:16px">✓ ${n} Fotos zugeordnet${touched.size?` (${touched.size} Punkte)`:""}.</p><p class="muted">Mit ⟳ oben rechts auf die anderen Geräte abgleichen.</p><div class="actions"><button class="btn" id="pfOk">OK</button></div>`);$("#pfOk").onclick=closePanel;};}
 /* ---------- OsmAnd-Favoriten übernehmen (ohne Reise) ---------- */
 const FAV_MAP={"möglicher stellplatz":["wild","idee"],"freier stellplatz":["wild","besucht"],"campingplätze":["camp","besucht"],"trinkwasser":["water","besucht"]};
 function guessPoiCat(t){t=(t||"").toLowerCase();
@@ -1170,10 +1177,10 @@ async function importOsmandFav(w,after,nImg){
    <p class="muted">Sterne im Namen (z. B. «***») werden zur Bewertung. Kategorien bei «POI» sind aus dem Namen geraten und lassen sich danach im Punkt ändern.</p>
    ${after?`<p><b>Die Datei enthält zusätzlich ${nImg} Fotos.</b> Nach dem Übernehmen werden sie den Punkten zugeordnet (Vorschau folgt).</p>`:""}
    <div class="actions"><button class="btn" id="ofGo">Übernehmen</button>${after?`<button class="btn sec" id="ofSkip">Nur Fotos zuordnen</button>`:""}<button class="btn sec" id="ofNo">Abbrechen</button></div>`);
-  $("#ofNo").onclick=closePanel;const sk=$("#ofSkip");if(sk)sk.onclick=()=>{closePanel();after();};
-  $("#ofGo").onclick=async()=>{toast("Übernehme …",30000);let n=0;
-    for(const x of todo){const p=newPoint(x.la,x.lo,x.extra);if(!p.visited)delete p.visited;if(p.water===undefined)delete p.water;await put("points",p);n++;}
-    await loadPoints();closePanel();toast(`${n} OsmAnd-Favoriten übernommen`,5000);if(after)setTimeout(after,600);};}
+  $("#ofNo").onclick=closePanel;const sk=$("#ofSkip");if(sk)sk.onclick=()=>after();
+  $("#ofGo").onclick=async()=>{let n=0;
+    for(const x of todo){if(n%10===0)progress("Favoriten übernehmen",n,todo.length,"");const p=newPoint(x.la,x.lo,x.extra);if(!p.visited)delete p.visited;if(p.water===undefined)delete p.water;await put("points",p);n++;}
+    await loadPoints();if(after){progress("Favoriten übernommen",n,todo.length,"weiter mit den Fotos …");setTimeout(after,400);}else{closePanel();toast(`${n} OsmAnd-Favoriten übernommen`,5000);}};}
 
 async function importGPX(text){const doc=new DOMParser().parseFromString(text,"application/xml");const w=[...doc.getElementsByTagName("wpt")];
   if(!w.length)return toast("Keine Wegpunkte gefunden");

@@ -1,4 +1,4 @@
-IbexMap – v1.26 (privates Projekt)
+IbexMap – v1.27 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -154,3 +154,6 @@ NEU IN v1.25
 NEU IN v1.26
 - OsmAnd-.osf wird auch ohne Dateiendung erkannt (Android), Fehlermeldungen beim Lesen, Rückmeldung sofort nach Dateiauswahl.
 - .osf mit vielen Fotos: Fotos werden einzeln entpackt (wenig Arbeitsspeicher), Ort zuerst aus OsmAnd-Dateiname, sonst aus dem Foto.
+
+NEU IN v1.27
+- Import und Foto-Zuordnung mit sichtbarem Fortschrittsbalken (x von y, %) und Abschlussmeldung.
