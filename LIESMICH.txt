@@ -1,4 +1,4 @@
-IBEXMAP – Prototyp v9 (privates Projekt)
+IBEXMAP – Prototyp v10 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -61,3 +61,15 @@ NEU IN v9
   Interne Speichernamen bleiben gleich – vorhandene Daten bleiben erhalten.
 - Bewertung 1–5 Sterne bei Stellplatz (vorher "Wildcamp") und Camping, plus Einzelbewertungen mit Notiz:
   Stellplatz: Umgebung, Wohlfühlen, Am Wasser – Camping: Sanitär, Stellplatz, Kosten/Nutzen, Restaurant, Am Wasser.
+
+NEU IN v10
+- "Punkt setzen" zeigt das Fadenkreuz sofort in der Kartenmitte.
+- Versionsanzeige oben neben dem Namen und im Menü, Knopf "Nach Update suchen".
+- Neue Versionen werden beim Öffnen automatisch geladen (kein Warten auf den Browser-Zwischenspeicher mehr).
+- Nahe Punkte gleicher Kategorie werden bis Zoom 12 zu einer Blase mit Anzahl gruppiert
+  (Antippen zoomt hinein). Im Filter ein-/ausschaltbar.
+- Menü-Knopf ⋮ jetzt oben rechts in der Kopfzeile.
+- Familienseite (verschlüsselt): Punkte als "Storypoint" markieren, Menü → Familienseite einrichten /
+  Storypoints veröffentlichen. Die Datei familie.html ist die Seite für die Familie (wird automatisch
+  ins Familien-Repository hochgeladen). Verschlüsselung AES-256-GCM, Schlüssel aus Passwort (PBKDF2, 250 000 Runden).
+- Neues App-Logo (Steinbock mit Kartenpin) für Startbildschirm, Kopfzeile und Browser-Tab.
