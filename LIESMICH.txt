@@ -1,4 +1,4 @@
-IbexMap – v1.27 (privates Projekt)
+IbexMap – v1.28 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -157,3 +157,10 @@ NEU IN v1.26
 
 NEU IN v1.27
 - Import und Foto-Zuordnung mit sichtbarem Fortschrittsbalken (x von y, %) und Abschlussmeldung.
+
+NEU IN v1.28
+- Dateiauswahl mit Fenster: «Datei auswählen …», Anzeige der gewählten Datei und Wartehinweis bei grossen Dateien.
+- Fehler behoben: Reisename in der Kopfzeile, automatisches Laden der Ländergrenzen und Teilen aus Google Maps laufen wieder beim Start.
+- Kartenwahl oben rechts kompakt und sauber gestaltet.
+- Fehler behoben: OsmAnd-Orte wurden beim Abgleich fälschlich «Marokko 2027» zugeordnet – wird beim Start automatisch korrigiert.
+- Suche versteht Koordinaten (z. B. 31.0999, -4.0141) und Google-Maps-Links (Name und Position werden übernommen, «Hier Punkt setzen» vorausgefüllt).
