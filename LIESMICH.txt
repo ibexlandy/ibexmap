@@ -1,4 +1,4 @@
-IBEXMAP – v1.13 (privates Projekt)
+IBEXMAP – v1.17 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -84,3 +84,24 @@ NEU IN v1.13
 - Neues Versionsschema: vTAG.NUMMER (Tag = Arbeitstag am Projekt, Nummer = Stand an diesem Tag).
 - Google-Anmeldung jetzt per Weiterleitung auf die Google-Seite (jedes Konto wählbar).
   In der Cloud Console beim Client zusätzlich "Autorisierte Weiterleitungs-URI" https://ibexlandy.github.io/ibexmap/ eintragen.
+
+NEU IN v1.14
+- Titel freiwillig (leer = automatischer Name aus Kategorie, Region, Datum).
+- Datum sichtbar (Erfasst/Besucht/geändert), "Besucht am" im Formular einstellbar.
+- Liste sortierbar: Nächste, Neueste, Älteste, Beste Bewertung.
+
+NEU IN v1.15
+- Neue Kategorie Wasser/Trinkwasser (Auswahl Trinkwasser / Brauchwasser / unbekannt).
+- OSM-Filter Wasser/Brunnen (Trinkwasserstellen, Wasserhähne, Brunnen, Quellen). Orte neu herunterladen!
+
+NEU IN v1.16
+- Reisen: mehrere Reisen mit eigenen Abschnitten, aktuelle Reise oben in der Kopfzeile (antippen zum Wechseln).
+  Bestehende Punkte gehören zur Reise "Marokko 2027".
+- Land automatisch aus den Koordinaten (Ländergrenzen werden einmalig mit Internet geladen).
+- Filter Reise/Land auf Karte und in Liste; GPX wahlweise aktuelle Reise oder alle;
+  OSM-Orte "ganzes Land" für das Land in der Kartenmitte; Offline-Karte nach Reise; Familienseite pro Reise.
+
+NEU IN v1.17
+- Fussleiste entfernt: Punkt setzen (+), Hier merken, Liste als runde Knöpfe rechts. Zoom-Knöpfe entfernt.
+- Bewertung: "Am Wasser" ist jetzt ein Häkchen statt Sterne.
+- Schönere Symbole: Wanderung 🏔️, Achtung ⚠️, Sonstiges 🔹.
