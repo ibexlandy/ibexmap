@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#2f3b2f">
-<title>ibexmap</title>
+<title>IbexMap</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="favicon.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -116,7 +116,7 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 </head>
 <body>
 <div id="app">
-  <header><img src="icon-192.png" alt="" style="width:28px;height:28px;border-radius:7px;flex:none"><h1>ibexmap <span id="ver" style="font-size:12px;font-weight:400;opacity:.7"></span></h1><button class="hbtn" id="tripName" title="Aktuelle Reise – antippen zum Wechseln" style="font-size:12px;max-width:40vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></button><span class="gps" id="gpsInfo">GPS aus</span><button class="hbtn" id="syncBtn" title="Mit Google Drive abgleichen" style="display:none">⟳</button><button class="hbtn" id="navMenu" title="Menü" aria-label="Menü" style="font-weight:700;padding:2px 12px">⋮</button></header>
+  <header><img src="icon-192.png" alt="" style="width:28px;height:28px;border-radius:7px;flex:none"><h1>IbexMap <span id="ver" style="font-size:12px;font-weight:400;opacity:.7"></span></h1><button class="hbtn" id="tripName" title="Aktuelle Reise – antippen zum Wechseln" style="font-size:12px;max-width:40vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></button><span class="gps" id="gpsInfo">GPS aus</span><button class="hbtn" id="syncBtn" title="Mit Google Drive abgleichen" style="display:none">⟳</button><button class="hbtn" id="navMenu" title="Menü" aria-label="Menü" style="font-weight:700;padding:2px 12px">⋮</button></header>
   <div id="map">
     <div class="hint" id="hint">Tippe ungefähr auf die Stelle – danach fein einstellen · <u id="hintCancel">Abbrechen</u></div>
     <div class="placebar" id="placebar"><div class="muted" id="pbInfo">Am Griff ✥ ziehen</div>
@@ -200,8 +200,8 @@ function bindStars(root){root.querySelectorAll(".stars").forEach(w=>w.querySelec
   const i=+b.dataset.i,v=+w.dataset.v===i?0:i;w.dataset.v=v;w.querySelectorAll("button").forEach(x=>x.classList.toggle("on",+x.dataset.i<=v));}));}
 function rateText(p){const cr=RATE[p.cat];if(!cr)return "";const r=p.rate||{};
   return [p.stars?"Gesamt "+starTxt(p.stars):"",...cr.map(([k,l,ty])=>ty?(isOn(r[k])?`${l}${r[k].t?" – "+r[k].t:""}`:""):r[k]&&(r[k].s||r[k].t)?`${l}: ${starTxt(r[k].s)}${r[k].t?" – "+r[k].t:""}`:"")].filter(Boolean).join("\n");}
-const GROUP="ibexmap";
-const VERSION="v1.23";
+const GROUP="IbexMap";
+const VERSION="v1.24";
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
 const MA_SECTORS=[
  {n:"A Norden",zeit:"5.–10. April",klima:"Frühling, grün; 15–22 °C, im Rif Regen möglich, Nächte kühl",info:"Tanger Med, Chefchaouen, Fès, Meknès – ankommen, Städte, einkaufen. Eher Campings.",box:[[33.8,-5.9,35.95,-1.0]]},
@@ -478,49 +478,81 @@ window.addEventListener("popstate",()=>{if(ignorePop){ignorePop=false;return;}if
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&isPanelOpen())closePanel();});
 $("#sheet").addEventListener("click",e=>{if(e.target.id==="sheet")closePanel();});
 
-/* ---------- Kategoriesuche wie in OsmAnd: «Brunnen», «Tankstelle», «Camping» … in der Umgebung ---------- */
-const SCATS=[
- {id:"water",l:"Wasser / Brunnen",k:/^(brunnen|wasser|trinkwasser|quelle|wasserstelle|fontaine|water)/,own:"water",c:"#0288d1",ico:"water",
-  sel:['nwr["amenity"~"^(drinking_water|water_point|fountain)$"]','nwr["man_made"~"^(water_tap|water_well)$"]','node["natural"="spring"]']},
- {id:"fuel",l:"Tankstelle",k:/^(tank|benzin|diesel|fuel|station)/,own:"fuel",c:"#ef6c00",ico:"fuel",sel:['nwr["amenity"="fuel"]']},
- {id:"shop",l:"Einkauf",k:/^(einkauf|supermarkt|laden|lebensmittel|hanout|shop|super)/,own:"shop",c:"#00897b",ico:"shop",sel:['nwr["shop"~"^(supermarket|convenience|general|greengrocer)$"]']},
- {id:"camp",l:"Camping",k:/^(camping|zeltplatz|campingplatz|stellpl|wohnmobil|camp)/,own:"camp",c:"#1565c0",ico:"camp",sel:['nwr["tourism"~"^(camp_site|caravan_site)$"]']},
- {id:"service",l:"Werkstatt / Reifen",k:/^(werkstatt|garage|mechanik|reifen|pneu|vulkan)/,own:"service",c:"#546e7a",ico:"service",sel:['nwr["shop"~"^(car_repair|tyres|car_parts)$"]','nwr["craft"="mechanic"]']},
- {id:"pharm",l:"Apotheke",k:/^(apothek|pharma)/,c:"#2e7d32",ico:"other",sel:['nwr["amenity"="pharmacy"]']},
- {id:"atm",l:"Geldautomat / Bank",k:/^(geld|bank|atm|bancomat)/,c:"#6d4c41",ico:"other",sel:['nwr["amenity"~"^(atm|bank)$"]']},
- {id:"food",l:"Restaurant / Café",k:/^(restaurant|essen|café|cafe|beiz|imbiss)/,c:"#8e24aa",ico:"other",sel:['nwr["amenity"~"^(restaurant|cafe|fast_food)$"]']},
- {id:"doc",l:"Arzt / Spital",k:/^(arzt|spital|kranken|klinik|doctor|hospital)/,c:"#c62828",ico:"warn",sel:['nwr["amenity"~"^(hospital|clinic|doctors)$"]']}
+/* ---------- Freie Suche wie OsmAnd: deutsche Begriffe → OpenStreetMap-Kategorien (Umgebung), plus Namen weltweit ---------- */
+const POI_DICT=[
+ [/^(parkplatz|parking|parkhaus)/,'nwr["amenity"="parking"]'],
+ [/^(unterstand|schutzhütte|schutzhuette|shelter)/,'nwr["amenity"="shelter"]'],
+ [/^(hütte|huette|berghütte|alphütte|sac)/,'nwr["tourism"~"^(alpine_hut|wilderness_hut)$"]'],
+ [/^(grill|feuerstelle|feuer)/,'nwr["leisure"="firepit"];nwr["amenity"="bbq"]'],
+ [/^(picknick|rastplatz)/,'nwr["leisure"="picnic_table"];nwr["tourism"="picnic_site"];nwr["highway"="rest_area"]'],
+ [/^(sitzbank|ruhebank)/,'node["amenity"="bench"]'],
+ [/^(toilette|wc|klo)/,'nwr["amenity"="toilets"]'],
+ [/^(dusche)/,'nwr["amenity"="shower"]'],
+ [/^(entsorg|dump|grauwasser|chemie)/,'nwr["amenity"~"^(sanitary_dump_station|waste_disposal)$"]'],
+ [/^(abfall|müll|muell|kehricht)/,'nwr["amenity"~"^(waste_disposal|recycling|waste_basket)$"]'],
+ [/^(wasserfall)/,'nwr["waterway"="waterfall"]'],
+ [/^(brunnen|trinkwasser|wasser|wasserstelle)/,'nwr["amenity"~"^(drinking_water|water_point|fountain)$"];nwr["man_made"~"^(water_tap|water_well)$"]'],
+ [/^(quelle)/,'node["natural"="spring"]'],
+ [/^(tankstelle|tanken|diesel|benzin)/,'nwr["amenity"="fuel"]'],
+ [/^(ladestation|laden strom|e-tank)/,'nwr["amenity"="charging_station"]'],
+ [/^(gas|gasflasche|camping ?gaz)/,'nwr["shop"="gas"]'],
+ [/^(supermarkt|einkauf|lebensmittel|hanout)/,'nwr["shop"~"^(supermarket|convenience|general)$"]'],
+ [/^(bäckerei|baeckerei|brot)/,'nwr["shop"="bakery"]'],
+ [/^(metzger|fleisch)/,'nwr["shop"="butcher"]'],
+ [/^(markt|souk)/,'nwr["amenity"="marketplace"]'],
+ [/^(werkstatt|garage|mechaniker)/,'nwr["shop"="car_repair"];nwr["craft"="mechanic"]'],
+ [/^(reifen|pneu|vulkan)/,'nwr["shop"="tyres"]'],
+ [/^(autoteile|ersatzteil)/,'nwr["shop"="car_parts"]'],
+ [/^(wäscherei|waescherei|waschsalon|laundry)/,'nwr["shop"~"^(laundry|dry_cleaning)$"]'],
+ [/^(camping|zeltplatz)/,'nwr["tourism"="camp_site"]'],
+ [/^(stellplatz|wohnmobil)/,'nwr["tourism"="caravan_site"]'],
+ [/^(hotel|riad|auberge|unterkunft|hostel|pension)/,'nwr["tourism"~"^(hotel|guest_house|hostel|motel)$"]'],
+ [/^(restaurant|essen)/,'nwr["amenity"="restaurant"]'],
+ [/^(café|cafe|kaffee)/,'nwr["amenity"="cafe"]'],
+ [/^(bar|bier)/,'nwr["amenity"~"^(bar|pub)$"]'],
+ [/^(imbiss|fast ?food)/,'nwr["amenity"="fast_food"]'],
+ [/^(apothek|pharma)/,'nwr["amenity"="pharmacy"]'],
+ [/^(arzt|doktor|praxis)/,'nwr["amenity"~"^(doctors|clinic)$"]'],
+ [/^(spital|krankenhaus|notfall)/,'nwr["amenity"="hospital"]'],
+ [/^(zahnarzt)/,'nwr["amenity"="dentist"]'],
+ [/^(tierarzt)/,'nwr["amenity"="veterinary"]'],
+ [/^(geldautomat|bancomat|atm)/,'nwr["amenity"="atm"]'],
+ [/^(bank)/,'nwr["amenity"="bank"]'],
+ [/^(post)/,'nwr["amenity"="post_office"]'],
+ [/^(polizei|gendarmerie)/,'nwr["amenity"="police"]'],
+ [/^(aussicht|viewpoint)/,'nwr["tourism"="viewpoint"]'],
+ [/^(gipfel|berg)/,'node["natural"="peak"]'],
+ [/^(pass|col)$/,'node["mountain_pass"="yes"]'],
+ [/^(höhle|hoehle)/,'nwr["natural"="cave_entrance"]'],
+ [/^(strand)/,'nwr["natural"="beach"]'],
+ [/^(baden|badestelle|schwimm)/,'nwr["leisure"~"^(swimming_area|bathing_place|swimming_pool)$"]'],
+ [/^(see)$/,'nwr["natural"="water"]["water"="lake"]'],
+ [/^(museum)/,'nwr["tourism"="museum"]'],
+ [/^(burg|schloss|kasbah|festung)/,'nwr["historic"~"^(castle|fort)$"]'],
+ [/^(ruine)/,'nwr["historic"="ruins"]'],
+ [/^(moschee)/,'nwr["amenity"="place_of_worship"]["religion"="muslim"]'],
+ [/^(kirche)/,'nwr["amenity"="place_of_worship"]["religion"="christian"]'],
+ [/^(sehenswürdig|attraktion)/,'nwr["tourism"="attraction"]'],
+ [/^(spielplatz)/,'nwr["leisure"="playground"]'],
+ [/^(bahnhof|zug)/,'nwr["railway"="station"]'],
+ [/^(bus|haltestelle)/,'nwr["highway"="bus_stop"]'],
+ [/^(fähre|faehre|hafen)/,'nwr["amenity"="ferry_terminal"]'],
+ [/^(wifi|wlan|internet)/,'nwr["internet_access"~"^(wlan|yes)$"]'],
+ [/^(information|touristinfo|info)/,'nwr["tourism"="information"]["information"="office"]'],
+ [/^(friedhof)/,'nwr["landuse"="cemetery"]'],
 ];
-function scatOf(q){q=(q||"").trim().toLowerCase();return q.length>=3?SCATS.find(c=>c.k.test(q)):null;}
-async function nearbySearch(sc,box){
-  const ctr=me?L.latLng(me.lat,me.lon):map.getCenter();box=box||$("#sRes");
-  const kmTxt=x=>(x.d<1?Math.round(x.d*1000)+" m":x.d.toFixed(1)+" km");
-  box.innerHTML=`<h3>${esc(sc.l)} in der Nähe</h3><p class="muted">${me?"Ab deinem Standort":"Ab Kartenmitte"} …</p>`;
-  const own=sc.own?points.filter(p=>p.cat===sc.own).map(p=>({p,d:distKm({lat:ctr.lat,lon:ctr.lng},p)})).sort((a,b)=>a.d-b.d).slice(0,10):[];
-  let h=`<h3>${esc(sc.l)} in der Nähe</h3><p class="muted">${me?"Entfernung ab deinem Standort":"Entfernung ab Kartenmitte"} (Luftlinie)</p>`;
-  if(own.length)h+=`<h3>Eigene Punkte</h3>`+own.map(x=>`<div class="item" data-own="${x.p.id}">${icoBadge(x.p.cat,CATS[x.p.cat].c,30)}<div><div class="t">${esc(ptTitle(x.p))}</div><div class="s">${kmTxt(x)}</div></div></div>`).join("");
-  let res=[];
-  /* zuerst gespeicherte OSM-Orte (offline), dann online im Umkreis */
-  if(sc.own&&OSM[sc.own])res=(osmData.items||[]).filter(x=>x.ty===sc.own).map(x=>({x,d:distKm({lat:ctr.lat,lon:ctr.lng},x)})).filter(r=>r.d<30);
-  if(navigator.onLine){box.innerHTML=h+`<p class="muted">Suche in OpenStreetMap … (kann einige Sekunden dauern)</p>`;
-    for(const R of [15000,50000]){
-      const q=`[out:json][timeout:25];(${sc.sel.map(x=>`${x}(around:${R},${ctr.lat.toFixed(5)},${ctr.lng.toFixed(5)});`).join("")});out center tags 80;`;
-      let ok=false;for(const ep of OVERPASS){try{const ac=new AbortController();const to=setTimeout(()=>ac.abort(),20000);
-        const r=await fetch(ep,{method:"POST",signal:ac.signal,body:"data="+encodeURIComponent(q),headers:{"Content-Type":"application/x-www-form-urlencoded"}});clearTimeout(to);
-        if(!r.ok)continue;const j=await r.json();const seen=new Set(res.map(r=>r.x.id));
-        for(const e of j.elements){const t=e.tags||{};const k={};KEEP.concat(["tourism","opening_hours"]).forEach(z=>{if(t[z])k[z]=t[z];});
-          const lat=e.lat??(e.center&&e.center.lat),lon=e.lon??(e.center&&e.center.lon);const id=e.type[0]+e.id;if(lat==null||seen.has(id))continue;
-          res.push({x:{id,lat,lon,ty:osmType(t)||sc.id,t:k},d:distKm({lat:ctr.lat,lon:ctr.lng},{lat,lon})});}ok=true;break;}catch(err){}}
-      if(!ok||res.length>=5)break;}}
-  res.sort((a,b)=>a.d-b.d);res=res.slice(0,40);
-  h+=res.length?`<h3>OpenStreetMap</h3>`+res.map((r,i)=>{const t=r.x.t;const nm=t.name||t["name:fr"]||t.brand||"";
-      const kind=OSM[r.x.ty]?osmKind(t):(t.tourism==="camp_site"?"Campingplatz":t.tourism==="caravan_site"?"Wohnmobil-Stellplatz":sc.l);
-      return `<div class="item" data-r="${i}">${icoBadge(sc.ico,sc.c,30)}<div><div class="t">${esc(nm||kind)}</div><div class="s">${kmTxt(r)}${nm?" · "+esc(kind):""}</div></div></div>`;}).join("")
-    :`<p class="muted">${navigator.onLine?"Nichts im Umkreis von 50 km gefunden.":"Offline: keine gespeicherten Orte dieser Art in der Nähe."}</p>`;
-  box.innerHTML=h;
-  box.querySelectorAll("[data-own]").forEach(e=>e.onclick=()=>{const p=points.find(x=>x.id===e.dataset.own);closePanel();map.setView([p.lat,p.lon],15);setTimeout(()=>showDetail(p.id),300);});
-  box.querySelectorAll("[data-r]").forEach(e=>e.onclick=()=>{const x=res[+e.dataset.r].x;closePanel();map.setView([x.lat,x.lon],16);
-    if(OSM[x.ty])setTimeout(()=>showOsm(x),300);else{const t=x.t;goTo(x.lat,x.lon,16,t.name||t["name:fr"]||sc.l);}});}
+function poiQuery(t){t=(t||"").trim().toLowerCase();if(t.length<3)return null;const m=POI_DICT.find(([re])=>re.test(t));return m?m[1]:null;}
+const kmTxt=d=>d<1?Math.round(d*1000)+" m":d.toFixed(1)+" km";
+function osmLabel(t){if(!t)return "";const keys=["amenity","tourism","shop","leisure","natural","historic","man_made","railway","highway","craft","waterway"];
+  for(const k of keys)if(t[k])return (OSM_DE[t[k]]||t[k].replace(/_/g," "));return "";}
+const OSM_DE={parking:"Parkplatz",shelter:"Unterstand",alpine_hut:"Berghütte",wilderness_hut:"Hütte",firepit:"Feuerstelle",bbq:"Grillstelle",picnic_table:"Picknicktisch",picnic_site:"Picknickplatz",rest_area:"Rastplatz",bench:"Sitzbank",toilets:"Toilette",shower:"Dusche",sanitary_dump_station:"Entsorgungsstation",waste_disposal:"Abfall",recycling:"Recycling",drinking_water:"Trinkwasser",water_point:"Wasserstelle",fountain:"Brunnen",water_tap:"Wasserhahn",water_well:"Ziehbrunnen",spring:"Quelle",fuel:"Tankstelle",charging_station:"Ladestation",gas:"Gasflaschen",supermarket:"Supermarkt",convenience:"Laden",general:"Gemischtwaren",bakery:"Bäckerei",butcher:"Metzgerei",marketplace:"Markt",car_repair:"Autowerkstatt",tyres:"Reifen",car_parts:"Autoteile",laundry:"Wäscherei",camp_site:"Campingplatz",caravan_site:"Wohnmobil-Stellplatz",hotel:"Hotel",guest_house:"Gästehaus / Riad",hostel:"Hostel",motel:"Motel",restaurant:"Restaurant",cafe:"Café",bar:"Bar",pub:"Bar",fast_food:"Imbiss",pharmacy:"Apotheke",doctors:"Arzt",clinic:"Klinik",hospital:"Spital",dentist:"Zahnarzt",veterinary:"Tierarzt",atm:"Geldautomat",bank:"Bank",post_office:"Post",police:"Polizei",viewpoint:"Aussichtspunkt",peak:"Gipfel",waterfall:"Wasserfall",cave_entrance:"Höhle",beach:"Strand",museum:"Museum",castle:"Burg / Kasbah",fort:"Festung",ruins:"Ruine",place_of_worship:"Gotteshaus",attraction:"Sehenswürdigkeit",playground:"Spielplatz",station:"Bahnhof",bus_stop:"Bushaltestelle",ferry_terminal:"Fähre",information:"Information",water:"See"};
+async function overpassAround(sel,lat,lon,R){const parts=sel.split(";").filter(Boolean).map(x=>`${x}(around:${R},${lat.toFixed(5)},${lon.toFixed(5)});`).join("");
+  const q=`[out:json][timeout:25];(${parts});out center tags 60;`;
+  for(const ep of OVERPASS){try{const ac=new AbortController();const to=setTimeout(()=>ac.abort(),20000);
+    const r=await fetch(ep,{method:"POST",signal:ac.signal,body:"data="+encodeURIComponent(q),headers:{"Content-Type":"application/x-www-form-urlencoded"}});clearTimeout(to);
+    if(!r.ok)continue;const j=await r.json();
+    return j.elements.map(e=>({id:e.type[0]+e.id,lat:e.lat??(e.center&&e.center.lat),lon:e.lon??(e.center&&e.center.lon),t:e.tags||{}})).filter(x=>x.lat!=null);}catch(e){}}
+  return null;}
 /* ---------- Suche: eigene Punkte, gespeicherte OSM-Orte (offline) und Orte weltweit (online, OpenStreetMap/Nominatim) ---------- */
 let searchMark=null,lastQ="";
 function goTo(lat,lon,z,label){closePanel();map.setView([lat,lon],z||14);
@@ -531,29 +563,39 @@ function goTo(lat,lon,z,label){closePanel();map.setView([lat,lon],z||14);
 map.on("click",()=>{if(searchMark&&!placing){map.removeLayer(searchMark);searchMark=null;}});
 function showSearch(){
   openPanel(`<h2>Suchen</h2>
-   <div class="row"><input id="sQ" type="search" placeholder="Ort, eigener Punkt oder z. B. «Brunnen»" value="${esc(lastQ)}" enterkeyhint="search" autocomplete="off"><button class="btn" id="sGo" style="flex:none">Suchen</button></div>
-   <div class="chips" id="sCats">${SCATS.map(c=>`<button class="chip" data-sc="${c.id}">${icoBadge(c.ico,c.c,20)}${esc(c.l)}</button>`).join("")}</div>
+   <div class="row"><input id="sQ" type="search" placeholder="z. B. Merzouga, Parkplatz, Unterstand …" value="${esc(lastQ)}" enterkeyhint="search" autocomplete="off"><button class="btn" id="sGo" style="flex:none">Suchen</button></div>
    <div id="sRes"></div>`);
-  $("#sCats").querySelectorAll("[data-sc]").forEach(b=>b.onclick=()=>{const sc=SCATS.find(c=>c.id===b.dataset.sc);q.value=sc.l;lastQ=sc.l;nearbySearch(sc);});
   const q=$("#sQ");setTimeout(()=>q.focus(),150);
-  const local=()=>{const t=q.value.trim().toLowerCase();lastQ=q.value;if(t.length<2){$("#sRes").innerHTML=`<p class="muted">Tippen, um eigene Punkte zu finden. Mit «Suchen» auch Orte weltweit (braucht Internet).</p>`;return;}
+  const local=()=>{const t=q.value.trim().toLowerCase();lastQ=q.value;if(t.length<2){$("#sRes").innerHTML=`<p class="muted">Nach Namen oder Art suchen, z. B. «Merzouga», «Parkplatz», «Unterstand», «Brunnen», «Apotheke». Eigene Punkte erscheinen sofort, mit «Suchen» auch alles aus OpenStreetMap (braucht Internet).</p>`;return;}
     const own=points.filter(p=>(ptTitle(p)+" "+(p.desc||"")+" "+(p.region||"")+" "+(p.section||"")).toLowerCase().includes(t)).slice(0,15);
     const osm=(osmData.items||[]).filter(x=>{const n=(x.t.name||x.t["name:fr"]||x.t.brand||"").toLowerCase();return n&&n.includes(t);}).slice(0,15);
     let h="";
     if(own.length)h+=`<h3>Eigene Punkte</h3>`+own.map(p=>{const c=CATS[p.cat]||CATS.other;return `<div class="item" data-own="${p.id}">${icoBadge(p.cat in CATS?p.cat:"other",c.c,30)}<div><div class="t">${esc(ptTitle(p))}</div><div class="s">${esc(c.n)}${p.region?" · "+esc(p.region):""}</div></div></div>`;}).join("");
     if(osm.length)h+=`<h3>Gespeicherte OSM-Orte</h3>`+osm.map((x,i)=>`<div class="item" data-osm="${i}">${icoBadge(x.ty,OSM[x.ty].c,30)}<div><div class="t">${esc(x.t.name||x.t["name:fr"]||x.t.brand)}</div><div class="s">${esc(osmKind(x.t))}</div></div></div>`).join("");
-    const sc=scatOf(t);if(sc)h=`<div class="item" id="sCatHit">${icoBadge(sc.ico,sc.c,30)}<div><div class="t">${esc(sc.l)} in der Nähe suchen</div><div class="s">Antippen oder «Suchen»</div></div></div>`+h;
     $("#sRes").innerHTML=h+`<div id="sWeb"><p class="muted">${navigator.onLine?"Für Orte weltweit «Suchen» tippen.":"Offline: nur eigene und gespeicherte Orte."}</p></div>`;
-    const ch=$("#sCatHit");if(ch)ch.onclick=()=>nearbySearch(sc);
     $("#sRes").querySelectorAll("[data-own]").forEach(e=>e.onclick=()=>{const p=points.find(x=>x.id===e.dataset.own);closePanel();map.setView([p.lat,p.lon],15);setTimeout(()=>showDetail(p.id),300);});
     $("#sRes").querySelectorAll("[data-osm]").forEach(e=>e.onclick=()=>{const x=osm[+e.dataset.osm];closePanel();map.setView([x.lat,x.lon],16);setTimeout(()=>showOsm(x),300);});};
-  const web=async()=>{const t=q.value.trim();if(t.length<2)return;const sc=scatOf(t);if(sc)return nearbySearch(sc);local();if(!navigator.onLine)return;
-    $("#sWeb").innerHTML=`<p class="muted">Suche weltweit …</p>`;
-    try{const r=await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=10&accept-language=de&q=${encodeURIComponent(t)}`);
-      const j=await r.json();
-      $("#sWeb").innerHTML=`<h3>Orte (OpenStreetMap)</h3>`+(j.length?j.map((x,i)=>`<div class="item" data-web="${i}"><span class="ico" style="background:#6b6b6b;width:30px;height:30px;color:#fff">${mi("pin",18)}</span><div><div class="t">${esc(x.name||x.display_name.split(",")[0])}</div><div class="s">${esc(x.display_name)}</div></div></div>`).join(""):`<p class="muted">Nichts gefunden.</p>`);
-      $("#sWeb").querySelectorAll("[data-web]").forEach(e=>e.onclick=()=>{const x=j[+e.dataset.web];const z=x.addresstype==="country"?6:/state|region|province/.test(x.addresstype)?8:/city|town/.test(x.addresstype)?13:15;goTo(+x.lat,+x.lon,z,x.name||x.display_name.split(",")[0]);});
-    }catch(err){$("#sWeb").innerHTML=`<p class="muted">Suche nicht erreichbar.</p>`;}};
+  const web=async()=>{const t=q.value.trim();if(t.length<2)return;local();if(!navigator.onLine)return;
+    const ctr=me?{lat:me.lat,lon:me.lon}:{lat:map.getCenter().lat,lon:map.getCenter().lng};
+    $("#sWeb").innerHTML=`<p class="muted">Suche in OpenStreetMap … (kann einige Sekunden dauern)</p>`;
+    const sel=poiQuery(t);const b=map.getBounds().pad(1.5);
+    const nomi=(extra)=>fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=${extra?25:8}&accept-language=de&q=${encodeURIComponent(t)}${extra||""}`).then(r=>r.json()).catch(()=>[]);
+    const [near,world,pois]=await Promise.all([
+      nomi(`&bounded=1&viewbox=${b.getWest().toFixed(4)},${b.getNorth().toFixed(4)},${b.getEast().toFixed(4)},${b.getSouth().toFixed(4)}`),
+      nomi(""),
+      sel?(async()=>{let r=await overpassAround(sel,ctr.lat,ctr.lon,15000);if(r&&r.length<5)r=await overpassAround(sel,ctr.lat,ctr.lon,50000)||r;return r||[];})():Promise.resolve([])]);
+    const items=[];const seen=new Set();
+    const add=(lat,lon,name,kind,key,osmT,z)=>{const k=key||(lat.toFixed(4)+","+lon.toFixed(4));if(seen.has(k))return;seen.add(k);items.push({lat,lon,name,kind,osmT,z,d:distKm(ctr,{lat,lon})});};
+    for(const x of pois)add(x.lat,x.lon,x.t.name||x.t["name:fr"]||x.t.brand||"",osmLabel(x.t),x.id,x.t,17);
+    for(const x of near)add(+x.lat,+x.lon,x.name||x.display_name.split(",")[0],OSM_DE[x.type]||x.type.replace(/_/g," "),x.osm_type[0]+x.osm_id,null,16);
+    const nearList=items.sort((a,b)=>a.d-b.d).slice(0,40);
+    const worldList=world.filter(x=>!seen.has(x.osm_type[0]+x.osm_id)).map(x=>({lat:+x.lat,lon:+x.lon,name:x.name||x.display_name.split(",")[0],kind:x.display_name,
+      z:x.addresstype==="country"?6:/state|region|province/.test(x.addresstype)?8:/city|town/.test(x.addresstype)?13:15}));
+    const row=(x,i,grp)=>`<div class="item" data-g="${grp}" data-i="${i}"><span class="ico" style="background:#6b6b6b;width:30px;height:30px;color:#fff">${mi("pin",18)}</span><div><div class="t">${esc(x.name||x.kind)}</div><div class="s">${grp==="n"?kmTxt(x.d)+" · ":""}${esc(x.name?x.kind:"")}</div></div></div>`;
+    $("#sWeb").innerHTML=(nearList.length?`<h3>In der Nähe ${me?"(ab deinem Standort)":"(ab Kartenmitte)"}</h3>`+nearList.map((x,i)=>row(x,i,"n")).join(""):"")
+      +(worldList.length?`<h3>Weitere Orte</h3>`+worldList.map((x,i)=>row(x,i,"w")).join(""):"")
+      +(!nearList.length&&!worldList.length?`<p class="muted">Nichts gefunden. Tipp: anderen Begriff versuchen oder Karte an den Zielort schieben.</p>`:"");
+    $("#sWeb").querySelectorAll("[data-g]").forEach(e=>e.onclick=()=>{const x=(e.dataset.g==="n"?nearList:worldList)[+e.dataset.i];goTo(x.lat,x.lon,x.z||15,x.name||x.kind);});};
   q.oninput=local;q.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();web();q.blur();}};$("#sGo").onclick=web;local();}
 $("#searchBtn").onclick=showSearch;
 
@@ -887,7 +929,7 @@ $("#navMenu").onclick=async()=>{
    <p class="muted">${est}</p>
    <div class="actions"><button class="btn sec" id="mStore">Speicher anzeigen und aufräumen</button></div>
    <h3>Version</h3>
-   <p class="muted">ibexmap ${VERSION}. Neue Versionen werden beim Öffnen mit Internet automatisch geladen.</p>
+   <p class="muted">IbexMap ${VERSION}. Neue Versionen werden beim Öffnen mit Internet automatisch geladen.</p>
    <div class="actions"><button class="btn sec" id="mUpd">Nach Update suchen</button></div>
    <hr><p class="muted">Karten: Strassen (Esri), Satellit (Esri), Topo (OpenTopoMap) – oben rechts umschalten. Ohne Internet zeigt die Karte die offline gespeicherten und bereits angeschauten Gebiete.</p>`);
   $("#mSec").onclick=manageSections;
@@ -934,7 +976,7 @@ async function dataToBlob(d){return (await fetch(d)).blob();}
 async function exportPackage(){toast("Paket wird erstellt …");
   const photos={};for(const p of points)for(const id of p.photos||[]){const ph=await getOne("photos",id);if(ph)photos[id]=await blobToData(ph.blob);}
   const all=await getAll("points");const pkg={app:"ibexmap",format:4,exported:new Date().toISOString(),trips,deletedTrips:delTrips,points:all,photos};
-  download(`ibexmap_Paket_${stamp()}.json`,new Blob([JSON.stringify(pkg)],{type:"application/json"}));toast("Reisepaket exportiert");}
+  download(`IbexMap_Paket_${stamp()}.json`,new Blob([JSON.stringify(pkg)],{type:"application/json"}));toast("Reisepaket exportiert");}
 function exportGPX(){
   openPanel(`<h2>GPX für OsmAnd</h2><p class="muted">Alle Punkte kommen in die eine Gruppe «${GROUP}».</p>
    <div class="actions"><button class="btn" id="gxCur">Aktuelle Reise: ${esc(curTripObj()?curTripObj().name:"")} (${points.filter(p=>p.trip===curTrip).length})</button>
@@ -945,14 +987,14 @@ function exportGPX(){
 function writeGPX(list,label){const x=s=>esc(s);
   const w=list.map(p=>{const c=CATS[p.cat]||CATS.other;const desc=[c.n+" · "+(STATUS[p.status]||""),p.section,[countryName(p.country),p.region].filter(Boolean).join(" · "),p.cat==="water"?WATERQ[p.water||"unklar"]:"",rateText(p),p.desc,p.note].filter(Boolean).join("\n");
     return `<wpt lat="${p.lat}" lon="${p.lon}"><name>${x(ptTitle(p))}</name><desc>${x(desc)}</desc><type>${GROUP}</type></wpt>`;}).join("\n");
-  const g=`<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="ibexmap" xmlns="http://www.topografix.com/GPX/1/1">\n<metadata><name>${GROUP}</name></metadata>\n${w}\n</gpx>`;
-  download(`ibexmap_${label.replace(/[^\wäöüÄÖÜ-]+/g,"_")}_${stamp()}.gpx`,new Blob([g],{type:"application/gpx+xml"}));toast(`GPX exportiert (${list.length} Punkte)`);}
+  const g=`<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="IbexMap" xmlns="http://www.topografix.com/GPX/1/1">\n<metadata><name>${GROUP}</name></metadata>\n${w}\n</gpx>`;
+  download(`IbexMap_${label.replace(/[^\wäöüÄÖÜ-]+/g,"_")}_${stamp()}.gpx`,new Blob([g],{type:"application/gpx+xml"}));toast(`GPX exportiert (${list.length} Punkte)`);}
 $("#fileImport").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f)return;const text=await f.text();
   if(f.name.toLowerCase().endsWith(".gpx"))return importGPX(text);
   if(f.name.toLowerCase().endsWith(".csv")){const it=googleFromCSV(text);return it.length?importGoogle(it,f.name):toast("Keine Orte in der CSV-Datei gefunden");}
   let pkg;try{pkg=JSON.parse(text);}catch(err){return toast("Datei nicht lesbar");}
   if(pkg&&pkg.type==="FeatureCollection"){const it=googleFromGeoJSON(pkg);return it.length?importGoogle(it,f.name):toast("Keine Orte in der Datei gefunden");}
-  if(!["ibexmap","Reisebuch"].includes(pkg.app)||!Array.isArray(pkg.points))return toast("Kein ibexmap-Paket");
+  if(!["ibexmap","Reisebuch"].includes(pkg.app)||!Array.isArray(pkg.points))return toast("Kein IbexMap-Paket");
   openPanel(`<h2>Reisepaket importieren</h2><p>${pkg.points.filter(p=>!p.deleted).length} Punkte${pkg.points.some(p=>p.deleted)?" (+ "+pkg.points.filter(p=>p.deleted).length+" Löschungen)":""}, exportiert am ${esc(new Date(pkg.exported).toLocaleString("de-CH"))}.</p>
     <p class="muted"><b>Zusammenführen:</b> neue Punkte kommen dazu, bei gleichen Punkten gewinnt die neuere Version. Auch Löschungen werden übernommen, wenn sie neuer sind.<br><b>Ersetzen:</b> alle Punkte auf diesem Gerät werden gelöscht und durch das Paket ersetzt.</p>
     <div class="actions"><button class="btn" id="iMerge">Zusammenführen</button><button class="btn warn" id="iRepl">Alles ersetzen</button><button class="btn sec" id="iNo">Abbrechen</button></div>`);
@@ -974,7 +1016,7 @@ $("#fileImport").onchange=async e=>{const f=e.target.files[0];e.target.value="";
 };
 async function importGPX(text){const doc=new DOMParser().parseFromString(text,"application/xml");const w=[...doc.getElementsByTagName("wpt")];
   if(!w.length)return toast("Keine Wegpunkte gefunden");let n=0;
-  for(const el of w){const g=t=>el.getElementsByTagName(t)[0]?.textContent||"";const typ=g("type");const sec=typ&&typ!==GROUP&&typ!=="Reisebuch"?typ:"";if(sec)await addSection(sec,curTrip);
+  for(const el of w){const g=t=>el.getElementsByTagName(t)[0]?.textContent||"";const typ=g("type");const sec=typ&&typ!==GROUP&&!/^(reisebuch|ibexmap)$/i.test(typ)?typ:"";if(sec)await addSection(sec,curTrip);
     const la=+el.getAttribute("lat"),lo=+el.getAttribute("lon");
     await put("points",newPoint(la,lo,{title:g("name")||"Wegpunkt",desc:g("desc"),section:sec,region:regionOf(la,lo),status:/option/i.test(typ)?"idee":"fix"}));n++;}
   await loadPoints();closePanel();toast(`${n} Wegpunkte aus GPX importiert`);}
