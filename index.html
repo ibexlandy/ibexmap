@@ -201,7 +201,7 @@ function bindStars(root){root.querySelectorAll(".stars").forEach(w=>w.querySelec
 function rateText(p){const cr=RATE[p.cat];if(!cr)return "";const r=p.rate||{};
   return [p.stars?"Gesamt "+starTxt(p.stars):"",...cr.map(([k,l,ty])=>ty?(isOn(r[k])?`${l}${r[k].t?" – "+r[k].t:""}`:""):r[k]&&(r[k].s||r[k].t)?`${l}: ${starTxt(r[k].s)}${r[k].t?" – "+r[k].t:""}`:"")].filter(Boolean).join("\n");}
 const GROUP="ibexmap";
-const VERSION="v1.22";
+const VERSION="v1.23";
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
 const MA_SECTORS=[
  {n:"A Norden",zeit:"5.–10. April",klima:"Frühling, grün; 15–22 °C, im Rif Regen möglich, Nächte kühl",info:"Tanger Med, Chefchaouen, Fès, Meknès – ankommen, Städte, einkaufen. Eher Campings.",box:[[33.8,-5.9,35.95,-1.0]]},
@@ -316,10 +316,10 @@ function regionOf(lat,lon){if(!regionData)return "";const f=list=>(list||[]).fin
 /* ---------- Karte ---------- */
 const map=L.map("map",{zoomControl:false}).setView([31.8,-6.5],6);
 const BASE={
-  "Strassen":L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,attribution:"Karte © Esri, HERE, Garmin, OpenStreetMap-Mitwirkende"}),
-  "Satellit":L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,attribution:"Bilder © Esri, Maxar, Earthstar Geographics"}),
-  "Topo":L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",{subdomains:"abc",maxZoom:17,attribution:"© OpenStreetMap-Mitwirkende, SRTM | © OpenTopoMap (CC-BY-SA)"}),
-  "swisstopo (Schweiz)":L.tileLayer("https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg",{maxZoom:19,minZoom:6,bounds:[[45.6,5.8],[47.95,10.65]],attribution:"© swisstopo"})
+  "Strassen":L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,crossOrigin:"anonymous",attribution:"Karte © Esri, HERE, Garmin, OpenStreetMap-Mitwirkende"}),
+  "Satellit":L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,crossOrigin:"anonymous",attribution:"Bilder © Esri, Maxar, Earthstar Geographics"}),
+  "Topo":L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",{subdomains:"abc",maxZoom:17,crossOrigin:"anonymous",attribution:"© OpenStreetMap-Mitwirkende, SRTM | © OpenTopoMap (CC-BY-SA)"}),
+  "swisstopo (Schweiz)":L.tileLayer("https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg",{maxZoom:19,minZoom:6,crossOrigin:"anonymous",bounds:[[45.6,5.8],[47.95,10.65]],attribution:"© swisstopo"})
 };
 let baseName="Strassen";try{baseName=localStorage.getItem("rb_base")||"Strassen";}catch(e){}
 (BASE[baseName]||BASE["Strassen"]).addTo(map);
@@ -447,7 +447,7 @@ function distKm(a,b){const R=6371,r=x=>x*Math.PI/180;const dLa=r(b.lat-a.lat),dL
   const h=Math.sin(dLa/2)**2+Math.cos(r(a.lat))*Math.cos(r(b.lat))*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.sqrt(h));}
 
 /* ---------- Fotos ---------- */
-function resize(file,max=1600,q=.82){return new Promise((res,rej)=>{const img=new Image();const u=URL.createObjectURL(file);
+function resize(file,max=1280,q=.8){return new Promise((res,rej)=>{const img=new Image();const u=URL.createObjectURL(file);
   img.onload=()=>{let w=img.naturalWidth,h=img.naturalHeight;const s=Math.min(1,max/Math.max(w,h));w=Math.round(w*s);h=Math.round(h*s);
     const cv=document.createElement("canvas");cv.width=w;cv.height=h;cv.getContext("2d").drawImage(img,0,0,w,h);URL.revokeObjectURL(u);
     cv.toBlob(b=>b?res(b):rej(new Error("Bild")),"image/jpeg",q);};
@@ -478,6 +478,49 @@ window.addEventListener("popstate",()=>{if(ignorePop){ignorePop=false;return;}if
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&isPanelOpen())closePanel();});
 $("#sheet").addEventListener("click",e=>{if(e.target.id==="sheet")closePanel();});
 
+/* ---------- Kategoriesuche wie in OsmAnd: «Brunnen», «Tankstelle», «Camping» … in der Umgebung ---------- */
+const SCATS=[
+ {id:"water",l:"Wasser / Brunnen",k:/^(brunnen|wasser|trinkwasser|quelle|wasserstelle|fontaine|water)/,own:"water",c:"#0288d1",ico:"water",
+  sel:['nwr["amenity"~"^(drinking_water|water_point|fountain)$"]','nwr["man_made"~"^(water_tap|water_well)$"]','node["natural"="spring"]']},
+ {id:"fuel",l:"Tankstelle",k:/^(tank|benzin|diesel|fuel|station)/,own:"fuel",c:"#ef6c00",ico:"fuel",sel:['nwr["amenity"="fuel"]']},
+ {id:"shop",l:"Einkauf",k:/^(einkauf|supermarkt|laden|lebensmittel|hanout|shop|super)/,own:"shop",c:"#00897b",ico:"shop",sel:['nwr["shop"~"^(supermarket|convenience|general|greengrocer)$"]']},
+ {id:"camp",l:"Camping",k:/^(camping|zeltplatz|campingplatz|stellpl|wohnmobil|camp)/,own:"camp",c:"#1565c0",ico:"camp",sel:['nwr["tourism"~"^(camp_site|caravan_site)$"]']},
+ {id:"service",l:"Werkstatt / Reifen",k:/^(werkstatt|garage|mechanik|reifen|pneu|vulkan)/,own:"service",c:"#546e7a",ico:"service",sel:['nwr["shop"~"^(car_repair|tyres|car_parts)$"]','nwr["craft"="mechanic"]']},
+ {id:"pharm",l:"Apotheke",k:/^(apothek|pharma)/,c:"#2e7d32",ico:"other",sel:['nwr["amenity"="pharmacy"]']},
+ {id:"atm",l:"Geldautomat / Bank",k:/^(geld|bank|atm|bancomat)/,c:"#6d4c41",ico:"other",sel:['nwr["amenity"~"^(atm|bank)$"]']},
+ {id:"food",l:"Restaurant / Café",k:/^(restaurant|essen|café|cafe|beiz|imbiss)/,c:"#8e24aa",ico:"other",sel:['nwr["amenity"~"^(restaurant|cafe|fast_food)$"]']},
+ {id:"doc",l:"Arzt / Spital",k:/^(arzt|spital|kranken|klinik|doctor|hospital)/,c:"#c62828",ico:"warn",sel:['nwr["amenity"~"^(hospital|clinic|doctors)$"]']}
+];
+function scatOf(q){q=(q||"").trim().toLowerCase();return q.length>=3?SCATS.find(c=>c.k.test(q)):null;}
+async function nearbySearch(sc,box){
+  const ctr=me?L.latLng(me.lat,me.lon):map.getCenter();box=box||$("#sRes");
+  const kmTxt=x=>(x.d<1?Math.round(x.d*1000)+" m":x.d.toFixed(1)+" km");
+  box.innerHTML=`<h3>${esc(sc.l)} in der Nähe</h3><p class="muted">${me?"Ab deinem Standort":"Ab Kartenmitte"} …</p>`;
+  const own=sc.own?points.filter(p=>p.cat===sc.own).map(p=>({p,d:distKm({lat:ctr.lat,lon:ctr.lng},p)})).sort((a,b)=>a.d-b.d).slice(0,10):[];
+  let h=`<h3>${esc(sc.l)} in der Nähe</h3><p class="muted">${me?"Entfernung ab deinem Standort":"Entfernung ab Kartenmitte"} (Luftlinie)</p>`;
+  if(own.length)h+=`<h3>Eigene Punkte</h3>`+own.map(x=>`<div class="item" data-own="${x.p.id}">${icoBadge(x.p.cat,CATS[x.p.cat].c,30)}<div><div class="t">${esc(ptTitle(x.p))}</div><div class="s">${kmTxt(x)}</div></div></div>`).join("");
+  let res=[];
+  /* zuerst gespeicherte OSM-Orte (offline), dann online im Umkreis */
+  if(sc.own&&OSM[sc.own])res=(osmData.items||[]).filter(x=>x.ty===sc.own).map(x=>({x,d:distKm({lat:ctr.lat,lon:ctr.lng},x)})).filter(r=>r.d<30);
+  if(navigator.onLine){box.innerHTML=h+`<p class="muted">Suche in OpenStreetMap … (kann einige Sekunden dauern)</p>`;
+    for(const R of [15000,50000]){
+      const q=`[out:json][timeout:25];(${sc.sel.map(x=>`${x}(around:${R},${ctr.lat.toFixed(5)},${ctr.lng.toFixed(5)});`).join("")});out center tags 80;`;
+      let ok=false;for(const ep of OVERPASS){try{const ac=new AbortController();const to=setTimeout(()=>ac.abort(),20000);
+        const r=await fetch(ep,{method:"POST",signal:ac.signal,body:"data="+encodeURIComponent(q),headers:{"Content-Type":"application/x-www-form-urlencoded"}});clearTimeout(to);
+        if(!r.ok)continue;const j=await r.json();const seen=new Set(res.map(r=>r.x.id));
+        for(const e of j.elements){const t=e.tags||{};const k={};KEEP.concat(["tourism","opening_hours"]).forEach(z=>{if(t[z])k[z]=t[z];});
+          const lat=e.lat??(e.center&&e.center.lat),lon=e.lon??(e.center&&e.center.lon);const id=e.type[0]+e.id;if(lat==null||seen.has(id))continue;
+          res.push({x:{id,lat,lon,ty:osmType(t)||sc.id,t:k},d:distKm({lat:ctr.lat,lon:ctr.lng},{lat,lon})});}ok=true;break;}catch(err){}}
+      if(!ok||res.length>=5)break;}}
+  res.sort((a,b)=>a.d-b.d);res=res.slice(0,40);
+  h+=res.length?`<h3>OpenStreetMap</h3>`+res.map((r,i)=>{const t=r.x.t;const nm=t.name||t["name:fr"]||t.brand||"";
+      const kind=OSM[r.x.ty]?osmKind(t):(t.tourism==="camp_site"?"Campingplatz":t.tourism==="caravan_site"?"Wohnmobil-Stellplatz":sc.l);
+      return `<div class="item" data-r="${i}">${icoBadge(sc.ico,sc.c,30)}<div><div class="t">${esc(nm||kind)}</div><div class="s">${kmTxt(r)}${nm?" · "+esc(kind):""}</div></div></div>`;}).join("")
+    :`<p class="muted">${navigator.onLine?"Nichts im Umkreis von 50 km gefunden.":"Offline: keine gespeicherten Orte dieser Art in der Nähe."}</p>`;
+  box.innerHTML=h;
+  box.querySelectorAll("[data-own]").forEach(e=>e.onclick=()=>{const p=points.find(x=>x.id===e.dataset.own);closePanel();map.setView([p.lat,p.lon],15);setTimeout(()=>showDetail(p.id),300);});
+  box.querySelectorAll("[data-r]").forEach(e=>e.onclick=()=>{const x=res[+e.dataset.r].x;closePanel();map.setView([x.lat,x.lon],16);
+    if(OSM[x.ty])setTimeout(()=>showOsm(x),300);else{const t=x.t;goTo(x.lat,x.lon,16,t.name||t["name:fr"]||sc.l);}});}
 /* ---------- Suche: eigene Punkte, gespeicherte OSM-Orte (offline) und Orte weltweit (online, OpenStreetMap/Nominatim) ---------- */
 let searchMark=null,lastQ="";
 function goTo(lat,lon,z,label){closePanel();map.setView([lat,lon],z||14);
@@ -488,8 +531,10 @@ function goTo(lat,lon,z,label){closePanel();map.setView([lat,lon],z||14);
 map.on("click",()=>{if(searchMark&&!placing){map.removeLayer(searchMark);searchMark=null;}});
 function showSearch(){
   openPanel(`<h2>Suchen</h2>
-   <div class="row"><input id="sQ" type="search" placeholder="Ort, Stadt, eigener Punkt …" value="${esc(lastQ)}" enterkeyhint="search" autocomplete="off"><button class="btn" id="sGo" style="flex:none">Suchen</button></div>
+   <div class="row"><input id="sQ" type="search" placeholder="Ort, eigener Punkt oder z. B. «Brunnen»" value="${esc(lastQ)}" enterkeyhint="search" autocomplete="off"><button class="btn" id="sGo" style="flex:none">Suchen</button></div>
+   <div class="chips" id="sCats">${SCATS.map(c=>`<button class="chip" data-sc="${c.id}">${icoBadge(c.ico,c.c,20)}${esc(c.l)}</button>`).join("")}</div>
    <div id="sRes"></div>`);
+  $("#sCats").querySelectorAll("[data-sc]").forEach(b=>b.onclick=()=>{const sc=SCATS.find(c=>c.id===b.dataset.sc);q.value=sc.l;lastQ=sc.l;nearbySearch(sc);});
   const q=$("#sQ");setTimeout(()=>q.focus(),150);
   const local=()=>{const t=q.value.trim().toLowerCase();lastQ=q.value;if(t.length<2){$("#sRes").innerHTML=`<p class="muted">Tippen, um eigene Punkte zu finden. Mit «Suchen» auch Orte weltweit (braucht Internet).</p>`;return;}
     const own=points.filter(p=>(ptTitle(p)+" "+(p.desc||"")+" "+(p.region||"")+" "+(p.section||"")).toLowerCase().includes(t)).slice(0,15);
@@ -497,10 +542,12 @@ function showSearch(){
     let h="";
     if(own.length)h+=`<h3>Eigene Punkte</h3>`+own.map(p=>{const c=CATS[p.cat]||CATS.other;return `<div class="item" data-own="${p.id}">${icoBadge(p.cat in CATS?p.cat:"other",c.c,30)}<div><div class="t">${esc(ptTitle(p))}</div><div class="s">${esc(c.n)}${p.region?" · "+esc(p.region):""}</div></div></div>`;}).join("");
     if(osm.length)h+=`<h3>Gespeicherte OSM-Orte</h3>`+osm.map((x,i)=>`<div class="item" data-osm="${i}">${icoBadge(x.ty,OSM[x.ty].c,30)}<div><div class="t">${esc(x.t.name||x.t["name:fr"]||x.t.brand)}</div><div class="s">${esc(osmKind(x.t))}</div></div></div>`).join("");
+    const sc=scatOf(t);if(sc)h=`<div class="item" id="sCatHit">${icoBadge(sc.ico,sc.c,30)}<div><div class="t">${esc(sc.l)} in der Nähe suchen</div><div class="s">Antippen oder «Suchen»</div></div></div>`+h;
     $("#sRes").innerHTML=h+`<div id="sWeb"><p class="muted">${navigator.onLine?"Für Orte weltweit «Suchen» tippen.":"Offline: nur eigene und gespeicherte Orte."}</p></div>`;
+    const ch=$("#sCatHit");if(ch)ch.onclick=()=>nearbySearch(sc);
     $("#sRes").querySelectorAll("[data-own]").forEach(e=>e.onclick=()=>{const p=points.find(x=>x.id===e.dataset.own);closePanel();map.setView([p.lat,p.lon],15);setTimeout(()=>showDetail(p.id),300);});
     $("#sRes").querySelectorAll("[data-osm]").forEach(e=>e.onclick=()=>{const x=osm[+e.dataset.osm];closePanel();map.setView([x.lat,x.lon],16);setTimeout(()=>showOsm(x),300);});};
-  const web=async()=>{const t=q.value.trim();if(t.length<2)return;local();if(!navigator.onLine)return;
+  const web=async()=>{const t=q.value.trim();if(t.length<2)return;const sc=scatOf(t);if(sc)return nearbySearch(sc);local();if(!navigator.onLine)return;
     $("#sWeb").innerHTML=`<p class="muted">Suche weltweit …</p>`;
     try{const r=await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=10&accept-language=de&q=${encodeURIComponent(t)}`);
       const j=await r.json();
@@ -805,7 +852,7 @@ async function renderItems(){
 
 /* ---------- Menü: Export / Import ---------- */
 $("#navMenu").onclick=async()=>{
-  let est="";try{const s=await navigator.storage.estimate();est=`Belegter Speicher: ${(s.usage/1048576).toFixed(1)} MB`;}catch(e){}
+  let est="";try{const s=await navigator.storage.estimate();est=`Belegt laut Browser: ${(s.usage/1048576).toFixed(0)} MB`;}catch(e){}
   openPanel(`<h2>Menü</h2>
    <p class="muted">${points.length} Punkte gespeichert. ${est}</p>
    <h3>Online-Abgleich (Google Drive)</h3>
@@ -836,6 +883,9 @@ $("#navMenu").onclick=async()=>{
    <h3>Regionen Marokko (Provinzen)</h3>
    <p class="muted">${regionData?`Regionsgrenzen geladen (${(regionData.prov||[]).length} Provinzen, ${(regionData.reg||[]).length} Regionen) – funktioniert offline.`:"Einmalig mit Internet laden (Marokko: Provinzen und Regionen). Danach offline."}</p>
    <div class="actions"><button class="btn sec" id="mReg">${regionData?"Neu laden":"Regionsgrenzen laden"}</button>${regionData?`<button class="btn sec" id="mRegAll">Region für alle Punkte ermitteln</button>`:""}</div>
+   <h3>Speicher</h3>
+   <p class="muted">${est}</p>
+   <div class="actions"><button class="btn sec" id="mStore">Speicher anzeigen und aufräumen</button></div>
    <h3>Version</h3>
    <p class="muted">ibexmap ${VERSION}. Neue Versionen werden beim Öffnen mit Internet automatisch geladen.</p>
    <div class="actions"><button class="btn sec" id="mUpd">Nach Update suchen</button></div>
@@ -844,6 +894,7 @@ $("#navMenu").onclick=async()=>{
   $("#mReg").onclick=async()=>{toast("Lade Regionsgrenzen …",8000);try{const d=await downloadRegions();toast(`Geladen: ${d.prov.length} Provinzen, ${d.reg.length} Regionen`);$("#navMenu").onclick();}catch(e){toast("Laden fehlgeschlagen – Internet?",5000);}};
   const ra=$("#mRegAll");if(ra)ra.onclick=async()=>{let n=0;for(const p of points){const r=regionOf(p.lat,p.lon);if(r&&r!==p.region){p.region=r;p.updated=Date.now();await put("points",p);n++;}}await loadPoints();toast(`${n} Punkte aktualisiert`);};
   $("#mUpd").onclick=checkUpdate;
+  $("#mStore").onclick=storageDialog;
   $("#mTrips").onclick=manageTrips;
   $("#mCountries").onclick=async()=>{if(!navigator.onLine)return toast("Kein Internet",3000);toast("Lade Ländergrenzen …",60000);
     try{const n=await downloadCountries();const k=await assignCountries();toast(`${n} Länder geladen, ${k} Punkte zugeordnet`,4000);$("#navMenu").onclick();}catch(e){toast("Laden fehlgeschlagen",4000);}};
@@ -1085,7 +1136,7 @@ async function offDownload(pl){if(!navigator.onLine)return toast("Kein Internet"
   const upd=()=>{const b=$("#oBar div");if(b)b.style.width=(total?Math.round(done/total*100):100)+"%";const i=$("#oInfo");if(i)i.textContent=`${done} von ${total} neu geladen${fail?`, ${fail} Fehler`:""}${pl.keys.length-total?` (${pl.keys.length-total} schon vorhanden)`:""}`;};
   upd();let idx=0;
   const worker=async()=>{while(!run.stop&&idx<todo.length){const u=todo[idx++];
-    try{let r=await fetch(u,{mode:"cors"}).catch(()=>null);if(!r||!r.ok)r=await fetch(u,{mode:"no-cors"});await c.put(u,r);}catch(e){fail++;}
+    try{const r=await fetch(u,{mode:"cors"});if(r.ok)await c.put(u,r);else fail++;}catch(e){fail++;}
     done++;if(done%10===0||done===total)upd();}};
   await Promise.all([worker(),worker(),worker(),worker()]);offRun=null;upd();
   toast(run.stop?"Abgebrochen – später weitermachen möglich":`Fertig: ${done-fail} Kartenbilder gespeichert${fail?", "+fail+" Fehler (nochmals starten)":""}`,6000);
@@ -1172,6 +1223,29 @@ function famSettings(){const c=famCfg();const owner=c.owner||location.hostname.s
     try{await navigator.clipboard.writeText(t);toast("Kopiert – z. B. in WhatsApp einfügen",4000);}catch(e){toast(famURL(c)+"  Passwort: "+c.pw,10000);}};
   const d=$("#fmDel");if(d)d.onclick=()=>confirmBox("Schlüssel und Passwort auf diesem Gerät löschen? (Die Familienseite selbst bleibt bestehen.)",()=>{try{localStorage.removeItem("rb_fam");}catch(e){}toast("Gelöscht");$("#navMenu").onclick();});}
 
+
+/* ---------- Speicher anzeigen und aufräumen ---------- */
+const MB=b=>b<1048576?(b/1024).toFixed(0)+" KB":(b/1048576).toFixed(1)+" MB";
+async function cacheInfo(name){try{if(!(await caches.has(name)))return {n:0,b:0};const c=await caches.open(name);const ks=await c.keys();let b=0,i=0;
+  for(const k of ks){if(i++>3000){b=b/3000*ks.length;break;}const r=await c.match(k);const l=+r.headers.get("content-length");b+=l>0?l:15000;}return {n:ks.length,b};}catch(e){return {n:0,b:0};}}
+async function storageDialog(){
+  openPanel(`<h2>Speicher</h2><p class="muted">Wird berechnet …</p>`);
+  let photoB=0,photoN=0;try{for(const ph of await getAll("photos")){photoB+=ph.blob?ph.blob.size:0;photoN++;}}catch(e){}
+  let ptsB=0;try{ptsB=JSON.stringify(await getAll("points")).length;}catch(e){}
+  let metaB=0;try{metaB=JSON.stringify(await getAll("meta")).length;}catch(e){}
+  const tiles=await cacheInfo(TILECACHE),off=await cacheInfo("reisebuch-offline");
+  let est={};try{est=await navigator.storage.estimate();}catch(e){}
+  const persisted=navigator.storage&&navigator.storage.persisted?await navigator.storage.persisted():false;
+  openPanel(`<h2>Speicher</h2>
+   <div class="item" style="cursor:default"><div style="flex:1"><div class="t">Punkte (${points.length})</div><div class="s">${MB(ptsB)}</div></div></div>
+   <div class="item" style="cursor:default"><div style="flex:1"><div class="t">Fotos (${photoN})</div><div class="s">${MB(photoB)} – neue Fotos werden auf 1280 px verkleinert</div></div></div>
+   <div class="item" style="cursor:default"><div style="flex:1"><div class="t">OSM-Orte, Länder- und Regionsgrenzen</div><div class="s">${MB(metaB)}</div></div></div>
+   <div class="item" style="cursor:default"><div style="flex:1"><div class="t">Karten-Zwischenspeicher (${tiles.n} Bilder)</div><div class="s">ca. ${MB(tiles.b)} – angeschaute Gebiete, max. 3000 Bilder, wird automatisch begrenzt</div></div><button class="btn sec" id="stTiles" style="flex:none">Leeren</button></div>
+   <div class="item" style="cursor:default"><div style="flex:1"><div class="t">Offline-Karte (${off.n} Bilder)</div><div class="s">ca. ${MB(off.b)} – Löschen über Menü → Karte offline</div></div></div>
+   <p class="muted">Belegt laut Browser: ${est.usage?MB(est.usage):"?"}${est.quota?` von max. ${MB(est.quota)}`:""}. ${persisted?"Speicher ist als dauerhaft geschützt.":"Speicher ist (noch) nicht als dauerhaft geschützt – nach dem Installieren der App gibt Android das meist frei."}</p>
+   <p class="muted">Punkte und Fotos werden beim Leeren nie gelöscht.</p>`);
+  $("#stTiles").onclick=async()=>{await caches.delete(TILECACHE);toast("Karten-Zwischenspeicher geleert");storageDialog();};}
+const TILECACHE="reisebuch-tiles-v3";
 /* ---------- Update ---------- */
 let swReg=null;
 async function checkUpdate(){if(!navigator.onLine)return toast("Kein Internet",3000);toast("Suche Update …",5000);

@@ -1,4 +1,4 @@
-IBEXMAP – v1.22 (privates Projekt)
+IBEXMAP – v1.23 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -132,3 +132,9 @@ NEU IN v1.22
 - Teilen aus Google Maps (oder anderen Apps) an ibexmap: Name, Adresse, Link werden übernommen, Ort gesucht, Fadenkreuz zum Bestätigen.
 - Import von Google-Orten (Google Takeout: Gespeicherte Orte .json oder Listen .csv).
 - Menü neu geordnet: Online-Abgleich, Familienseite, Reisen zuoberst.
+
+NEU IN v1.23
+- Kategoriesuche wie OsmAnd: «Brunnen», «Tankstelle», «Camping», «Apotheke» … in der Nähe (eigene Punkte, gespeicherte und online OSM-Orte); Kategorie-Knöpfe in der Suche.
+- Speicher: Kartenbilder werden korrekt (CORS) geladen und zählen nur noch ihre echte Grösse; alter aufgeblähter Zwischenspeicher wird beim Update gelöscht (max. 3000 Bilder).
+- Menü → Speicher: Aufschlüsselung (Punkte, Fotos, OSM/Grenzen, Zwischenspeicher, Offline-Karte) und «Leeren».
+- Neue Fotos auf 1280 px verkleinert (ca. 40 % kleiner).
