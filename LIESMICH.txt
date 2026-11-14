@@ -1,4 +1,4 @@
-IBEXMAP – Prototyp v12 (privates Projekt)
+IBEXMAP – v1.13 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -79,3 +79,8 @@ NEU IN v11
 
 NEU IN v12
 - Google-Abgleich: Konto (E-Mail) festlegbar, Kontoauswahl beim ersten Verbinden, Knopf "Konto wechseln".
+
+NEU IN v1.13
+- Neues Versionsschema: vTAG.NUMMER (Tag = Arbeitstag am Projekt, Nummer = Stand an diesem Tag).
+- Google-Anmeldung jetzt per Weiterleitung auf die Google-Seite (jedes Konto wählbar).
+  In der Cloud Console beim Client zusätzlich "Autorisierte Weiterleitungs-URI" https://ibexlandy.github.io/ibexmap/ eintragen.
