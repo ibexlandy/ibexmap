@@ -51,6 +51,8 @@ nav button.on{color:var(--accent2)}
 .clu b{position:absolute;right:-6px;top:-6px;background:#222;color:#fff;font-size:11px;min-width:20px;height:20px;border-radius:10px;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid #fff}
 .ico{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;flex:none;vertical-align:middle}
 .chip .ico{margin-right:4px}
+.chip svg{vertical-align:-3px;margin-right:4px}
+.lfh{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:10px 0 2px}
 .catgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:6px;margin-top:4px}
 .catgrid button{display:flex;flex-direction:column;align-items:center;gap:4px;border:2px solid var(--line);background:#fff;border-radius:10px;padding:8px 4px;font:inherit;font-size:12px;color:var(--ink);line-height:1.2;text-align:center}
 .catgrid button.on{border-color:var(--accent2);background:#fff6ec;font-weight:600}
@@ -132,6 +134,10 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 .leaflet-control-layers input[type=radio]{width:18px;height:18px;margin:0;flex:none;accent-color:var(--accent)}
 .leaflet-control-layers-selector{top:0!important}
 .leaflet-control-layers-separator{margin:4px 0}
+.flag{position:relative;width:30px;height:34px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
+.flag b{position:absolute;left:10px;top:3px;width:16px;text-align:center;color:#fff;font-size:11px;font-weight:800}
+.fcount{position:absolute;right:-4px;top:-4px;background:#d84315;color:#fff;border-radius:10px;min-width:20px;height:20px;font-size:12px;line-height:20px;padding:0 4px;border:2px solid #fff}
+.ctxbtns{display:flex;flex-direction:column;gap:6px;min-width:170px}.ctxbtns .btn{font-size:14px;padding:9px 12px;text-align:left}
 </style>
 </head>
 <body>
@@ -154,6 +160,7 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
     <button class="fab" id="navHere" title="Hier merken (aktueller Standort)" style="bottom:calc(200px + var(--sb))">📍</button>
     <button class="fab" id="navList" title="Liste" style="bottom:calc(140px + var(--sb))">☰</button>
     <button class="fab" id="locBtn" title="Mein Standort">◎</button>
+    <button class="fab" id="flagBtn" title="Fahnen (Vormerker)" style="top:76px;left:12px;right:auto;bottom:auto;display:none"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M5 22V3" stroke="#d84315" stroke-width="2.4" stroke-linecap="round"/><path d="M6 3.5h12l-3 4.5 3 4.5H6z" fill="#d84315"/></svg><b class="fcount"></b></button>
     <button class="fab" id="searchBtn" title="Ort suchen" style="top:12px;left:12px;right:auto;bottom:auto"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg></button>
     <button class="fab" id="filtBtn" title="Filter: was auf der Karte angezeigt wird" style="bottom:calc(80px + var(--sb))"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"><path d="M3 4h18l-7 8.5V19l-4 2v-8.5z"/></svg></button>
   </div>
@@ -232,7 +239,7 @@ function bindStars(root){root.querySelectorAll(".stars").forEach(w=>w.querySelec
 function rateText(p){const cr=RATE[p.cat];if(!cr)return "";const r=p.rate||{};
   return [p.stars?"Gesamt "+starTxt(p.stars):"",...cr.map(([k,l,ty])=>ty?(isOn(r[k])?`${l}${r[k].t?" – "+r[k].t:""}`:""):r[k]&&(r[k].s||r[k].t)?`${l}: ${starTxt(r[k].s)}${r[k].t?" – "+r[k].t:""}`:"")].filter(Boolean).join("\n");}
 const GROUP="IbexMap";
-const VERSION="v1.28";
+const VERSION="v1.29";
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
 const MA_SECTORS=[
  {n:"A Norden",zeit:"5.–10. April",klima:"Frühling, grün; 15–22 °C, im Rif Regen möglich, Nächte kühl",info:"Tanger Med, Chefchaouen, Fès, Meknès – ankommen, Städte, einkaufen. Eher Campings.",box:[[33.8,-5.9,35.95,-1.0]]},
@@ -586,8 +593,8 @@ let searchMark=null,lastQ="";
 function goTo(lat,lon,z,label,extra){closePanel();map.setView([lat,lon],z||14);
   if(searchMark)map.removeLayer(searchMark);
   searchMark=L.marker([lat,lon],{icon:L.divIcon({className:"",iconSize:[26,26],iconAnchor:[13,13],html:`<div style="width:26px;height:26px;border-radius:50%;border:4px solid #c8742c;background:rgba(200,116,44,.25)"></div>`}),zIndexOffset:1500}).addTo(map)
-    .bindPopup(`<b>${esc(label)}</b><br><button class="btn" style="margin-top:6px" id="sHere">＋ Hier Punkt setzen</button>`).openPopup();
-  setTimeout(()=>{const b=document.getElementById("sHere");if(b)b.onclick=()=>{map.closePopup();setPlacing(false);setPlacing(true);putCross(L.latLng(lat,lon));placeExtra=extra||null;};},50);}
+    .bindPopup(`<b>${esc(label)}</b><br><button class="btn" style="margin-top:6px" id="sHere">＋ Hier Punkt setzen</button> <button class="btn sec" style="margin-top:6px" id="sFlag">🚩 Fahne</button>`).openPopup();
+  setTimeout(()=>{const b=document.getElementById("sHere");if(b)b.onclick=()=>{map.closePopup();setPlacing(false);setPlacing(true);putCross(L.latLng(lat,lon));placeExtra=extra||null;};const f=document.getElementById("sFlag");if(f)f.onclick=()=>{map.closePopup();if(searchMark){map.removeLayer(searchMark);searchMark=null;}addFlag(lat,lon,label);};},50);}
 /* Koordinaten oder Google-Maps-Link in der Suche erkennen */
 function parseLoc(t){t=(t||"").trim();if(!t)return null;let m;
   if((m=t.match(/^(-?\d{1,2}(?:\.\d+)?)\s*°?\s*([NS])?\s*[,;\s]\s*(-?\d{1,3}(?:\.\d+)?)\s*°?\s*([EOW])?$/i))){
@@ -720,6 +727,49 @@ function googleFromGeoJSON(fc){return (fc.features||[]).map(f=>{const P=f.proper
 function googleFromCSV(t){const rows=parseCSV(t);if(rows.length<2)return [];const h=rows[0].map(x=>x.trim().toLowerCase());
   const ix=k=>h.findIndex(x=>k.includes(x));const iT=ix(["title","titel","name"]),iN=ix(["note","notiz","comment","kommentar"]),iU=ix(["url"]);
   return rows.slice(1).map(r=>{const url=iU>=0?r[iU]:"";return {name:iT>=0?r[iT]:"",note:iN>=0?r[iN]:"",url,addr:"",ll:coordsFromUrl(url)};}).filter(x=>x.name);}
+
+/* ---------- Fahnen: temporäre Vormerker wie die Markierungen in OsmAnd ---------- */
+const FLAG_COLORS=["#d84315","#1e6fd9","#2e9e44","#f57c00","#8e24aa","#00897b","#f9a825"];
+const flagColor=f=>FLAG_COLORS[(f.color??0)%FLAG_COLORS.length];
+let flags=[],flagDel=[];const flagLayer=L.layerGroup().addTo(map);
+async function loadFlags(){try{const m=await getOne("meta","flags");flags=m?m.list||[]:[];flagDel=m?m.del||[]:[];}catch(e){}drawFlags();}
+async function saveFlags(){await put("meta",{id:"flags",list:flags,del:flagDel.slice(-300),updated:Date.now()});drawFlags();}
+function drawFlags(){flagLayer.clearLayers();
+  flags.forEach((f,i)=>L.marker([f.lat,f.lon],{zIndexOffset:3000,icon:L.divIcon({className:"",iconSize:[30,34],iconAnchor:[5,33],
+    html:`<div class="flag"><svg width="30" height="34" viewBox="0 0 30 34"><path d="M5 33V3" stroke="#fff" stroke-width="4" stroke-linecap="round"/><path d="M5 33V3" stroke="#5d2a14" stroke-width="2.2" stroke-linecap="round"/><path d="M6 3h20l-4 6.5 4 6.5H6z" fill="${flagColor(f)}" stroke="#fff" stroke-width="1.5"/></svg><b>${i+1}</b></div>`})})
+    .addTo(flagLayer).on("click",ev=>{L.DomEvent.stopPropagation(ev);showFlag(f.id);}));
+  const b=$("#flagBtn");if(b){b.style.display=flags.length?"":"none";b.querySelector(".fcount").textContent=flags.length;}}
+async function addFlag(lat,lon,name){let ci=+(localStorage.getItem("rb_flagc")||0);try{localStorage.setItem("rb_flagc",String((ci+1)%FLAG_COLORS.length));}catch(e){}
+  flags.push({id:uid(),lat:+(+lat).toFixed(6),lon:+(+lon).toFixed(6),name:name||"",created:Date.now(),color:ci});await saveFlags();toast(`🚩 Fahne ${flags.length} gesetzt`,2500);}
+async function passFlag(id){flags=flags.filter(f=>f.id!==id);flagDel.push({id,t:Date.now()});await saveFlags();}
+function flagLabel(f,i){return f.name||`Fahne ${i+1}`;}
+function showFlag(id){const i=flags.findIndex(f=>f.id===id);if(i<0)return;const f=flags[i];
+  openPanel(`<h2><span class="ico" style="background:${flagColor(f)};width:28px;height:28px;color:#fff;font-weight:800;font-size:14px">${i+1}</span> ${esc(flagLabel(f,i))}</h2>
+   <div class="meta"><div class="mrow">${mi("pin")}<span>${f.lat.toFixed(5)}, ${f.lon.toFixed(5)}</span></div>
+   ${me?`<div class="mrow">${mi("ruler")}<span>${kmTxt(distKm(me,f))} Luftlinie</span></div>`:""}
+   <div class="mrow">${mi("cal")}<span>gesetzt ${esc(fmtDT(f.created))}</span></div></div>
+   <label>Name (freiwillig)</label><input id="flName" value="${esc(f.name)}" placeholder="z. B. Abzweigung Piste, Wasser holen …">
+   <div class="actions"><button class="btn" id="flPass">✓ Passiert</button>
+   <a class="btn sec" href="geo:${f.lat},${f.lon}?q=${f.lat},${f.lon}(${encodeURIComponent(flagLabel(f,i))})">Navigieren (OsmAnd)</a>
+   <button class="btn sec" id="flPoint">Als Punkt speichern</button><button class="btn sec" id="flAll">Alle Fahnen</button></div>`);
+  $("#flName").onchange=async e=>{f.name=e.target.value.trim();await saveFlags();};
+  $("#flPass").onclick=async()=>{await passFlag(f.id);closePanel();toast("Fahne entfernt",2000);};
+  $("#flPoint").onclick=async()=>{const nm=$("#flName").value.trim();await passFlag(f.id);editPoint(newPoint(f.lat,f.lon,{title:nm}),true);};
+  $("#flAll").onclick=showFlags;}
+function showFlags(){
+  openPanel(`<h2>Fahnen (${flags.length})</h2>
+   <p class="muted">Temporäre Vormerker. Setzen: lange auf die Karte drücken → «🚩 Fahne setzen», oder aus der Suche. «✓» = passiert, Fahne verschwindet.</p>
+   ${flags.map((f,i)=>`<div class="item" data-fl="${f.id}"><span class="ico" style="background:${flagColor(f)};width:30px;height:30px;color:#fff;font-weight:800">${i+1}</span>
+     <div style="flex:1"><div class="t">${esc(flagLabel(f,i))}</div><div class="s">${me?kmTxt(distKm(me,f))+" · ":""}${esc(fmtDT(f.created))}</div></div>
+     <button class="btn sec" data-pass="${f.id}" style="flex:none;padding:8px 12px">✓</button></div>`).join("")||`<p class="muted">Keine Fahnen gesetzt.</p>`}
+   ${flags.length>1?`<div class="actions"><button class="btn warn" id="flClear">Alle Fahnen entfernen</button></div>`:""}`);
+  $("#panel").querySelectorAll("[data-pass]").forEach(b=>b.onclick=async ev=>{ev.stopPropagation();await passFlag(b.dataset.pass);showFlags();});
+  $("#panel").querySelectorAll("[data-fl]").forEach(e=>e.onclick=()=>{const f=flags.find(x=>x.id===e.dataset.fl);closePanel();map.setView([f.lat,f.lon],Math.max(map.getZoom(),14));});
+  const c=$("#flClear");if(c)c.onclick=()=>confirmBox("Alle Fahnen entfernen?",async()=>{for(const f of [...flags])flagDel.push({id:f.id,t:Date.now()});flags=[];await saveFlags();closePanel();});}
+$("#flagBtn").onclick=showFlags;
+function mergeFlags(rl,rd){const del=new Set([...flagDel,...(rd||[])].map(x=>x.id));flagDel=[...new Map([...flagDel,...(rd||[])].map(x=>[x.id,x])).values()];
+  const m=new Map(flags.map(f=>[f.id,f]));for(const f of rl||[])if(!m.has(f.id))m.set(f.id,f);else if((f.name||"")&&!m.get(f.id).name)m.get(f.id).name=f.name;
+  flags=[...m.values()].filter(f=>!del.has(f.id)).sort((a,b)=>a.created-b.created);}
 /* ---------- Kartenfilter ---------- */
 $("#filtBtn").onclick=showMapFilter;
 function showMapFilter(){
@@ -908,7 +958,9 @@ $("#pbOk").onclick=e=>{e.stopPropagation();if(!cross)return;const ll=cross.getLa
   const p=newPoint(+ll.lat.toFixed(6),+ll.lng.toFixed(6),ex||{});if(ex&&ex.cat==="camp"&&!p.section)p.section=sectorOf(p.lat,p.lon);editPoint(p,true);};
 L.DomEvent.disableClickPropagation($("#placebar"));
 map.on("click",e=>{if(!placing)return;putCross(e.latlng);});
-map.on("contextmenu",e=>{setPlacing(false);setPlacing(true);putCross(e.latlng);});
+map.on("contextmenu",e=>{if(placing)return;const ll=e.latlng;
+  const pop=L.popup({closeButton:false,offset:[0,-4]}).setLatLng(ll).setContent(`<div class="ctxbtns"><button class="btn" id="cxFlag">🚩 Fahne setzen</button><button class="btn sec" id="cxPoint">＋ Punkt setzen</button></div>`).openOn(map);
+  setTimeout(()=>{$("#cxFlag").onclick=()=>{map.closePopup();addFlag(ll.lat,ll.lng);};$("#cxPoint").onclick=()=>{map.closePopup();setPlacing(false);setPlacing(true);putCross(ll);};},30);});
 $("#navHere").onclick=()=>{
   const go=pos=>{const d=new Date();const t=`Stellplatz ${d.toLocaleDateString("de-CH")} ${d.toLocaleTimeString("de-CH",{hour:"2-digit",minute:"2-digit"})}`;
     editPoint(newPoint(+pos.lat.toFixed(6),+pos.lon.toFixed(6),{title:t,cat:"wild",status:"besucht",visited:d.toISOString().slice(0,10)}),true);};
@@ -920,28 +972,37 @@ $("#navHere").onclick=()=>{
 };
 
 /* ---------- Liste ---------- */
-let fCat="",fStatus="",fText="",fSec="",fTrip="",fCountry="";
+/* Liste: Mehrfachauswahl je Gruppe (innerhalb einer Gruppe «oder», zwischen Gruppen «und») */
+let fText="";const LF={cat:new Set(),st:new Set(),trip:new Set(),cc:new Set(),sec:new Set()};
+const lfAny=()=>Object.values(LF).some(x=>x.size);
 $("#navList").onclick=()=>showList();
 async function showList(){
-  const catChips=Object.entries(CATS).map(([k,v])=>`<button class="chip ${fCat===k?"on":""}" data-c="${k}">${icoBadge(k,v.c,20)}${v.n}</button>`).join("");
-  const stChips=Object.entries(STATUS).map(([k,v])=>`<button class="chip ${fStatus===k?"on":""}" data-s="${k}">${v}</button>`).join("");
+  const chip=(grp,val,label,extra="")=>`<button class="chip ${LF[grp].has(val)?"on":""}" data-g="${grp}" data-v="${esc(val)}">${extra}${label}</button>`;
+  const cnt=f=>points.filter(f).length;
+  const countries=[...new Set(points.map(p=>p.country).filter(Boolean))].sort((a,b)=>countryName(a).localeCompare(countryName(b)));
+  const secTrips=LF.trip.size?trips.filter(t=>LF.trip.has(t.id)):[curTripObj()].filter(Boolean);
+  const secs=[...new Set(secTrips.flatMap(t=>t.sections||[]))];
   openPanel(`<h2>Punkte (${points.length})</h2>
     <input id="lSearch" placeholder="Suchen …" value="${esc(fText)}">
-    <div class="chips">${catChips}</div><div class="chips">${stChips}</div><div class="chips">${trips.map(t=>`<button class="chip ${fTrip===t.id?"on":""}" data-lt="${t.id}">🧳 ${esc(t.name)}</button>`).join("")}${[...new Set(points.map(p=>p.country).filter(Boolean))].map(c=>`<button class="chip ${fCountry===c?"on":""}" data-lc="${c}">🌍 ${esc(countryName(c))}</button>`).join("")}</div>
-    ${(tripOf(fTrip)||(!fTrip&&curTripObj()))&&(tripOf(fTrip)||curTripObj()).sections.length?`<div class="chips">${(tripOf(fTrip)||curTripObj()).sections.map(x=>`<button class="chip ${fSec===x?"on":""}" data-x="${esc(x)}">${esc(x)}</button>`).join("")}</div>`:""}<div class="chips">↕ ${[["dist","Nächste zuerst"],["new","Neueste zuerst"],["old","Älteste zuerst"],["stars","Beste Bewertung"]].map(([k,t])=>`<button class="chip ${lSort===k?"on":""}" data-so="${k}">${t}</button>`).join("")}</div><div id="lItems"></div>`);
+    ${lfAny()?`<div class="chips"><button class="chip" id="lfReset" style="border-color:var(--accent2);color:var(--accent2)">✕ Alle Filter zurücksetzen</button></div>`:""}
+    <div class="lfh">Kategorie</div><div class="chips">${Object.entries(CATS).map(([k,v])=>chip("cat",k,esc(v.n),icoBadge(k,v.c,20))).join("")}</div>
+    <div class="lfh">Status</div><div class="chips">${Object.entries(STATUS).map(([k,v])=>chip("st",k,esc(v))).join("")}</div>
+    <div class="lfh">Reise</div><div class="chips">${trips.map(t=>chip("trip",t.id,`${esc(t.name)} (${cnt(p=>p.trip===t.id)})`,mi("bag",15))).join("")}${chip("trip","__none",`ohne Reise (${cnt(p=>!p.trip)})`,mi("bag",15))}</div>
+    ${countries.length?`<div class="lfh">Land</div><div class="chips">${countries.map(c=>chip("cc",c,`${esc(countryName(c))} (${cnt(p=>p.country===c)})`,mi("globe",15))).join("")}</div>`:""}
+    ${secs.length?`<div class="lfh">Abschnitt</div><div class="chips">${secs.map(x=>chip("sec",x,esc(x))).join("")}</div>`:""}
+    <div class="lfh">Sortierung</div><div class="chips">${[["dist","Nächste zuerst"],["new","Neueste zuerst"],["old","Älteste zuerst"],["stars","Beste Bewertung"]].map(([k,t])=>`<button class="chip ${lSort===k?"on":""}" data-so="${k}">${t}</button>`).join("")}</div><div id="lItems"></div>`);
   $("#panel").querySelectorAll("[data-so]").forEach(b=>b.onclick=()=>{lSort=b.dataset.so;try{localStorage.setItem("rb_lsort",lSort);}catch(e){}showList();});
-  $("#panel").querySelectorAll("[data-lt]").forEach(b=>b.onclick=()=>{fTrip=fTrip===b.dataset.lt?"":b.dataset.lt;fSec="";showList();});
-  $("#panel").querySelectorAll("[data-lc]").forEach(b=>b.onclick=()=>{fCountry=fCountry===b.dataset.lc?"":b.dataset.lc;showList();});
-  $("#panel").querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>{fSec=fSec===b.dataset.x?"":b.dataset.x;showList();});
-  $("#panel").querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>{fCat=fCat===b.dataset.c?"":b.dataset.c;showList();});
-  $("#panel").querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>{fStatus=fStatus===b.dataset.s?"":b.dataset.s;showList();});
+  $("#panel").querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{const S=LF[b.dataset.g],v=b.dataset.v;S.has(v)?S.delete(v):S.add(v);
+    if(b.dataset.g==="trip")LF.sec.clear();const sc=$("#panel").scrollTop;showList().then(()=>{$("#panel").scrollTop=sc;});});
+  const rs=$("#lfReset");if(rs)rs.onclick=()=>{Object.values(LF).forEach(x=>x.clear());showList();};
   $("#lSearch").oninput=e=>{fText=e.target.value;renderItems();};
   renderItems();
 }
 let lSort="dist";try{lSort=localStorage.getItem("rb_lsort")||"dist";}catch(e){}
 async function renderItems(){
   const q=fText.toLowerCase();
-  let list=points.filter(p=>(!fTrip||p.trip===fTrip)&&(!fCountry||p.country===fCountry)&&(!fCat||p.cat===fCat)&&(!fStatus||p.status===fStatus)&&(!fSec||p.section===fSec)&&(!q||(ptTitle(p)+" "+p.desc+" "+p.section+" "+(p.region||"")+" "+countryName(p.country)+" "+tripName(p.trip)+" "+p.note).toLowerCase().includes(q)));
+  const inS=(S,v)=>!S.size||S.has(v);
+  let list=points.filter(p=>(!LF.trip.size||LF.trip.has(p.trip||"__none"))&&inS(LF.cc,p.country)&&inS(LF.cat,p.cat in CATS?p.cat:"other")&&inS(LF.st,p.status||"idee")&&inS(LF.sec,p.section)&&(!q||(ptTitle(p)+" "+p.desc+" "+p.section+" "+(p.region||"")+" "+countryName(p.country)+" "+tripName(p.trip)+" "+p.note).toLowerCase().includes(q)));
   const dkey=p=>p.visited?new Date(p.visited+"T12:00:00").getTime():(p.created||0);
   if(lSort==="dist"&&me)list=list.map(p=>({p,d:distKm(me,p)})).sort((a,b)=>a.d-b.d).map(x=>x.p);
   else if(lSort==="new")list.sort((a,b)=>dkey(b)-dkey(a));
@@ -1120,9 +1181,14 @@ async function zipRead(file,en){const h=new DataView(await file.slice(en.lo,en.l
   const raw=file.slice(start,start+en.csz);if(en.method===0)return raw;
   if(en.method!==8)throw new Error("Unbekannte Kompression");
   return await new Response(raw.stream().pipeThrough(new DecompressionStream("deflate-raw"))).blob();}
-async function importOsf(file,photosOnly){try{await importOsf2(file,photosOnly);}catch(e){toast("Fehler beim Lesen der OsmAnd-Datei: "+(e&&e.message||e),9000);}}
+function osfError(msg){openPanel(`<h2>OsmAnd-Datei</h2><p style="color:#b00020;font-size:15px">⚠ ${esc(msg)}</p>
+   <p class="muted">Tipps: Die .osf zuerst auf das Gerät selbst kopieren (z. B. Ordner «Downloads») statt direkt aus Google Drive zu öffnen – oder den Import am PC machen und danach mit ⟳ abgleichen.</p>
+   <div class="actions"><button class="btn" id="oeOk">OK</button></div>`);$("#oeOk").onclick=closePanel;}
+async function importOsf(file,photosOnly){const t0=Date.now();
+  const tick=setInterval(()=>{const el=$("#progTxt");if(el&&/wird gelesen/.test(el.textContent)){const s=Math.round((Date.now()-t0)/1000);el.textContent=el.textContent.replace(/ \(seit.*$/,"")+` (seit ${Math.floor(s/60)}:${String(s%60).padStart(2,"0")} min – grosse Dateien aus Google Drive brauchen lange)`;}},1000);
+  try{await importOsf2(file,photosOnly);}catch(e){osfError("Fehler beim Lesen der OsmAnd-Datei: "+(e&&e.message||e));}finally{clearInterval(tick);}}
 async function importOsf2(file,photosOnly){
-  progress("OsmAnd-Datei öffnen",0,0,`«${file.name}» (${MB(file.size)}) wird gelesen …`);let ents;try{ents=await zipEntries(file);}catch(e){return toast(e.message,6000);}
+  progress("OsmAnd-Datei öffnen",0,0,`«${file.name}» (${MB(file.size)}) wird gelesen …`);let ents;try{ents=await zipEntries(file);}catch(e){return osfError((e&&e.message)||"Datei konnte nicht gelesen werden");}
   const imgs=ents.filter(x=>/\.(jpe?g)$/i.test(x.name)&&x.usz>0);const gpxs=ents.filter(x=>/\.gpx$/i.test(x.name));
   /* Fotos nicht alle auf einmal entpacken: jedes Foto wird erst bei Bedarf gelesen und gleich wieder freigegeben */
   const getImgs=async()=>imgs.map(en=>({name:en.name.split("/").pop(),lastModified:en.date,size:en.usz,lazy:()=>zipRead(file,en)}));
@@ -1130,7 +1196,7 @@ async function importOsf2(file,photosOnly){
   let fav=null;if(!photosOnly)for(const en of gpxs){try{const t=await(await zipRead(file,en)).text();if(/creator="OsmAnd/i.test(t)&&(/<name>favorites<\/name>/i.test(t)||/points_groups/.test(t))){fav=t;break;}}catch(e){}}
   if(fav){const w=[...new DOMParser().parseFromString(fav,"application/xml").getElementsByTagName("wpt")];
     importOsmandFav(w,imgs.length?async()=>{assignPhotos(await getImgs());}:null,imgs.length);return;}
-  if(!imgs.length){closePanel();return toast("In der Datei wurden keine Fotos oder Favoriten gefunden",6000);}
+  if(!imgs.length)return osfError(`In der Datei wurden keine Fotos oder Favoriten gefunden (${ents.length} Einträge: ${ents.slice(0,5).map(x=>x.name).join(", ")}${ents.length>5?" …":""}).`);
   assignPhotos(await getImgs());}
 /* ---------- Fotos automatisch den nächsten Punkten zuordnen (Ort aus EXIF oder OsmAnd-Dateiname) ---------- */
 async function exifGPS(file){try{const buf=await file.slice(0,524288).arrayBuffer();const v=new DataView(buf);if(v.byteLength<4||v.getUint16(0)!==0xFFD8)return null;let o=2;
@@ -1304,6 +1370,7 @@ async function syncDrive(){if(syncing)return;
       if(ex&&!ex.deleted)for(const id of ex.photos||[])if(!(p.photos||[]).includes(id))await del("photos",id);
       if(p.trip===undefined&&!p.deleted)p.trip=MIG_TRIP;
       await put("points",p);local[p.id]=p;nIn++;}
+    if(Array.isArray(remote.flags)){mergeFlags(remote.flags,remote.flagDel);await saveFlags();}
     if(Array.isArray(remote.trips)){if(mergeTrips(remote.trips,remote.deletedTrips)){await saveTrips();showHeaderTrip();}}
     const have=new Set(await keysOf("photos"));const need=new Set();
     Object.values(local).filter(p=>!p.deleted).forEach(p=>(p.photos||[]).forEach(id=>need.add(id)));
@@ -1311,7 +1378,7 @@ async function syncDrive(){if(syncing)return;
     for(const id of need){const fn="foto_"+id+".jpg";i++;
       if(have.has(id)&&!byName[fn]){const ph=await getOne("photos",id);if(ph){toast(`Fotos hochladen … (${i}/${need.size})`,120000);await gdUpload(fn,ph.blob);up++;}}
       else if(!have.has(id)&&byName[fn]){toast(`Fotos herunterladen … (${i}/${need.size})`,120000);await put("photos",{id,blob:await(await gd(`drive/v3/files/${byName[fn].id}?alt=media`)).blob()});down++;}}
-    await gdUpload(GD_DATA,new Blob([JSON.stringify({app:"ibexmap",format:4,updated:Date.now(),trips,deletedTrips:delTrips,points:Object.values(local)})],{type:"application/json"}),byName[GD_DATA]&&byName[GD_DATA].id);
+    await gdUpload(GD_DATA,new Blob([JSON.stringify({app:"ibexmap",format:4,updated:Date.now(),trips,deletedTrips:delTrips,flags,flagDel,points:Object.values(local)})],{type:"application/json"}),byName[GD_DATA]&&byName[GD_DATA].id);
     for(const f of files)if(/^foto_.+\.jpg$/.test(f.name)&&!need.has(f.name.slice(5,-4)))await gd(`drive/v3/files/${f.id}`,{method:"DELETE"}).catch(()=>{});
     ls("rb_lastsync",String(Date.now()));await loadPoints();
     toast(`Abgeglichen: ${nIn} Änderungen geholt, ${up} Fotos hoch-, ${down} heruntergeladen`,5000);
@@ -1510,6 +1577,7 @@ async function checkUpdate(){if(!navigator.onLine)return toast("Kein Internet",3
   /* Reparatur: OsmAnd-Favoriten gehören zu keiner Reise (wurden beim Abgleich fälschlich «Marokko 2027» zugeordnet) */
   try{if(!localStorage.getItem("rb_fix_osm1")){let n=0;for(const p of await getAll("points"))if(!p.deleted&&p.trip===MIG_TRIP&&/^OsmAnd/.test(p.source||"")){p.trip="";p.updated=Date.now();await put("points",p);n++;}
     localStorage.setItem("rb_fix_osm1","1");if(n){await loadPoints();setTimeout(()=>toast(`${n} OsmAnd-Orte wieder ohne Reise`,5000),2500);}}}catch(e){}
+  await loadFlags();
   showHeaderTrip();setTimeout(handleShare,600);setTimeout(async()=>{if(!countryData){await ensureCountries();}else{await assignCountries();}},1500);
   if(_gdNew||sessionStorage.getItem("rb_after_login")){try{sessionStorage.removeItem("rb_after_login");}catch(e){}if(gdToken)setTimeout(()=>syncDrive(),400);}
   try{const o=await getOne("meta","osmpoi");if(o)osmData={items:o.items||[],loaded:o.loaded,scope:o.scope||""};}catch(e){}drawOsm();

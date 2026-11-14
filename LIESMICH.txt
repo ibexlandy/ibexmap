@@ -1,4 +1,4 @@
-IbexMap – v1.28 (privates Projekt)
+IbexMap – v1.29 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -164,3 +164,9 @@ NEU IN v1.28
 - Kartenwahl oben rechts kompakt und sauber gestaltet.
 - Fehler behoben: OsmAnd-Orte wurden beim Abgleich fälschlich «Marokko 2027» zugeordnet – wird beim Start automatisch korrigiert.
 - Suche versteht Koordinaten (z. B. 31.0999, -4.0141) und Google-Maps-Links (Name und Position werden übernommen, «Hier Punkt setzen» vorausgefüllt).
+
+NEU IN v1.29
+- Liste: Mehrfachauswahl in allen Filtergruppen, Überschriften, «ohne Reise», Zurücksetzen.
+- Fahnen (Vormerker) wie OsmAnd-Markierungen: lange auf die Karte drücken → «Fahne setzen», nummeriert, Liste oben links, «✓ Passiert» entfernt sie; werden mit abgeglichen.
+- Fahnen wechseln automatisch die Farbe (7 Farben reihum), Farbe bleibt fest an der Fahne.
+- .osf-Import: Fehler werden im Fenster angezeigt (statt nur kurz oben), laufende Zeit beim Lesen sichtbar.
