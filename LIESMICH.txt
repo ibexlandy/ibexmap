@@ -1,4 +1,4 @@
-IbexMap – v1.25 (privates Projekt)
+IbexMap – v1.26 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -150,3 +150,7 @@ NEU IN v1.25
 - Import von OsmAnd-Favoriten (favorites.gpx): Gruppen werden auf Kategorien/Status abgebildet, Sterne im Namen zur Bewertung, ohne Reise, Land automatisch.
 - Fotos Punkten zuordnen (Menü): liest den Aufnahmeort aus dem Foto bzw. aus dem OsmAnd-Dateinamen und hängt es an den nächsten Punkt (max. 300 m); sonst optional neuer Stellplatz.
 - OsmAnd-Backup (.osf) importieren: Favoriten übernehmen und enthaltene Fotos automatisch den Punkten zuordnen (Menü → Importieren).
+
+NEU IN v1.26
+- OsmAnd-.osf wird auch ohne Dateiendung erkannt (Android), Fehlermeldungen beim Lesen, Rückmeldung sofort nach Dateiauswahl.
+- .osf mit vielen Fotos: Fotos werden einzeln entpackt (wenig Arbeitsspeicher), Ort zuerst aus OsmAnd-Dateiname, sonst aus dem Foto.

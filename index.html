@@ -149,8 +149,8 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 
 <div class="sheet" id="sheet"><div class="panel" id="panel"></div></div>
 <div class="toast" id="toast"></div>
-<input type="file" id="photoAssign" accept="image/jpeg,image/*,.osf,.zip" multiple hidden>
-<input type="file" id="fileImport" accept=".json,.geojson,.gpx,.csv,.osf,.zip,application/json,application/geo+json,application/gpx+xml,text/csv" hidden>
+<input type="file" id="photoAssign" accept="image/*,.osf,.zip,application/zip,application/octet-stream" multiple hidden>
+<input type="file" id="fileImport" accept=".json,.geojson,.gpx,.csv,.osf,.zip,application/json,application/geo+json,application/gpx+xml,text/csv,application/zip,application/octet-stream" hidden>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
@@ -220,7 +220,7 @@ function bindStars(root){root.querySelectorAll(".stars").forEach(w=>w.querySelec
 function rateText(p){const cr=RATE[p.cat];if(!cr)return "";const r=p.rate||{};
   return [p.stars?"Gesamt "+starTxt(p.stars):"",...cr.map(([k,l,ty])=>ty?(isOn(r[k])?`${l}${r[k].t?" – "+r[k].t:""}`:""):r[k]&&(r[k].s||r[k].t)?`${l}: ${starTxt(r[k].s)}${r[k].t?" – "+r[k].t:""}`:"")].filter(Boolean).join("\n");}
 const GROUP="IbexMap";
-const VERSION="v1.25";
+const VERSION="v1.26";
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
 const MA_SECTORS=[
  {n:"A Norden",zeit:"5.–10. April",klima:"Frühling, grün; 15–22 °C, im Rif Regen möglich, Nächte kühl",info:"Tanger Med, Chefchaouen, Fès, Meknès – ankommen, Städte, einkaufen. Eher Campings.",box:[[33.8,-5.9,35.95,-1.0]]},
@@ -1029,7 +1029,8 @@ function writeGPX(list,label){const x=s=>esc(s);
   const g=`<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="IbexMap" xmlns="http://www.topografix.com/GPX/1/1">\n<metadata><name>${GROUP}</name></metadata>\n${w}\n</gpx>`;
   download(`IbexMap_${label.replace(/[^\wäöüÄÖÜ-]+/g,"_")}_${stamp()}.gpx`,new Blob([g],{type:"application/gpx+xml"}));toast(`GPX exportiert (${list.length} Punkte)`);}
 $("#fileImport").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f)return;
-  if(/\.(osf|zip)$/i.test(f.name))return importOsf(f,false);
+  toast(`Lese «${f.name}» (${MB(f.size)}) …`,8000);
+  if(/\.(osf|zip)$/i.test(f.name)||await isZip(f))return importOsf(f,false);
   const text=await f.text();
   if(f.name.toLowerCase().endsWith(".gpx"))return importGPX(text);
   if(f.name.toLowerCase().endsWith(".csv")){const it=googleFromCSV(text);return it.length?importGoogle(it,f.name):toast("Keine Orte in der CSV-Datei gefunden");}
@@ -1059,6 +1060,7 @@ $("#fileImport").onchange=async e=>{const f=e.target.files[0];e.target.value="";
 
 
 /* ---------- OsmAnd-Backup (.osf = ZIP) lesen: Favoriten und Fotos ---------- */
+async function isZip(f){try{const b=new Uint8Array(await f.slice(0,4).arrayBuffer());return b[0]===0x50&&b[1]===0x4B&&b[2]===3&&b[3]===4;}catch(e){return false;}}
 async function zipEntries(file){const sz=file.size;const tail=new DataView(await file.slice(Math.max(0,sz-70000),sz).arrayBuffer());
   let e=-1;for(let i=tail.byteLength-22;i>=0;i--)if(tail.getUint32(i,true)===0x06054b50){e=i;break;}
   if(e<0)throw new Error("Keine gültige OsmAnd-Datei (ZIP)");
@@ -1078,11 +1080,12 @@ async function zipRead(file,en){const h=new DataView(await file.slice(en.lo,en.l
   const raw=file.slice(start,start+en.csz);if(en.method===0)return raw;
   if(en.method!==8)throw new Error("Unbekannte Kompression");
   return await new Response(raw.stream().pipeThrough(new DecompressionStream("deflate-raw"))).blob();}
-async function importOsf(file,photosOnly){
+async function importOsf(file,photosOnly){try{await importOsf2(file,photosOnly);}catch(e){toast("Fehler beim Lesen der OsmAnd-Datei: "+(e&&e.message||e),9000);}}
+async function importOsf2(file,photosOnly){
   toast("Öffne OsmAnd-Datei …",20000);let ents;try{ents=await zipEntries(file);}catch(e){return toast(e.message,6000);}
   const imgs=ents.filter(x=>/\.(jpe?g)$/i.test(x.name)&&x.usz>0);const gpxs=ents.filter(x=>/\.gpx$/i.test(x.name));
-  const getImgs=async()=>{const fl=[];let i=0;for(const en of imgs){i++;toast(`Entpacke Fotos … (${i}/${imgs.length})`,60000);
-    try{const b=await zipRead(file,en);fl.push(new File([b],en.name.split("/").pop(),{type:"image/jpeg",lastModified:en.date}));}catch(e){}}return fl;};
+  /* Fotos nicht alle auf einmal entpacken: jedes Foto wird erst bei Bedarf gelesen und gleich wieder freigegeben */
+  const getImgs=async()=>imgs.map(en=>({name:en.name.split("/").pop(),lastModified:en.date,size:en.usz,lazy:()=>zipRead(file,en)}));
   let fav=null;if(!photosOnly)for(const en of gpxs){try{const t=await(await zipRead(file,en)).text();if(/creator="OsmAnd/i.test(t)&&(/<name>favorites<\/name>/i.test(t)||/points_groups/.test(t))){fav=t;break;}}catch(e){}}
   if(fav){const w=[...new DOMParser().parseFromString(fav,"application/xml").getElementsByTagName("wpt")];
     importOsmandFav(w,imgs.length?async()=>{assignPhotos(await getImgs());}:null,imgs.length);return;}
@@ -1103,14 +1106,18 @@ function tiffGPS(v,t){const le=v.getUint16(t)===0x4949;const u16=a=>v.getUint16(
 function osmShortlink(code){const A="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_~";let x=0,y=0,z=0;
   for(const ch of code){const d=A.indexOf(ch);if(d<0)break;x*=8;y*=8;z+=3;for(let j=2;j>=0;j--){if(d&(1<<(2*j+1)))x+=1<<j;if(d&(1<<(2*j)))y+=1<<j;}}
   if(z<18)return null;const X=x*2**(32-z),Y=y*2**(32-z);const lon=X*360/2**32-180,lat=Y*180/2**32-90;return Math.abs(lat)<=90?[lat,lon]:null;}
-function nameGPS(n){const b=n.replace(/\.[^.]+$/,"").split(/[-.\s]/)[0];return b.length>=6?osmShortlink(b):null;}
+function nameGPS(n){const b=n.replace(/\.[^.]+$/,"").split(/[-.\s]/)[0];
+  if(!/^[A-Za-z0-9_~@]{6,12}$/.test(b)||/^(img|dsc|pxl|vid|scr|pano|photo|foto|wp_|dcim)/i.test(b)||/^\d+$/.test(b)||/\d{6,}/.test(b))return null;return osmShortlink(b);}
 $("#photoAssign").onchange=async e=>{const fl=[...e.target.files];e.target.value="";if(!fl.length)return;
-  const osf=fl.find(f=>/\.(osf|zip)$/i.test(f.name));if(osf)return importOsf(osf,true);assignPhotos(fl);};
+  let osf=fl.find(f=>/\.(osf|zip)$/i.test(f.name));if(!osf)for(const f of fl)if(!/^image\//.test(f.type)&&await isZip(f)){osf=f;break;}
+  if(osf)return importOsf(osf,true);assignPhotos(fl.filter(f=>/^image\//.test(f.type)||/\.jpe?g$/i.test(f.name)));};
 async function assignPhotos(files){if(!files.length)return toast("Keine Fotos gefunden");
   toast(`Lese ${files.length} Fotos …`,20000);
   const live=points.filter(p=>!p.deleted);const R=0.3;
-  const rows=[];for(const f of files){let ll=await exifGPS(f),how="Foto-Standort";if(!ll){ll=nameGPS(f.name);how="OsmAnd-Dateiname";}
-    let best=null;if(ll)for(const p of live){const d=distKm({lat:ll[0],lon:ll[1]},p);if(!best||d<best.d)best={p,d};}
+  const rows=[];let k=0;for(const f of files){k++;if(files.length>5)toast(`Lese Aufnahmeorte … (${k}/${files.length})`,60000);
+    const near=ll=>{let b=null;if(ll)for(const p of live){const d=distKm({lat:ll[0],lon:ll[1]},p);if(!b||d<b.d)b={p,d};}return b;};
+    let ll=nameGPS(f.name),how="OsmAnd-Dateiname",best=near(ll);
+    if(!best||best.d>R){try{const b=f.lazy?await f.lazy():f;const ex=await exifGPS(b);if(ex){ll=ex;how="Foto-Standort";best=near(ll);}}catch(e){}}
     rows.push({f,ll,how,best:best&&best.d<=R?best:null,near:best});}
   const ok=rows.filter(r=>r.best);
   openPanel(`<h2>Fotos zuordnen</h2>
@@ -1125,8 +1132,8 @@ async function assignPhotos(files){if(!files.length)return toast("Keine Fotos ge
   $("#paGo").onclick=async()=>{const mk=newSel();let n=0,i=0;const touched=new Map();
     for(const [idx,r] of rows.entries()){let p=r.best&&r.best.p;
       if(!p&&mk.includes(idx)){p=newPoint(+r.ll[0].toFixed(6),+r.ll[1].toFixed(6),{cat:"wild",status:"besucht",trip:"",section:"",visited:new Date(r.f.lastModified||Date.now()).toISOString().slice(0,10)});}
-      if(!p)continue;i++;toast(`Speichere Fotos … (${i})`,60000);
-      try{const b=await resize(r.f);const id=uid();await put("photos",{id,blob:b});p.photos=p.photos||[];p.photos.push(id);p.updated=Date.now();touched.set(p.id,p);n++;}catch(err){}}
+      if(!p)continue;i++;toast(`Speichere Fotos … (${i} von ${ok.length+mk.length})`,120000);
+      try{const src=r.f.lazy?await r.f.lazy():r.f;const b=await resize(src);const id=uid();await put("photos",{id,blob:b});p.photos=p.photos||[];p.photos.push(id);p.updated=Date.now();touched.set(p.id,p);n++;}catch(err){}}
     for(const p of touched.values())await put("points",p);
     await loadPoints();closePanel();toast(`${n} Fotos zugeordnet`,5000);};}
 /* ---------- OsmAnd-Favoriten übernehmen (ohne Reise) ---------- */
