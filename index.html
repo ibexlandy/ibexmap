@@ -14,11 +14,18 @@
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);background:var(--bg)}
 #app{position:fixed;left:0;right:0;top:0;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
-header{flex:none;display:flex;align-items:center;gap:8px;padding:calc(8px + env(safe-area-inset-top)) 12px 8px;background:var(--accent);color:#fff}
-header h1{font-size:18px;margin:0;flex:1;font-weight:600;letter-spacing:.3px}
-header .gps{font-size:12px;opacity:.85}
-.hbtn{border:1px solid rgba(255,255,255,.5);background:none;color:#fff;border-radius:8px;font-size:18px;padding:2px 10px;margin-left:6px}
-.hbtn.busy{opacity:.5}
+header{flex:none;display:flex;align-items:center;gap:6px;padding:calc(6px + env(safe-area-inset-top)) 6px 6px 10px;background:var(--accent);color:#fff;min-height:52px}
+.hlogo{width:34px;height:34px;border-radius:8px;flex:none}
+.htitle{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.15;padding-left:4px}
+.hname{font-size:18px;font-weight:700;letter-spacing:.2px;white-space:nowrap}
+#ver{font-size:11px;font-weight:400;opacity:.55;margin-left:2px}
+.htrip{border:0;background:none;color:#fff;opacity:.8;font:inherit;font-size:13px;padding:0;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.htrip::after{content:" ▾";opacity:.7}
+.hbtn{position:relative;flex:none;width:42px;height:42px;border:0;border-radius:50%;background:none;color:#fff;display:flex;align-items:center;justify-content:center;padding:0}
+.hbtn:active{background:rgba(255,255,255,.15)}
+.hbtn.busy svg{animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+.gdot{position:absolute;right:8px;bottom:9px;width:9px;height:9px;border-radius:50%;background:#9e9e9e;border:2px solid var(--accent)}
+#gpsInfo.ok .gdot{background:#4caf50}#gpsInfo.bad .gdot{background:#e53935}
 .bar{height:10px;background:#ddd;border-radius:5px;overflow:hidden;margin:10px 0}.bar div{height:100%;background:var(--accent2);width:0}
 #map{flex:1;position:relative;min-height:0}
 nav{flex:none;display:grid;grid-template-columns:repeat(3,1fr);background:#fff;border-top:1px solid var(--line);padding-bottom:var(--sb)}
@@ -86,6 +93,7 @@ textarea{min-height:110px;resize:vertical}
 .meta{display:flex;flex-direction:column;gap:7px;font-size:15.5px;color:#444;margin-bottom:6px}
 .mrow{display:flex;align-items:center;gap:10px}
 .mrow>svg{margin:0 3px}
+.detail .src a{color:var(--accent2);font-weight:600;word-break:break-all}
 .detail .desc{font-size:16.5px;line-height:1.5}
 .detail .rate{font-size:15.5px}
 .detail img.big{width:100%;border-radius:10px;margin-bottom:6px}
@@ -116,7 +124,16 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 </head>
 <body>
 <div id="app">
-  <header><img src="icon-192.png" alt="" style="width:28px;height:28px;border-radius:7px;flex:none"><h1>IbexMap <span id="ver" style="font-size:12px;font-weight:400;opacity:.7"></span></h1><button class="hbtn" id="tripName" title="Aktuelle Reise – antippen zum Wechseln" style="font-size:12px;max-width:40vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></button><span class="gps" id="gpsInfo">GPS aus</span><button class="hbtn" id="syncBtn" title="Mit Google Drive abgleichen" style="display:none">⟳</button><button class="hbtn" id="navMenu" title="Menü" aria-label="Menü" style="font-weight:700;padding:2px 12px">⋮</button></header>
+  <header>
+    <img src="icon-192.png" alt="" class="hlogo">
+    <div class="htitle">
+      <div class="hname">IbexMap <span id="ver"></span></div>
+      <button id="tripName" class="htrip" title="Aktuelle Reise – antippen zum Wechseln"></button>
+    </div>
+    <button class="hbtn" id="gpsInfo" style="display:none" title="GPS aus" aria-label="GPS-Status"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3"/></svg><i class="gdot"></i></button>
+    <button class="hbtn" id="syncBtn" title="Mit Google Drive abgleichen" aria-label="Abgleichen" style="display:none"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 0 0-14.3-4.6L4 8.5M4 4v4.5h4.5M4 13a8 8 0 0 0 14.3 4.6L20 15.5M20 20v-4.5h-4.5"/></svg></button>
+    <button class="hbtn" id="navMenu" title="Menü" aria-label="Menü"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2.1"/><circle cx="12" cy="12" r="2.1"/><circle cx="12" cy="19" r="2.1"/></svg></button>
+  </header>
   <div id="map">
     <div class="hint" id="hint">Tippe ungefähr auf die Stelle – danach fein einstellen · <u id="hintCancel">Abbrechen</u></div>
     <div class="placebar" id="placebar"><div class="muted" id="pbInfo">Am Griff ✥ ziehen</div>
@@ -132,7 +149,8 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 
 <div class="sheet" id="sheet"><div class="panel" id="panel"></div></div>
 <div class="toast" id="toast"></div>
-<input type="file" id="fileImport" accept=".json,.geojson,.gpx,.csv,application/json,application/geo+json,application/gpx+xml,text/csv" hidden>
+<input type="file" id="photoAssign" accept="image/jpeg,image/*,.osf,.zip" multiple hidden>
+<input type="file" id="fileImport" accept=".json,.geojson,.gpx,.csv,.osf,.zip,application/json,application/geo+json,application/gpx+xml,text/csv" hidden>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
@@ -165,6 +183,7 @@ const ICON={
   service:`<path d="M15.2 3.2a5 5 0 0 0-5.6 6.8L3 16.6 7.4 21l6.6-6.6a5 5 0 0 0 6.8-5.6l-3.1 3.1-3.3-.9-.9-3.3z" fill="#fff"/>`,
   water:`<path d="M12 2.5C9 7.2 5.5 10.6 5.5 14.6a6.5 6.5 0 0 0 13 0c0-4-3.5-7.4-6.5-12.1z" fill="#fff"/><path d="M9 14.8a3 3 0 0 0 3 3" stroke="${D}" stroke-width="1.8" fill="none" stroke-linecap="round"/>`,
   warn:`<path d="M12 2.8 22.2 20.5H1.8z" fill="#fff" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/><rect x="10.9" y="8.5" width="2.2" height="6.5" rx="1" fill="${D}"/><circle cx="12" cy="17.6" r="1.3" fill="${D}"/>`,
+  food:`<path d="M7 2.5v7.5M4.5 2.5v4.5a2.5 2.5 0 0 0 5 0V2.5M7 10v11.5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M17.5 2.5c-2.2 0-3.5 2.5-3.5 6.5h3.5v12.5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`,
   lake:`<path d="M5 10.5c1.5-3 4-4.5 7-4.5s5.5 1.5 7 4.5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M3 14c1.5 1.3 3 1.3 4.5 0s3-1.3 4.5 0 3 1.3 4.5 0 3-1.3 4.5 0M3 18c1.5 1.3 3 1.3 4.5 0s3-1.3 4.5 0 3 1.3 4.5 0 3-1.3 4.5 0" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/>`,
   other:`<circle cx="12" cy="12" r="9.5" fill="#fff"/><circle cx="12" cy="7.3" r="1.5" fill="${D}"/><rect x="10.8" y="10" width="2.4" height="8" rx="1" fill="${D}"/>`
 };
@@ -201,7 +220,7 @@ function bindStars(root){root.querySelectorAll(".stars").forEach(w=>w.querySelec
 function rateText(p){const cr=RATE[p.cat];if(!cr)return "";const r=p.rate||{};
   return [p.stars?"Gesamt "+starTxt(p.stars):"",...cr.map(([k,l,ty])=>ty?(isOn(r[k])?`${l}${r[k].t?" – "+r[k].t:""}`:""):r[k]&&(r[k].s||r[k].t)?`${l}: ${starTxt(r[k].s)}${r[k].t?" – "+r[k].t:""}`:"")].filter(Boolean).join("\n");}
 const GROUP="IbexMap";
-const VERSION="v1.24";
+const VERSION="v1.25";
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
 const MA_SECTORS=[
  {n:"A Norden",zeit:"5.–10. April",klima:"Frühling, grün; 15–22 °C, im Rif Regen möglich, Nächte kühl",info:"Tanger Med, Chefchaouen, Fès, Meknès – ankommen, Städte, einkaufen. Eher Campings.",box:[[33.8,-5.9,35.95,-1.0]]},
@@ -426,20 +445,22 @@ function showOsm(x){const c=OSM[x.ty],t=x.t;const nm=t.name||t["name:fr"]||t.bra
 
 /* ---------- GPS ---------- */
 let me=null,meMarker=null,meCircle=null,follow=false,watchId=null;
+function gpsState(cls,txt){const b=$("#gpsInfo");b.classList.remove("ok","bad");if(cls)b.classList.add(cls);b.title=txt;b.dataset.txt=txt;}
+$("#gpsInfo").onclick=()=>toast($("#gpsInfo").dataset.txt||"GPS aus",4000);
 function startGPS(){
-  if(!("geolocation" in navigator)){$("#gpsInfo").textContent="Kein GPS";return;}
+  if(!("geolocation" in navigator)){gpsState("bad","Kein GPS");return;}
   if(watchId!==null)return;
   watchId=navigator.geolocation.watchPosition(pos=>{
     me={lat:pos.coords.latitude,lon:pos.coords.longitude,acc:pos.coords.accuracy};
-    $("#gpsInfo").textContent=`GPS ±${Math.round(me.acc)} m`;
+    gpsState("ok",`GPS ±${Math.round(me.acc)} m`);
     if(!meMarker){meMarker=L.circleMarker([me.lat,me.lon],{radius:8,color:"#fff",weight:3,fillColor:"#1e88e5",fillOpacity:1}).addTo(map);
       meCircle=L.circle([me.lat,me.lon],{radius:me.acc,color:"#1e88e5",weight:1,fillOpacity:.1}).addTo(map);}
     else{meMarker.setLatLng([me.lat,me.lon]);meCircle.setLatLng([me.lat,me.lon]).setRadius(me.acc);}
     if(follow)map.setView([me.lat,me.lon],Math.max(map.getZoom(),14));
-  },err=>{$("#gpsInfo").textContent="GPS: "+(err.code===1?"nicht erlaubt":"kein Signal");},
+  },err=>{gpsState("bad","GPS: "+(err.code===1?"nicht erlaubt – in den Einstellungen des Browsers bzw. der App den Standort erlauben":"kein Signal"));},
   {enableHighAccuracy:true,maximumAge:5000,timeout:30000});
 }
-$("#locBtn").onclick=()=>{startGPS();follow=!follow;$("#locBtn").classList.toggle("follow",follow);
+$("#locBtn").onclick=()=>{startGPS();if($("#gpsInfo").classList.contains("bad")){toast($("#gpsInfo").dataset.txt,5000);return;}follow=!follow;$("#locBtn").classList.toggle("follow",follow);
   if(follow&&me)map.setView([me.lat,me.lon],Math.max(map.getZoom(),14));
   toast(follow?"Karte folgt deinem Standort":"Karte folgt nicht mehr");};
 map.on("dragstart",()=>{if(follow){follow=false;$("#locBtn").classList.remove("follow");}});
@@ -479,69 +500,64 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&isPanelOpen())close
 $("#sheet").addEventListener("click",e=>{if(e.target.id==="sheet")closePanel();});
 
 /* ---------- Freie Suche wie OsmAnd: deutsche Begriffe → OpenStreetMap-Kategorien (Umgebung), plus Namen weltweit ---------- */
-const POI_DICT=[
- [/^(parkplatz|parking|parkhaus)/,'nwr["amenity"="parking"]'],
- [/^(unterstand|schutzhütte|schutzhuette|shelter)/,'nwr["amenity"="shelter"]'],
- [/^(hütte|huette|berghütte|alphütte|sac)/,'nwr["tourism"~"^(alpine_hut|wilderness_hut)$"]'],
- [/^(grill|feuerstelle|feuer)/,'nwr["leisure"="firepit"];nwr["amenity"="bbq"]'],
- [/^(picknick|rastplatz)/,'nwr["leisure"="picnic_table"];nwr["tourism"="picnic_site"];nwr["highway"="rest_area"]'],
- [/^(sitzbank|ruhebank)/,'node["amenity"="bench"]'],
- [/^(toilette|wc|klo)/,'nwr["amenity"="toilets"]'],
- [/^(dusche)/,'nwr["amenity"="shower"]'],
- [/^(entsorg|dump|grauwasser|chemie)/,'nwr["amenity"~"^(sanitary_dump_station|waste_disposal)$"]'],
- [/^(abfall|müll|muell|kehricht)/,'nwr["amenity"~"^(waste_disposal|recycling|waste_basket)$"]'],
- [/^(wasserfall)/,'nwr["waterway"="waterfall"]'],
- [/^(brunnen|trinkwasser|wasser|wasserstelle)/,'nwr["amenity"~"^(drinking_water|water_point|fountain)$"];nwr["man_made"~"^(water_tap|water_well)$"]'],
- [/^(quelle)/,'node["natural"="spring"]'],
- [/^(tankstelle|tanken|diesel|benzin)/,'nwr["amenity"="fuel"]'],
- [/^(ladestation|laden strom|e-tank)/,'nwr["amenity"="charging_station"]'],
- [/^(gas|gasflasche|camping ?gaz)/,'nwr["shop"="gas"]'],
- [/^(supermarkt|einkauf|lebensmittel|hanout)/,'nwr["shop"~"^(supermarket|convenience|general)$"]'],
- [/^(bäckerei|baeckerei|brot)/,'nwr["shop"="bakery"]'],
- [/^(metzger|fleisch)/,'nwr["shop"="butcher"]'],
- [/^(markt|souk)/,'nwr["amenity"="marketplace"]'],
- [/^(werkstatt|garage|mechaniker)/,'nwr["shop"="car_repair"];nwr["craft"="mechanic"]'],
- [/^(reifen|pneu|vulkan)/,'nwr["shop"="tyres"]'],
- [/^(autoteile|ersatzteil)/,'nwr["shop"="car_parts"]'],
- [/^(wäscherei|waescherei|waschsalon|laundry)/,'nwr["shop"~"^(laundry|dry_cleaning)$"]'],
- [/^(camping|zeltplatz)/,'nwr["tourism"="camp_site"]'],
- [/^(stellplatz|wohnmobil)/,'nwr["tourism"="caravan_site"]'],
- [/^(hotel|riad|auberge|unterkunft|hostel|pension)/,'nwr["tourism"~"^(hotel|guest_house|hostel|motel)$"]'],
- [/^(restaurant|essen)/,'nwr["amenity"="restaurant"]'],
- [/^(café|cafe|kaffee)/,'nwr["amenity"="cafe"]'],
- [/^(bar|bier)/,'nwr["amenity"~"^(bar|pub)$"]'],
- [/^(imbiss|fast ?food)/,'nwr["amenity"="fast_food"]'],
- [/^(apothek|pharma)/,'nwr["amenity"="pharmacy"]'],
- [/^(arzt|doktor|praxis)/,'nwr["amenity"~"^(doctors|clinic)$"]'],
- [/^(spital|krankenhaus|notfall)/,'nwr["amenity"="hospital"]'],
- [/^(zahnarzt)/,'nwr["amenity"="dentist"]'],
- [/^(tierarzt)/,'nwr["amenity"="veterinary"]'],
- [/^(geldautomat|bancomat|atm)/,'nwr["amenity"="atm"]'],
- [/^(bank)/,'nwr["amenity"="bank"]'],
- [/^(post)/,'nwr["amenity"="post_office"]'],
- [/^(polizei|gendarmerie)/,'nwr["amenity"="police"]'],
- [/^(aussicht|viewpoint)/,'nwr["tourism"="viewpoint"]'],
- [/^(gipfel|berg)/,'node["natural"="peak"]'],
- [/^(pass|col)$/,'node["mountain_pass"="yes"]'],
- [/^(höhle|hoehle)/,'nwr["natural"="cave_entrance"]'],
- [/^(strand)/,'nwr["natural"="beach"]'],
- [/^(baden|badestelle|schwimm)/,'nwr["leisure"~"^(swimming_area|bathing_place|swimming_pool)$"]'],
- [/^(see)$/,'nwr["natural"="water"]["water"="lake"]'],
- [/^(museum)/,'nwr["tourism"="museum"]'],
- [/^(burg|schloss|kasbah|festung)/,'nwr["historic"~"^(castle|fort)$"]'],
- [/^(ruine)/,'nwr["historic"="ruins"]'],
- [/^(moschee)/,'nwr["amenity"="place_of_worship"]["religion"="muslim"]'],
- [/^(kirche)/,'nwr["amenity"="place_of_worship"]["religion"="christian"]'],
- [/^(sehenswürdig|attraktion)/,'nwr["tourism"="attraction"]'],
- [/^(spielplatz)/,'nwr["leisure"="playground"]'],
- [/^(bahnhof|zug)/,'nwr["railway"="station"]'],
- [/^(bus|haltestelle)/,'nwr["highway"="bus_stop"]'],
- [/^(fähre|faehre|hafen)/,'nwr["amenity"="ferry_terminal"]'],
- [/^(wifi|wlan|internet)/,'nwr["internet_access"~"^(wlan|yes)$"]'],
- [/^(information|touristinfo|info)/,'nwr["tourism"="information"]["information"="office"]'],
- [/^(friedhof)/,'nwr["landuse"="cemetery"]'],
+/* Kategorien wie in OsmAnd: Gruppe → Arten (Name, Suchwörter, OSM-Abfrage) */
+const POI_GROUPS=[
+ {g:"Café und Restaurant",i:"food",c:"#8e24aa",items:[
+  ["Restaurant",/^(restaurant|essen)/,'nwr["amenity"="restaurant"]'],["Café",/^(café|cafe|kaffee)/,'nwr["amenity"="cafe"]'],
+  ["Bar",/^(bar|bier|pub)$/,'nwr["amenity"~"^(bar|pub)$"]'],["Imbiss",/^(imbiss|fast ?food|snack)/,'nwr["amenity"="fast_food"]']]},
+ {g:"Lebensmittel und Supermarkt",i:"shop",c:"#00897b",items:[
+  ["Supermarkt / Laden",/^(supermarkt|einkauf|lebensmittel|laden|hanout|épicerie)/,'nwr["shop"~"^(supermarket|convenience|general)$"]'],
+  ["Bäckerei",/^(bäckerei|baeckerei|brot)/,'nwr["shop"="bakery"]'],["Metzgerei",/^(metzger|fleisch|boucherie)/,'nwr["shop"="butcher"]'],
+  ["Gemüse / Obst",/^(gemüse|gemuese|obst|früchte)/,'nwr["shop"="greengrocer"]'],["Markt / Souk",/^(markt|souk)/,'nwr["amenity"="marketplace"]']]},
+ {g:"Geschäft",i:"shop",c:"#26a69a",items:[
+  ["Gasflaschen",/^(gas|gasflasche|camping ?gaz|butan)/,'nwr["shop"="gas"]'],["Outdoor / Camping-Bedarf",/^(outdoor|campingbedarf|sport)/,'nwr["shop"~"^(outdoor|sports)$"]'],
+  ["Baumarkt / Eisenwaren",/^(baumarkt|eisenwaren|hardware|quincaillerie)/,'nwr["shop"~"^(hardware|doityourself)$"]'],
+  ["Wäscherei",/^(wäscherei|waescherei|waschsalon|laundry)/,'nwr["shop"~"^(laundry|dry_cleaning)$"]'],["Handy / SIM",/^(handy|sim|telefon|mobile)/,'nwr["shop"="mobile_phone"]']]},
+ {g:"Finanzwesen",i:"other",c:"#6d4c41",items:[
+  ["Geldautomat",/^(geldautomat|bancomat|atm)/,'nwr["amenity"="atm"]'],["Bank",/^(bank)$/,'nwr["amenity"="bank"]'],
+  ["Wechselstube",/^(wechsel|geldwechsel|change)/,'nwr["amenity"="bureau_de_change"]']]},
+ {g:"Gesundheit",i:"warn",c:"#c62828",items:[
+  ["Apotheke",/^(apothek|pharma)/,'nwr["amenity"="pharmacy"]'],["Arzt / Klinik",/^(arzt|doktor|praxis|klinik)/,'nwr["amenity"~"^(doctors|clinic)$"]'],
+  ["Spital",/^(spital|krankenhaus|hospital)/,'nwr["amenity"="hospital"]'],["Zahnarzt",/^(zahnarzt)/,'nwr["amenity"="dentist"]'],["Tierarzt",/^(tierarzt)/,'nwr["amenity"="veterinary"]']]},
+ {g:"Notfall",i:"warn",c:"#b71c1c",items:[
+  ["Polizei / Gendarmerie",/^(polizei|gendarmerie)/,'nwr["amenity"="police"]'],["Spital / Notfall",/^(notfall)/,'nwr["amenity"="hospital"]'],["Feuerwehr",/^(feuerwehr)/,'nwr["amenity"="fire_station"]']]},
+ {g:"Auto und Unterwegs",i:"fuel",c:"#ef6c00",items:[
+  ["Tankstelle",/^(tankstelle|tanken|diesel|benzin)/,'nwr["amenity"="fuel"]'],["Autowerkstatt",/^(werkstatt|garage|mechaniker)/,'nwr["shop"="car_repair"];nwr["craft"="mechanic"]'],
+  ["Reifen / Vulkaniseur",/^(reifen|pneu|vulkan)/,'nwr["shop"="tyres"]'],["Autoteile",/^(autoteile|ersatzteil)/,'nwr["shop"="car_parts"]'],
+  ["Parkplatz",/^(parkplatz|parking|parkhaus)/,'nwr["amenity"="parking"]'],["Autowaschanlage",/^(autowasch|waschanlage|lavage)/,'nwr["amenity"="car_wash"]'],
+  ["Ladestation",/^(ladestation|e-tank)/,'nwr["amenity"="charging_station"]']]},
+ {g:"Camping und Übernachten",i:"camp",c:"#1565c0",items:[
+  ["Campingplatz",/^(camping|zeltplatz)/,'nwr["tourism"="camp_site"]'],["Wohnmobil-Stellplatz",/^(stellplatz|wohnmobil|aire)/,'nwr["tourism"="caravan_site"]'],
+  ["Hotel / Riad / Auberge",/^(hotel|riad|auberge|unterkunft|hostel|pension|gästehaus)/,'nwr["tourism"~"^(hotel|guest_house|hostel|motel)$"]'],
+  ["Berghütte",/^(hütte|huette|berghütte|alphütte|sac)/,'nwr["tourism"~"^(alpine_hut|wilderness_hut)$"]'],["Unterstand",/^(unterstand|schutzhütte|shelter)/,'nwr["amenity"="shelter"]']]},
+ {g:"Wasser und Sanitär",i:"water",c:"#0288d1",items:[
+  ["Trinkwasser / Brunnen",/^(brunnen|trinkwasser|wasser$|wasserstelle)/,'nwr["amenity"~"^(drinking_water|water_point|fountain)$"];nwr["man_made"~"^(water_tap|water_well)$"]'],
+  ["Quelle",/^(quelle)/,'node["natural"="spring"]'],["Toilette",/^(toilette|wc|klo)/,'nwr["amenity"="toilets"]'],["Dusche",/^(dusche)/,'nwr["amenity"="shower"]'],
+  ["Entsorgungsstation",/^(entsorg|dump|grauwasser|chemie)/,'nwr["amenity"="sanitary_dump_station"]'],["Abfall / Recycling",/^(abfall|müll|muell|kehricht|recycling)/,'nwr["amenity"~"^(waste_disposal|recycling)$"]']]},
+ {g:"Natur und Aussicht",i:"hike",c:"#6d4c41",items:[
+  ["Aussichtspunkt",/^(aussicht|viewpoint)/,'nwr["tourism"="viewpoint"]'],["Gipfel",/^(gipfel|berg)$/,'node["natural"="peak"]'],["Pass",/^(pass|col)$/,'node["mountain_pass"="yes"]'],
+  ["Wasserfall",/^(wasserfall)/,'nwr["waterway"="waterfall"]'],["Höhle",/^(höhle|hoehle)/,'nwr["natural"="cave_entrance"]'],["Strand",/^(strand)/,'nwr["natural"="beach"]'],
+  ["Badestelle",/^(baden|badestelle)/,'nwr["leisure"~"^(swimming_area|bathing_place)$"]'],["See",/^(see)$/,'nwr["natural"="water"]["water"="lake"]'],["Oase",/^(oase)/,'nwr["place"="oasis"];nwr["natural"="oasis"]']]},
+ {g:"Freizeit",i:"wild",c:"#2e7d32",items:[
+  ["Grill- / Feuerstelle",/^(grill|feuerstelle|feuer)/,'nwr["leisure"="firepit"];nwr["amenity"="bbq"]'],
+  ["Picknickplatz / Rastplatz",/^(picknick|rastplatz)/,'nwr["leisure"="picnic_table"];nwr["tourism"="picnic_site"];nwr["highway"="rest_area"]'],
+  ["Sitzbank",/^(sitzbank|ruhebank)/,'node["amenity"="bench"]'],["Spielplatz",/^(spielplatz)/,'nwr["leisure"="playground"]'],["Schwimmbad",/^(schwimm|hallenbad|freibad)/,'nwr["leisure"="swimming_pool"]["access"!="private"]']]},
+ {g:"Sehenswürdigkeiten und Kultur",i:"sight",c:"#8e24aa",items:[
+  ["Sehenswürdigkeit",/^(sehenswürdig|attraktion)/,'nwr["tourism"="attraction"]'],["Museum",/^(museum)/,'nwr["tourism"="museum"]'],
+  ["Burg / Kasbah / Festung",/^(burg|schloss|kasbah|festung|ksar)/,'nwr["historic"~"^(castle|fort)$"]'],["Ruine",/^(ruine)/,'nwr["historic"="ruins"]'],
+  ["Moschee",/^(moschee)/,'nwr["amenity"="place_of_worship"]["religion"="muslim"]'],["Kirche",/^(kirche)/,'nwr["amenity"="place_of_worship"]["religion"="christian"]'],
+  ["Touristen-Information",/^(information|touristinfo|info)/,'nwr["tourism"="information"]["information"="office"]']]},
+ {g:"Verkehr und Kommunikation",i:"other",c:"#546e7a",items:[
+  ["Bahnhof",/^(bahnhof|zug)/,'nwr["railway"="station"]'],["Bushaltestelle",/^(bus|haltestelle)/,'nwr["highway"="bus_stop"]'],["Fähre / Hafen",/^(fähre|faehre|hafen)/,'nwr["amenity"="ferry_terminal"]'],
+  ["Post",/^(post)$/,'nwr["amenity"="post_office"]'],["WLAN",/^(wifi|wlan|internet)/,'nwr["internet_access"~"^(wlan|yes)$"]']]}
 ];
-function poiQuery(t){t=(t||"").trim().toLowerCase();if(t.length<3)return null;const m=POI_DICT.find(([re])=>re.test(t));return m?m[1]:null;}
+POI_GROUPS.forEach(g=>{if(!ICON[g.i])g.i="other";});
+const POI_DICT=POI_GROUPS.flatMap(g=>g.items.map(([l,re,sel])=>[re,sel,l,g]));
+function poiFind(t){t=(t||"").trim().toLowerCase();if(t.length<3)return null;return POI_DICT.find(([re,,l])=>re.test(t)||l.toLowerCase().startsWith(t))||null;}
+function poiQuery(t){const m=poiFind(t);return m?m[1]:null;}
+function linkify(t){return esc(t).replace(/(https?:\/\/[^\s<]+|www\.[^\s<]+)/g,u=>{const href=u.startsWith("http")?u:"https://"+u;
+  let lbl=u.replace(/^https?:\/\//,"");if(/google\.[a-z.]+\/maps|maps\.app\.goo\.gl|goo\.gl\/maps/.test(u))lbl="In Google Maps öffnen";else if(lbl.length>45)lbl=lbl.slice(0,42)+"…";
+  return `<a href="${href}" target="_blank" rel="noopener">${lbl} ↗</a>`;});}
 const kmTxt=d=>d<1?Math.round(d*1000)+" m":d.toFixed(1)+" km";
 function osmLabel(t){if(!t)return "";const keys=["amenity","tourism","shop","leisure","natural","historic","man_made","railway","highway","craft","waterway"];
   for(const k of keys)if(t[k])return (OSM_DE[t[k]]||t[k].replace(/_/g," "));return "";}
@@ -565,14 +581,36 @@ function showSearch(){
   openPanel(`<h2>Suchen</h2>
    <div class="row"><input id="sQ" type="search" placeholder="z. B. Merzouga, Parkplatz, Unterstand …" value="${esc(lastQ)}" enterkeyhint="search" autocomplete="off"><button class="btn" id="sGo" style="flex:none">Suchen</button></div>
    <div id="sRes"></div>`);
-  const q=$("#sQ");setTimeout(()=>q.focus(),150);
-  const local=()=>{const t=q.value.trim().toLowerCase();lastQ=q.value;if(t.length<2){$("#sRes").innerHTML=`<p class="muted">Nach Namen oder Art suchen, z. B. «Merzouga», «Parkplatz», «Unterstand», «Brunnen», «Apotheke». Eigene Punkte erscheinen sofort, mit «Suchen» auch alles aus OpenStreetMap (braucht Internet).</p>`;return;}
+  const q=$("#sQ");
+  const catList=()=>{$("#sRes").innerHTML=`<h3>Kategorien</h3>`+POI_GROUPS.map((g,i)=>`<div class="item" data-grp="${i}">${icoBadge(g.i,g.c,32)}<div style="flex:1"><div class="t">${esc(g.g)}</div><div class="s">${esc(g.items.map(x=>x[0]).join(", "))}</div></div><span class="muted">›</span></div>`).join("")
+      +`<p class="muted">Oder oben einen Namen oder eine Art eintippen, z. B. «Merzouga», «Parkplatz», «Unterstand».</p>`;
+    $("#sRes").querySelectorAll("[data-grp]").forEach(e=>e.onclick=()=>catGroup(POI_GROUPS[+e.dataset.grp]));};
+  const catGroup=g=>{$("#sRes").innerHTML=`<button class="pback" id="sBackCat" style="border:0;background:none;color:var(--accent);font-weight:600;font-size:15px;padding:6px 0">‹ Alle Kategorien</button><h3>${esc(g.g)}</h3>`
+      +g.items.map(([l],i)=>`<div class="item" data-it="${i}">${icoBadge(g.i,g.c,30)}<div style="flex:1"><div class="t">${esc(l)}</div></div><span class="muted">›</span></div>`).join("");
+    $("#sBackCat").onclick=catList;$("#sRes").querySelectorAll("[data-it]").forEach(e=>e.onclick=()=>{const it=g.items[+e.dataset.it];catSearch(it[0],it[2],g);});};
+  const catSearch=async(label,sel,g)=>{
+    const ctr=me?{lat:me.lat,lon:me.lon}:{lat:map.getCenter().lat,lon:map.getCenter().lng};
+    const head=`<button class="pback" id="sBackCat" style="border:0;background:none;color:var(--accent);font-weight:600;font-size:15px;padding:6px 0">‹ ${esc(g?g.g:"Kategorien")}</button><h3>${esc(label)} in der Nähe</h3>`;
+    const bind=()=>{const b=$("#sBackCat");if(b)b.onclick=()=>g?catGroup(g):catList();};
+    if(!navigator.onLine){$("#sRes").innerHTML=head+`<p class="muted">Dafür braucht es Internet.</p>`;bind();return;}
+    $("#sRes").innerHTML=head+`<p class="muted">Suche ${me?"ab deinem Standort":"ab Kartenmitte"} … (kann einige Sekunden dauern)</p>`;bind();
+    let r=await overpassAround(sel,ctr.lat,ctr.lon,15000);if(r&&r.length<5)r=await overpassAround(sel,ctr.lat,ctr.lon,50000)||r;
+    if(!r){$("#sRes").innerHTML=head+`<p class="muted">OpenStreetMap antwortet gerade nicht – bitte nochmals versuchen.</p>`;bind();return;}
+    const list=r.map(x=>({...x,d:distKm(ctr,x)})).sort((a,b)=>a.d-b.d).slice(0,50);
+    $("#sRes").innerHTML=head+`<p class="muted">${list.length} Treffer, ${me?"ab deinem Standort":"ab Kartenmitte"} (Luftlinie)</p>`
+      +(list.length?list.map((x,i)=>{const nm=x.t.name||x.t["name:fr"]||x.t.brand||"";return `<div class="item" data-hit="${i}">${icoBadge(g?g.i:"other",g?g.c:"#6b6b6b",30)}<div><div class="t">${esc(nm||label)}</div><div class="s">${kmTxt(x.d)}${nm?" · "+esc(osmLabel(x.t)||label):""}${x.t.opening_hours?" · "+esc(x.t.opening_hours):""}</div></div></div>`;}).join(""):`<p class="muted">Nichts im Umkreis von 50 km gefunden.</p>`);
+    bind();$("#sRes").querySelectorAll("[data-hit]").forEach(e=>e.onclick=()=>{const x=list[+e.dataset.hit];goTo(x.lat,x.lon,17,(x.t.name||label));});};
+  if(!lastQ)setTimeout(()=>{},0);
+  const local=()=>{const t=q.value.trim().toLowerCase();lastQ=q.value;if(t.length<2){catList();return;}
     const own=points.filter(p=>(ptTitle(p)+" "+(p.desc||"")+" "+(p.region||"")+" "+(p.section||"")).toLowerCase().includes(t)).slice(0,15);
     const osm=(osmData.items||[]).filter(x=>{const n=(x.t.name||x.t["name:fr"]||x.t.brand||"").toLowerCase();return n&&n.includes(t);}).slice(0,15);
     let h="";
+    const cm=POI_DICT.filter(([re,,l])=>re.test(t)||l.toLowerCase().includes(t)).slice(0,6);
+    if(cm.length)h+=`<h3>Kategorien – in der Nähe suchen</h3>`+cm.map(([,,l,g],i)=>`<div class="item" data-cm="${i}">${icoBadge(g.i,g.c,30)}<div><div class="t">${esc(l)}</div><div class="s">${esc(g.g)}</div></div></div>`).join("");
     if(own.length)h+=`<h3>Eigene Punkte</h3>`+own.map(p=>{const c=CATS[p.cat]||CATS.other;return `<div class="item" data-own="${p.id}">${icoBadge(p.cat in CATS?p.cat:"other",c.c,30)}<div><div class="t">${esc(ptTitle(p))}</div><div class="s">${esc(c.n)}${p.region?" · "+esc(p.region):""}</div></div></div>`;}).join("");
     if(osm.length)h+=`<h3>Gespeicherte OSM-Orte</h3>`+osm.map((x,i)=>`<div class="item" data-osm="${i}">${icoBadge(x.ty,OSM[x.ty].c,30)}<div><div class="t">${esc(x.t.name||x.t["name:fr"]||x.t.brand)}</div><div class="s">${esc(osmKind(x.t))}</div></div></div>`).join("");
     $("#sRes").innerHTML=h+`<div id="sWeb"><p class="muted">${navigator.onLine?"Für Orte weltweit «Suchen» tippen.":"Offline: nur eigene und gespeicherte Orte."}</p></div>`;
+    $("#sRes").querySelectorAll("[data-cm]").forEach(e=>e.onclick=()=>{const m=cm[+e.dataset.cm];catSearch(m[2],m[1],m[3]);});
     $("#sRes").querySelectorAll("[data-own]").forEach(e=>e.onclick=()=>{const p=points.find(x=>x.id===e.dataset.own);closePanel();map.setView([p.lat,p.lon],15);setTimeout(()=>showDetail(p.id),300);});
     $("#sRes").querySelectorAll("[data-osm]").forEach(e=>e.onclick=()=>{const x=osm[+e.dataset.osm];closePanel();map.setView([x.lat,x.lon],16);setTimeout(()=>showOsm(x),300);});};
   const web=async()=>{const t=q.value.trim();if(t.length<2)return;local();if(!navigator.onLine)return;
@@ -717,7 +755,7 @@ async function showDetail(id){const p=points.find(x=>x.id===id);if(!p)return;con
     <hr>${imgs}
     ${p.desc?`<div class="desc">${esc(p.desc)}</div>`:""}
     ${p.note?`<label>Notiz unterwegs</label><div class="desc">${esc(p.note)}</div>`:""}
-    ${p.source?`<label>Quelle</label><div class="desc">${esc(p.source)}</div>`:""}
+    ${p.source?`<label>Quelle</label><div class="desc src">${linkify(p.source)}</div>`:""}
     <div class="muted" style="margin-top:10px">${p.lat.toFixed(5)}, ${p.lon.toFixed(5)}</div>
     <div class="actions">
       <a class="btn or" href="geo:${p.lat},${p.lon}?q=${p.lat},${p.lon}(${encodeURIComponent(ptTitle(p))})">Navigieren (OsmAnd)</a>
@@ -911,7 +949,7 @@ $("#navMenu").onclick=async()=>{
    <h3>Sichern und abgleichen</h3>
    <p class="muted">Das Reisepaket enthält alle Punkte mit Fotos. So bringst du die Daten auf ein anderes Gerät oder machst ein Backup.</p>
    <div class="actions"><button class="btn" id="mExport">Reisepaket exportieren</button>
-   <button class="btn sec" id="mImport">Importieren (Reisepaket, GPX, Google-Orte)</button></div>
+   <button class="btn sec" id="mImport">Importieren (Reisepaket, GPX, OsmAnd .osf, Google-Orte)</button><button class="btn sec" id="mPhotos">Fotos Punkten zuordnen</button></div>
    <p class="muted">Google-Orte: über Google Takeout «Maps (Meine Orte)» bzw. «Gespeichert» exportieren, dann die .json- oder .csv-Datei hier importieren.</p>
    <h3>Karte offline</h3>
    <p class="muted">Kartenbilder rund um eure Punkte vorab speichern (zu Hause im WLAN), damit die Karte in Marokko ohne Netz geht.</p>
@@ -942,6 +980,7 @@ $("#navMenu").onclick=async()=>{
     try{const n=await downloadCountries();const k=await assignCountries();toast(`${n} Länder geladen, ${k} Punkte zugeordnet`,4000);$("#navMenu").onclick();}catch(e){toast("Laden fehlgeschlagen",4000);}};
   $("#mFamSet").onclick=famSettings;const fp=$("#mFamPub");if(fp)fp.onclick=famPublish;
   $("#mGset").onclick=gdSettings;const ms=$("#mSync");if(ms)ms.onclick=syncDrive;$("#mOff").onclick=offlineDialog;
+  $("#mPhotos").onclick=()=>$("#photoAssign").click();
   $("#mExport").onclick=exportPackage;$("#mGpx").onclick=exportGPX;$("#mImport").onclick=()=>$("#fileImport").click();
 };
 function manageSections(){
@@ -989,7 +1028,9 @@ function writeGPX(list,label){const x=s=>esc(s);
     return `<wpt lat="${p.lat}" lon="${p.lon}"><name>${x(ptTitle(p))}</name><desc>${x(desc)}</desc><type>${GROUP}</type></wpt>`;}).join("\n");
   const g=`<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="IbexMap" xmlns="http://www.topografix.com/GPX/1/1">\n<metadata><name>${GROUP}</name></metadata>\n${w}\n</gpx>`;
   download(`IbexMap_${label.replace(/[^\wäöüÄÖÜ-]+/g,"_")}_${stamp()}.gpx`,new Blob([g],{type:"application/gpx+xml"}));toast(`GPX exportiert (${list.length} Punkte)`);}
-$("#fileImport").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f)return;const text=await f.text();
+$("#fileImport").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f)return;
+  if(/\.(osf|zip)$/i.test(f.name))return importOsf(f,false);
+  const text=await f.text();
   if(f.name.toLowerCase().endsWith(".gpx"))return importGPX(text);
   if(f.name.toLowerCase().endsWith(".csv")){const it=googleFromCSV(text);return it.length?importGoogle(it,f.name):toast("Keine Orte in der CSV-Datei gefunden");}
   let pkg;try{pkg=JSON.parse(text);}catch(err){return toast("Datei nicht lesbar");}
@@ -1014,8 +1055,122 @@ $("#fileImport").onchange=async e=>{const f=e.target.files[0];e.target.value="";
     await loadPoints();closePanel();toast(`${n} Punkte übernommen${nd?", "+nd+" gelöscht":""}`);};
   $("#iMerge").onclick=()=>run(false);$("#iRepl").onclick=()=>confirmBox("Wirklich ALLE Punkte auf diesem Gerät ersetzen?",()=>run(true));
 };
+
+
+
+/* ---------- OsmAnd-Backup (.osf = ZIP) lesen: Favoriten und Fotos ---------- */
+async function zipEntries(file){const sz=file.size;const tail=new DataView(await file.slice(Math.max(0,sz-70000),sz).arrayBuffer());
+  let e=-1;for(let i=tail.byteLength-22;i>=0;i--)if(tail.getUint32(i,true)===0x06054b50){e=i;break;}
+  if(e<0)throw new Error("Keine gültige OsmAnd-Datei (ZIP)");
+  let n=tail.getUint16(e+10,true),cdSize=tail.getUint32(e+12,true),cdOff=tail.getUint32(e+16,true);
+  if(cdOff===0xFFFFFFFF||n===0xFFFF){/* ZIP64 */const base=Math.max(0,sz-70000);let l=-1;for(let i=e-20;i>=0;i--)if(tail.getUint32(i,true)===0x07064b50){l=i;break;}
+    if(l>=0){const z64=Number(tail.getBigUint64(l+8,true));const r=new DataView(await file.slice(z64,z64+56).arrayBuffer());n=Number(r.getBigUint64(32,true));cdSize=Number(r.getBigUint64(40,true));cdOff=Number(r.getBigUint64(48,true));}}
+  const cd=new DataView(await file.slice(cdOff,cdOff+cdSize).arrayBuffer());const out=[];let o=0;const td=new TextDecoder();
+  for(let k=0;k<n&&o<cd.byteLength;k++){if(cd.getUint32(o,true)!==0x02014b50)break;
+    const method=cd.getUint16(o+10,true),dt=cd.getUint16(o+12,true),dd=cd.getUint16(o+14,true);let csz=cd.getUint32(o+20,true),usz=cd.getUint32(o+24,true);
+    const nl=cd.getUint16(o+28,true),xl=cd.getUint16(o+30,true),cl=cd.getUint16(o+32,true);let lo=cd.getUint32(o+42,true);
+    const name=td.decode(new Uint8Array(cd.buffer,cd.byteOffset+o+46,nl));
+    let xo=o+46+nl;const xe=xo+xl;while(xo+4<=xe){const id=cd.getUint16(xo,true),ln=cd.getUint16(xo+2,true);if(id===1){let q=xo+4;if(usz===0xFFFFFFFF){usz=Number(cd.getBigUint64(q,true));q+=8;}if(csz===0xFFFFFFFF){csz=Number(cd.getBigUint64(q,true));q+=8;}if(lo===0xFFFFFFFF)lo=Number(cd.getBigUint64(q,true));}xo+=4+ln;}
+    const date=new Date(1980+(dd>>9),((dd>>5)&15)-1,dd&31,dt>>11,(dt>>5)&63,(dt&31)*2).getTime();
+    out.push({name,method,csz,usz,lo,date});o=46+nl+xl+cl+o;}
+  return out;}
+async function zipRead(file,en){const h=new DataView(await file.slice(en.lo,en.lo+30).arrayBuffer());const start=en.lo+30+h.getUint16(26,true)+h.getUint16(28,true);
+  const raw=file.slice(start,start+en.csz);if(en.method===0)return raw;
+  if(en.method!==8)throw new Error("Unbekannte Kompression");
+  return await new Response(raw.stream().pipeThrough(new DecompressionStream("deflate-raw"))).blob();}
+async function importOsf(file,photosOnly){
+  toast("Öffne OsmAnd-Datei …",20000);let ents;try{ents=await zipEntries(file);}catch(e){return toast(e.message,6000);}
+  const imgs=ents.filter(x=>/\.(jpe?g)$/i.test(x.name)&&x.usz>0);const gpxs=ents.filter(x=>/\.gpx$/i.test(x.name));
+  const getImgs=async()=>{const fl=[];let i=0;for(const en of imgs){i++;toast(`Entpacke Fotos … (${i}/${imgs.length})`,60000);
+    try{const b=await zipRead(file,en);fl.push(new File([b],en.name.split("/").pop(),{type:"image/jpeg",lastModified:en.date}));}catch(e){}}return fl;};
+  let fav=null;if(!photosOnly)for(const en of gpxs){try{const t=await(await zipRead(file,en)).text();if(/creator="OsmAnd/i.test(t)&&(/<name>favorites<\/name>/i.test(t)||/points_groups/.test(t))){fav=t;break;}}catch(e){}}
+  if(fav){const w=[...new DOMParser().parseFromString(fav,"application/xml").getElementsByTagName("wpt")];
+    importOsmandFav(w,imgs.length?async()=>{assignPhotos(await getImgs());}:null,imgs.length);return;}
+  if(!imgs.length)return toast("In der Datei wurden keine Fotos oder Favoriten gefunden",6000);
+  assignPhotos(await getImgs());}
+/* ---------- Fotos automatisch den nächsten Punkten zuordnen (Ort aus EXIF oder OsmAnd-Dateiname) ---------- */
+async function exifGPS(file){try{const buf=await file.slice(0,524288).arrayBuffer();const v=new DataView(buf);if(v.byteLength<4||v.getUint16(0)!==0xFFD8)return null;let o=2;
+  while(o<v.byteLength-10){const m=v.getUint16(o);if((m&0xFF00)!==0xFF00)break;const len=v.getUint16(o+2);
+    if(m===0xFFE1&&v.getUint32(o+4)===0x45786966)return tiffGPS(v,o+10);o+=2+len;}}catch(e){}return null;}
+function tiffGPS(v,t){const le=v.getUint16(t)===0x4949;const u16=a=>v.getUint16(a,le),u32=a=>v.getUint32(a,le);
+  const ifd0=t+u32(t+4);let gps=0,dt="";for(let i=0;i<u16(ifd0);i++){const e=ifd0+2+i*12;if(u16(e)===0x8825)gps=t+u32(e+8);}
+  if(!gps)return null;const g={};
+  for(let i=0;i<u16(gps);i++){const e=gps+2+i*12,tag=u16(e),type=u16(e+2);
+    if(tag===1||tag===3)g[tag]=String.fromCharCode(v.getUint8(e+8));
+    if((tag===2||tag===4)&&type===5){const off=t+u32(e+8);const r=k=>{const d=u32(off+k*8+4);return d?u32(off+k*8)/d:0;};g[tag]=r(0)+r(1)/60+r(2)/3600;}}
+  if(g[2]==null||g[4]==null||(g[2]===0&&g[4]===0))return null;return [g[2]*(g[1]==="S"?-1:1),g[4]*(g[3]==="W"?-1:1)];}
+/* OsmAnd benennt Fotonotizen nach dem OSM-Kurzlink des Ortes (z. B. «0GHp5z_3.jpg») */
+function osmShortlink(code){const A="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_~";let x=0,y=0,z=0;
+  for(const ch of code){const d=A.indexOf(ch);if(d<0)break;x*=8;y*=8;z+=3;for(let j=2;j>=0;j--){if(d&(1<<(2*j+1)))x+=1<<j;if(d&(1<<(2*j)))y+=1<<j;}}
+  if(z<18)return null;const X=x*2**(32-z),Y=y*2**(32-z);const lon=X*360/2**32-180,lat=Y*180/2**32-90;return Math.abs(lat)<=90?[lat,lon]:null;}
+function nameGPS(n){const b=n.replace(/\.[^.]+$/,"").split(/[-.\s]/)[0];return b.length>=6?osmShortlink(b):null;}
+$("#photoAssign").onchange=async e=>{const fl=[...e.target.files];e.target.value="";if(!fl.length)return;
+  const osf=fl.find(f=>/\.(osf|zip)$/i.test(f.name));if(osf)return importOsf(osf,true);assignPhotos(fl);};
+async function assignPhotos(files){if(!files.length)return toast("Keine Fotos gefunden");
+  toast(`Lese ${files.length} Fotos …`,20000);
+  const live=points.filter(p=>!p.deleted);const R=0.3;
+  const rows=[];for(const f of files){let ll=await exifGPS(f),how="Foto-Standort";if(!ll){ll=nameGPS(f.name);how="OsmAnd-Dateiname";}
+    let best=null;if(ll)for(const p of live){const d=distKm({lat:ll[0],lon:ll[1]},p);if(!best||d<best.d)best={p,d};}
+    rows.push({f,ll,how,best:best&&best.d<=R?best:null,near:best});}
+  const ok=rows.filter(r=>r.best);
+  openPanel(`<h2>Fotos zuordnen</h2>
+   <p>${ok.length} von ${rows.length} Fotos haben einen Punkt im Umkreis von 300 m.</p>
+   ${rows.map((r,i)=>`<div class="item" style="cursor:default"><div style="flex:1"><div class="t">${esc(r.f.name)}</div><div class="s">${r.best?`→ <b>${esc(ptTitle(r.best.p))}</b> (${Math.round(r.best.d*1000)} m)`:r.ll?`kein Punkt in 300 m${r.near?` – nächster: ${esc(ptTitle(r.near.p))} (${kmTxt(r.near.d)})`:""}`:"kein Aufnahmeort im Foto"}</div></div>
+     ${!r.best&&r.ll?`<label class="muted" style="display:flex;gap:6px;align-items:center"><input type="checkbox" data-new="${i}" style="width:auto;margin:0">neuer Stellplatz</label>`:""}</div>`).join("")}
+   <div class="actions"><button class="btn" id="paGo">${ok.length} Fotos zuordnen</button><button class="btn sec" id="paNo">Abbrechen</button></div>
+   <p class="muted">Fotos werden verkleinert (1280 px) gespeichert. Ohne Aufnahmeort kannst du ein Foto im Punkt selbst über «Foto hinzufügen» anhängen.</p>`);
+  $("#paNo").onclick=closePanel;
+  const newSel=()=>[...$("#panel").querySelectorAll("[data-new]")].filter(c=>c.checked).map(c=>+c.dataset.new);
+  $("#panel").querySelectorAll("[data-new]").forEach(c=>c.onchange=()=>{$("#paGo").textContent=`${ok.length+newSel().length} Fotos zuordnen`;});
+  $("#paGo").onclick=async()=>{const mk=newSel();let n=0,i=0;const touched=new Map();
+    for(const [idx,r] of rows.entries()){let p=r.best&&r.best.p;
+      if(!p&&mk.includes(idx)){p=newPoint(+r.ll[0].toFixed(6),+r.ll[1].toFixed(6),{cat:"wild",status:"besucht",trip:"",section:"",visited:new Date(r.f.lastModified||Date.now()).toISOString().slice(0,10)});}
+      if(!p)continue;i++;toast(`Speichere Fotos … (${i})`,60000);
+      try{const b=await resize(r.f);const id=uid();await put("photos",{id,blob:b});p.photos=p.photos||[];p.photos.push(id);p.updated=Date.now();touched.set(p.id,p);n++;}catch(err){}}
+    for(const p of touched.values())await put("points",p);
+    await loadPoints();closePanel();toast(`${n} Fotos zugeordnet`,5000);};}
+/* ---------- OsmAnd-Favoriten übernehmen (ohne Reise) ---------- */
+const FAV_MAP={"möglicher stellplatz":["wild","idee"],"freier stellplatz":["wild","besucht"],"campingplätze":["camp","besucht"],"trinkwasser":["water","besucht"]};
+function guessPoiCat(t){t=(t||"").toLowerCase();
+  if(/fähre|faehre|ferry|gewicht|waage/.test(t))return "other";
+  if(/picknick|kein übernacht/.test(t))return "sight";
+  if(/stellplatz|übernacht|schlafplatz|plätzli/.test(t))return "wild";
+  if(/camping|campeggio|campsite/.test(t))return "camp";
+  if(/quelle|brunnen|trinkwasser|wasserstelle/.test(t))return "water";
+  if(/tankstelle|diesel|benzin/.test(t))return "fuel";
+  if(/garage|werkstatt|mechanik|reifen/.test(t))return "service";
+  if(/laden|shop|outlet|supermarkt|markt|bäckerei|geschäft|einkauf|eataly|transa\b/.test(t))return "shop";
+  if(/elch|bison|tier|vogel|wildpferd|rentier|bär|wolf|robbe|wal\b|delfin|zoo|park\b.*tier/.test(t))return "wildlife";
+  if(/gipfel|berg|wander|trail|klus|schlucht|pass\b|col\b|kungsleden|hütte|tour/.test(t))return "hike";
+  if(/achtung|gefahr|vorsicht|warnung|polizei|kontrolle/.test(t))return "warn";
+  return "sight";}
+async function importOsmandFav(w,after,nImg){
+  const known=new Set(points.map(p=>p.lat.toFixed(5)+","+p.lon.toFixed(5)));
+  const items=w.map(el=>{const g=t=>el.getElementsByTagName(t)[0]?.textContent?.trim()||"";
+    const gx=t=>{const e=[...el.getElementsByTagName("*")].find(x=>x.localName===t);return e?e.textContent.trim():"";};
+    const la=+el.getAttribute("lat"),lo=+el.getAttribute("lon");const typ=g("type");const map=FAV_MAP[typ.toLowerCase()];
+    let name=g("name"),stars=0;const m=name.match(/^\s*(\*{1,5})\s*(\(\d+\))?\s*/);if(m){stars=m[1].length;name=name.slice(m[0].length).trim();}
+    const desc=g("desc"),addr=gx("address"),am=gx("amenity_origin"),time=g("time");
+    const cat=map?map[0]:guessPoiCat(name+" "+desc+" "+am);const status=map?map[1]:"besucht";
+    const d=time?new Date(time):null;const ok=d&&!isNaN(d);
+    return {la,lo,typ,dup:known.has(la.toFixed(5)+","+lo.toFixed(5)),extra:{title:name,cat,status,trip:"",section:"",stars:(cat==="wild"||cat==="camp"||cat==="sight")&&stars?stars:0,
+      desc:[desc,addr&&addr!==name?addr:""].filter(Boolean).join("\n"),source:am?"OsmAnd: "+am.replace(/^Amenity:[^:]*:\s*/,""):"OsmAnd-Favorit"+(typ?" ("+typ+")":""),
+      water:cat==="water"?"trink":undefined,created:ok?d.getTime():Date.now(),updated:Date.now(),visited:status==="besucht"&&ok?time.slice(0,10):undefined}};});
+  const todo=items.filter(x=>!x.dup);const cnt={};todo.forEach(x=>{const k=CATS[x.extra.cat].n+" · "+STATUS[x.extra.status];cnt[k]=(cnt[k]||0)+1;});
+  openPanel(`<h2>OsmAnd-Favoriten übernehmen</h2>
+   <p>${todo.length} Punkte werden übernommen${items.length-todo.length?`, ${items.length-todo.length} sind schon vorhanden und werden übersprungen`:""}. Ohne Reise – das Land wird automatisch zugeordnet.</p>
+   <div class="chips">${Object.entries(cnt).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<span class="chip on" style="cursor:default">${esc(k)}: ${v}</span>`).join("")}</div>
+   <p class="muted">Sterne im Namen (z. B. «***») werden zur Bewertung. Kategorien bei «POI» sind aus dem Namen geraten und lassen sich danach im Punkt ändern.</p>
+   ${after?`<p><b>Die Datei enthält zusätzlich ${nImg} Fotos.</b> Nach dem Übernehmen werden sie den Punkten zugeordnet (Vorschau folgt).</p>`:""}
+   <div class="actions"><button class="btn" id="ofGo">Übernehmen</button>${after?`<button class="btn sec" id="ofSkip">Nur Fotos zuordnen</button>`:""}<button class="btn sec" id="ofNo">Abbrechen</button></div>`);
+  $("#ofNo").onclick=closePanel;const sk=$("#ofSkip");if(sk)sk.onclick=()=>{closePanel();after();};
+  $("#ofGo").onclick=async()=>{toast("Übernehme …",30000);let n=0;
+    for(const x of todo){const p=newPoint(x.la,x.lo,x.extra);if(!p.visited)delete p.visited;if(p.water===undefined)delete p.water;await put("points",p);n++;}
+    await loadPoints();closePanel();toast(`${n} OsmAnd-Favoriten übernommen`,5000);if(after)setTimeout(after,600);};}
+
 async function importGPX(text){const doc=new DOMParser().parseFromString(text,"application/xml");const w=[...doc.getElementsByTagName("wpt")];
-  if(!w.length)return toast("Keine Wegpunkte gefunden");let n=0;
+  if(!w.length)return toast("Keine Wegpunkte gefunden");
+  if(/creator="OsmAnd/i.test(text)&&(/<name>favorites<\/name>/i.test(text)||/points_groups/.test(text)))return importOsmandFav(w);let n=0;
   for(const el of w){const g=t=>el.getElementsByTagName(t)[0]?.textContent||"";const typ=g("type");const sec=typ&&typ!==GROUP&&!/^(reisebuch|ibexmap)$/i.test(typ)?typ:"";if(sec)await addSection(sec,curTrip);
     const la=+el.getAttribute("lat"),lo=+el.getAttribute("lon");
     await put("points",newPoint(la,lo,{title:g("name")||"Wegpunkt",desc:g("desc"),section:sec,region:regionOf(la,lo),status:/option/i.test(typ)?"idee":"fix"}));n++;}

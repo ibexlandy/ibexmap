@@ -1,4 +1,4 @@
-IbexMap – v1.24 (privates Projekt)
+IbexMap – v1.25 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -142,3 +142,11 @@ NEU IN v1.23
 NEU IN v1.24
 - Suche frei wie in OsmAnd: Namen oder Art (z. B. Parkplatz, Unterstand, Brunnen, Apotheke, Grillstelle …) in der Nähe und weltweit; keine vorgegebenen Knöpfe mehr.
 - Name überall «IbexMap» (GPX-Gruppe in OsmAnd heisst jetzt «IbexMap»).
+
+NEU IN v1.25
+- Suche mit Kategorien wie OsmAnd: 13 Gruppen (Café/Restaurant, Lebensmittel, Geschäft, Finanzwesen, Gesundheit, Notfall, Auto, Camping, Wasser/Sanitär, Natur, Freizeit, Kultur, Verkehr) mit 69 Arten; Antippen sucht in der Nähe.
+- Quelle in der Detailansicht als klickbarer Link (Google-Maps-Links als «In Google Maps öffnen»).
+- Kopfzeile neu: Logo, IbexMap mit Version, darunter aktuelle Reise (antippen); rechts nur Abgleich und Menü als schlichte Symbole. GPS-Anzeige entfernt (Hinweis beim Standort-Knopf).
+- Import von OsmAnd-Favoriten (favorites.gpx): Gruppen werden auf Kategorien/Status abgebildet, Sterne im Namen zur Bewertung, ohne Reise, Land automatisch.
+- Fotos Punkten zuordnen (Menü): liest den Aufnahmeort aus dem Foto bzw. aus dem OsmAnd-Dateinamen und hängt es an den nächsten Punkt (max. 300 m); sonst optional neuer Stellplatz.
+- OsmAnd-Backup (.osf) importieren: Favoriten übernehmen und enthaltene Fotos automatisch den Punkten zuordnen (Menü → Importieren).
