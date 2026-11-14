@@ -239,7 +239,7 @@ function bindStars(root){root.querySelectorAll(".stars").forEach(w=>w.querySelec
 function rateText(p){const cr=RATE[p.cat];if(!cr)return "";const r=p.rate||{};
   return [p.stars?"Gesamt "+starTxt(p.stars):"",...cr.map(([k,l,ty])=>ty?(isOn(r[k])?`${l}${r[k].t?" – "+r[k].t:""}`:""):r[k]&&(r[k].s||r[k].t)?`${l}: ${starTxt(r[k].s)}${r[k].t?" – "+r[k].t:""}`:"")].filter(Boolean).join("\n");}
 const GROUP="IbexMap";
-const VERSION="v1.29";
+const VERSION="v1.30";
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
 const MA_SECTORS=[
  {n:"A Norden",zeit:"5.–10. April",klima:"Frühling, grün; 15–22 °C, im Rif Regen möglich, Nächte kühl",info:"Tanger Med, Chefchaouen, Fès, Meknès – ankommen, Städte, einkaufen. Eher Campings.",box:[[33.8,-5.9,35.95,-1.0]]},
@@ -912,7 +912,8 @@ async function editPoint(p,isNew=false){
   $("#fSave").onclick=async()=>{
     const lat=parseFloat($("#fLat").value.replace(",",".")),lon=parseFloat($("#fLon").value.replace(",","."));
     if(!isFinite(lat)||!isFinite(lon)){toast("Koordinaten ungültig");return;}
-    for(const id of (p.photos||[]))if(!draftPhotos.includes(id))await del("photos",id);
+    {const rm=(p.photos||[]).filter(id=>!draftPhotos.includes(id));for(const id of rm)await del("photos",id);
+     if(rm.length)p.photoDel=[...new Set([...(p.photoDel||[]),...rm])];}
     const tr=$("#fTrip").value;let sec=$("#fSection").value;if(sec==="__new")sec=await addSection($("#fSectionNew").value,tr);
     p.trip=tr;if(!p.country)p.country=countryOf(p.lat,p.lon);
     readRate();const cr=RATE[$("#fCat").value];
@@ -939,28 +940,32 @@ function confirmBox(text,onYes){const prev=$("#panel").innerHTML;
 function newPoint(lat,lon,extra={}){return Object.assign({id:uid(),title:"",cat:"sight",status:"idee",trip:curTrip,country:countryOf(lat,lon),section:sectorOf(lat,lon),region:regionOf(lat,lon),desc:"",note:"",source:"",lat,lon,photos:[],created:Date.now(),updated:Date.now()},extra);}
 
 /* ---------- Punkt setzen / Hier merken ---------- */
-let placing=false,cross=null;
+let placing=false,cross=null,placeMode="point";
 const crossIcon=L.divIcon({className:"",iconSize:[64,120],iconAnchor:[32,32],html:`<div class="xh">
   <svg width="64" height="64" viewBox="0 0 64 64"><g stroke="#fff" stroke-width="5"><line x1="32" y1="2" x2="32" y2="24"/><line x1="32" y1="40" x2="32" y2="62"/><line x1="2" y1="32" x2="24" y2="32"/><line x1="40" y1="32" x2="62" y2="32"/></g>
   <g stroke="#c62828" stroke-width="2.5"><line x1="32" y1="2" x2="32" y2="24"/><line x1="32" y1="40" x2="32" y2="62"/><line x1="2" y1="32" x2="24" y2="32"/><line x1="40" y1="32" x2="62" y2="32"/></g>
   <circle cx="32" cy="32" r="3" fill="#c62828" stroke="#fff" stroke-width="1.5"/><circle cx="32" cy="32" r="12" fill="none" stroke="#c62828" stroke-width="1.5" stroke-dasharray="3 3"/></svg>
   <div class="stem"></div><div class="grip">✥</div></div>`});
 function pbInfo(){if(!cross)return;const ll=cross.getLatLng();$("#pbInfo").textContent=`${ll.lat.toFixed(5)}, ${ll.lng.toFixed(5)} · am Griff ✥ ziehen`;}
-function setPlacing(on){placing=on;$("#hint").style.display=on&&!cross?"block":"none";map.getContainer().classList.toggle("placing",on);
+function setPlacing(on){placing=on;if(!on){placeMode="point";}const pk=document.getElementById("pbOk");if(pk)pk.textContent=placeMode==="flag"?"🚩 Fahne hier setzen":"✓ Punkt hier setzen";$("#hint").style.display=on&&!cross?"block":"none";map.getContainer().classList.toggle("placing",on);
   if(!on){if(cross){map.removeLayer(cross);cross=null;}$("#placebar").style.display="none";}}
 function putCross(ll){if(!cross){cross=L.marker(ll,{icon:crossIcon,draggable:true,autoPan:true,zIndexOffset:2000,keyboard:false}).addTo(map);cross.on("drag",pbInfo);}
   else cross.setLatLng(ll);$("#hint").style.display="none";$("#placebar").style.display="block";pbInfo();}
-$("#navAdd").onclick=()=>{setPlacing(false);setPlacing(true);putCross(map.getCenter());};
+$("#navAdd").onclick=()=>startPlace(map.getCenter(),"point");
 $("#hintCancel").onclick=e=>{e.stopPropagation();setPlacing(false);};
-$("#pbNo").onclick=e=>{e.stopPropagation();placeExtra=null;setPlacing(false);};
+$("#pbNo").onclick=e=>{e.stopPropagation();placeExtra=null;placeMode="point";setPlacing(false);};
 let placeExtra=null;
-$("#pbOk").onclick=e=>{e.stopPropagation();if(!cross)return;const ll=cross.getLatLng();const ex=placeExtra;placeExtra=null;setPlacing(false);
+function startPlace(ll,mode){setPlacing(false);setPlacing(true);placeMode=mode||"point";
+  $("#pbOk").textContent=placeMode==="flag"?"🚩 Fahne hier setzen":"✓ Punkt hier setzen";putCross(ll);}
+$("#pbOk").onclick=e=>{e.stopPropagation();if(!cross)return;const ll=cross.getLatLng();
+  if(placeMode==="flag"){placeMode="point";setPlacing(false);addFlag(ll.lat,ll.lng);return;}
+  const ex=placeExtra;placeExtra=null;setPlacing(false);
   const p=newPoint(+ll.lat.toFixed(6),+ll.lng.toFixed(6),ex||{});if(ex&&ex.cat==="camp"&&!p.section)p.section=sectorOf(p.lat,p.lon);editPoint(p,true);};
 L.DomEvent.disableClickPropagation($("#placebar"));
 map.on("click",e=>{if(!placing)return;putCross(e.latlng);});
 map.on("contextmenu",e=>{if(placing)return;const ll=e.latlng;
   const pop=L.popup({closeButton:false,offset:[0,-4]}).setLatLng(ll).setContent(`<div class="ctxbtns"><button class="btn" id="cxFlag">🚩 Fahne setzen</button><button class="btn sec" id="cxPoint">＋ Punkt setzen</button></div>`).openOn(map);
-  setTimeout(()=>{$("#cxFlag").onclick=()=>{map.closePopup();addFlag(ll.lat,ll.lng);};$("#cxPoint").onclick=()=>{map.closePopup();setPlacing(false);setPlacing(true);putCross(ll);};},30);});
+  setTimeout(()=>{$("#cxFlag").onclick=()=>{map.closePopup();startPlace(ll,"flag");};$("#cxPoint").onclick=()=>{map.closePopup();startPlace(ll,"point");};},30);});
 $("#navHere").onclick=()=>{
   const go=pos=>{const d=new Date();const t=`Stellplatz ${d.toLocaleDateString("de-CH")} ${d.toLocaleTimeString("de-CH",{hour:"2-digit",minute:"2-digit"})}`;
     editPoint(newPoint(+pos.lat.toFixed(6),+pos.lon.toFixed(6),{title:t,cat:"wild",status:"besucht",visited:d.toISOString().slice(0,10)}),true);};
@@ -1366,7 +1371,12 @@ async function syncDrive(){if(syncing)return;
     let remote={points:[],trips:[]};
     if(byName[GD_DATA])remote=await(await gd(`drive/v3/files/${byName[GD_DATA].id}?alt=media`)).json();
     const local=Object.fromEntries((await getAll("points")).map(p=>[p.id,p]));let nIn=0;
-    for(const p of remote.points||[]){const ex=local[p.id];if(ex&&(ex.updated||0)>=(p.updated||0))continue;
+    /* Fotos werden pro Punkt zusammengeführt (nie stillschweigend verloren); entfernt wird ein Foto nur, wenn es jemand ausdrücklich gelöscht hat */
+    const mergePh=(a,b)=>{const del=new Set([...(a.photoDel||[]),...(b.photoDel||[])]);
+      return {photos:[...new Set([...(a.photos||[]),...(b.photos||[])])].filter(x=>!del.has(x)),photoDel:[...del]};};
+    for(const p of remote.points||[]){const ex=local[p.id];
+      if(ex&&(ex.updated||0)>=(p.updated||0)){if(!ex.deleted&&!p.deleted){const m=mergePh(ex,p);if(m.photos.length!==(ex.photos||[]).length||m.photoDel.length!==(ex.photoDel||[]).length){Object.assign(ex,m);await put("points",ex);}}continue;}
+      if(ex&&!ex.deleted&&!p.deleted)Object.assign(p,mergePh(p,ex));
       if(ex&&!ex.deleted)for(const id of ex.photos||[])if(!(p.photos||[]).includes(id))await del("photos",id);
       if(p.trip===undefined&&!p.deleted)p.trip=MIG_TRIP;
       await put("points",p);local[p.id]=p;nIn++;}
@@ -1376,10 +1386,11 @@ async function syncDrive(){if(syncing)return;
     Object.values(local).filter(p=>!p.deleted).forEach(p=>(p.photos||[]).forEach(id=>need.add(id)));
     let up=0,down=0,i=0;
     for(const id of need){const fn="foto_"+id+".jpg";i++;
-      if(have.has(id)&&!byName[fn]){const ph=await getOne("photos",id);if(ph){toast(`Fotos hochladen … (${i}/${need.size})`,120000);await gdUpload(fn,ph.blob);up++;}}
-      else if(!have.has(id)&&byName[fn]){toast(`Fotos herunterladen … (${i}/${need.size})`,120000);await put("photos",{id,blob:await(await gd(`drive/v3/files/${byName[fn].id}?alt=media`)).blob()});down++;}}
+      if(have.has(id)&&!byName[fn]){const ph=await getOne("photos",id);if(ph){up++;toast(`Fotos hochladen … (${up})`,120000);await gdUpload(fn,ph.blob);}}
+      else if(!have.has(id)&&byName[fn]){toast(`Fotos herunterladen … (${down+1})`,120000);await put("photos",{id,blob:await(await gd(`drive/v3/files/${byName[fn].id}?alt=media`)).blob()});down++;}}
     await gdUpload(GD_DATA,new Blob([JSON.stringify({app:"ibexmap",format:4,updated:Date.now(),trips,deletedTrips:delTrips,flags,flagDel,points:Object.values(local)})],{type:"application/json"}),byName[GD_DATA]&&byName[GD_DATA].id);
-    for(const f of files)if(/^foto_.+\.jpg$/.test(f.name)&&!need.has(f.name.slice(5,-4)))await gd(`drive/v3/files/${f.id}`,{method:"DELETE"}).catch(()=>{});
+    const gone=new Set(Object.values(local).flatMap(p=>p.photoDel||[]));
+    for(const f of files){const id=f.name.slice(5,-4);if(/^foto_.+\.jpg$/.test(f.name)&&gone.has(id)&&!need.has(id))await gd(`drive/v3/files/${f.id}`,{method:"DELETE"}).catch(()=>{});}
     ls("rb_lastsync",String(Date.now()));await loadPoints();
     toast(`Abgeglichen: ${nIn} Änderungen geholt, ${up} Fotos hoch-, ${down} heruntergeladen`,5000);
   }catch(e){toast("Abgleich fehlgeschlagen: "+e.message,7000);}

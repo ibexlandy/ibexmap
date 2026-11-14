@@ -1,4 +1,4 @@
-IbexMap – v1.29 (privates Projekt)
+IbexMap – v1.30 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -170,3 +170,9 @@ NEU IN v1.29
 - Fahnen (Vormerker) wie OsmAnd-Markierungen: lange auf die Karte drücken → «Fahne setzen», nummeriert, Liste oben links, «✓ Passiert» entfernt sie; werden mit abgeglichen.
 - Fahnen wechseln automatisch die Farbe (7 Farben reihum), Farbe bleibt fest an der Fahne.
 - .osf-Import: Fehler werden im Fenster angezeigt (statt nur kurz oben), laufende Zeit beim Lesen sichtbar.
+
+NEU IN v1.30
+- Fahne setzen wie Punkt mit Fadenkreuz zum genauen Zielen («🚩 Fahne hier setzen»).
+- Fehler behoben: Fotos wurden bei jedem Abgleich erneut hochgeladen (ein anderes Gerät hat sie im Google Drive gelöscht). Fotos eines Punkts werden jetzt zwischen den Geräten zusammengeführt; entfernt wird ein Foto nur noch, wenn es ausdrücklich gelöscht wurde.
+  Wichtig: zuerst alle Geräte auf v1.30 bringen, dann auf dem Tablet abgleichen.
+- Abgleich zählt beim Hochladen nur die wirklich hochgeladenen Fotos.
