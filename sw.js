@@ -1,4 +1,4 @@
-const APP="reisebuch-app-v1.19",TILES="reisebuch-tiles-v2",OFFLINE="reisebuch-offline",MAXTILES=5000;
+const APP="reisebuch-app-v1.20",TILES="reisebuch-tiles-v2",OFFLINE="reisebuch-offline",MAXTILES=5000;
 const SHELL=["./","index.html","manifest.webmanifest","icon-192.png","icon-512.png","icon-maskable-512.png","favicon.png",
 "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css",
 "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"];
@@ -7,7 +7,7 @@ self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(k=>Promise.a
 async function trim(){const c=await caches.open(TILES);const k=await c.keys();for(let i=0;i<k.length-MAXTILES;i++)await c.delete(k[i]);}
 self.addEventListener("fetch",e=>{const u=new URL(e.request.url);
  if(/googleapis\.com$|accounts\.google\.com$|overpass/.test(u.hostname))return;
- if(/server\.arcgisonline\.com$|tile\.opentopomap\.org$/.test(u.hostname)){
+ if(/server\.arcgisonline\.com$|tile\.opentopomap\.org$|wmts\.geo\.admin\.ch$/.test(u.hostname)){
   e.respondWith((async()=>{
    const off=await (await caches.open(OFFLINE)).match(e.request.url);if(off)return off;
    const c=await caches.open(TILES);const hit=await c.match(e.request);if(hit)return hit;

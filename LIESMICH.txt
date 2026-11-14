@@ -1,4 +1,4 @@
-IBEXMAP – v1.19 (privates Projekt)
+IBEXMAP – v1.20 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -115,3 +115,8 @@ NEU IN v1.19
 - Symbole: Stellplatz 🌲, Camping ⛺.
 - Eigene Karten-Symbole wie bei OSM/OsmAnd (Stellplatz = Tanne mit Bank usw.) statt Emojis auf Karte, Liste, Filter.
 - Kategorie im Formular als Symbol-Raster statt Auswahlliste. OSM-Orte ab Zoom 14 mit Symbol.
+
+NEU IN v1.20
+- Neue Kartenebene "swisstopo (Schweiz)" (Landeskarte), auch offline speicherbar.
+- Besuchte Punkte deutlich: grüner Rand und grüner Haken (Karte und Liste).
+- Auf Handy/Tablet immer mind. 48 px Abstand unten (Formulare, Leisten, Knöpfe), auch wenn Android den Abstand nicht meldet.

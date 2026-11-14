@@ -10,7 +10,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
-:root{--bg:#f4f1ea;--ink:#222;--muted:#6b6b6b;--accent:#2f3b2f;--accent2:#c8742c;--line:#d9d3c7;--card:#fff}
+:root{--sb:env(safe-area-inset-bottom,0px);--bg:#f4f1ea;--ink:#222;--muted:#6b6b6b;--accent:#2f3b2f;--accent2:#c8742c;--line:#d9d3c7;--card:#fff}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);background:var(--bg)}
 #app{position:fixed;left:0;right:0;top:0;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
@@ -21,13 +21,13 @@ header .gps{font-size:12px;opacity:.85}
 .hbtn.busy{opacity:.5}
 .bar{height:10px;background:#ddd;border-radius:5px;overflow:hidden;margin:10px 0}.bar div{height:100%;background:var(--accent2);width:0}
 #map{flex:1;position:relative;min-height:0}
-nav{flex:none;display:grid;grid-template-columns:repeat(3,1fr);background:#fff;border-top:1px solid var(--line);padding-bottom:max(env(safe-area-inset-bottom),0px)}
+nav{flex:none;display:grid;grid-template-columns:repeat(3,1fr);background:#fff;border-top:1px solid var(--line);padding-bottom:var(--sb)}
 nav button{border:0;background:none;padding:10px 4px 12px;font-size:13px;color:var(--ink);display:flex;flex-direction:column;align-items:center;gap:2px}
 nav button .ic{font-size:22px;line-height:1}
 nav button.primary{color:var(--accent2);font-weight:700}
 nav button.on{color:var(--accent2)}
 .fab.add{background:var(--accent2);color:#fff;font-size:28px;font-weight:700;width:56px;height:56px;right:8px}
-#locBtn{bottom:calc(20px + env(safe-area-inset-bottom))}
+#locBtn{bottom:calc(20px + var(--sb))}
 .fab{display:flex;align-items:center;justify-content:center;color:var(--ink);position:absolute;right:12px;bottom:20px;z-index:500;width:48px;height:48px;border-radius:50%;border:0;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.3);font-size:22px}
 .fab.follow{background:var(--accent2);color:#fff}
 .fab.active{background:var(--accent);color:#fff}
@@ -50,7 +50,7 @@ nav button.on{color:var(--accent2)}
 .hint{position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:600;background:var(--accent2);color:#fff;padding:8px 14px;border-radius:20px;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.3);display:none}
 .sheet{position:fixed;left:0;right:0;top:0;height:100vh;height:100dvh;z-index:1000;background:rgba(0,0,0,.35);display:none}
 .sheet.open{display:block}
-.panel{position:absolute;left:0;right:0;bottom:0;max-height:92%;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-bottom:calc(24px + env(safe-area-inset-bottom)) !important;background:var(--bg);border-radius:16px 16px 0 0;padding:14px 16px 24px}
+.panel{position:absolute;left:0;right:0;bottom:0;max-height:92%;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-bottom:calc(24px + var(--sb)) !important;background:var(--bg);border-radius:16px 16px 0 0;padding:14px 16px 24px}
 @media (min-width:900px){.panel{left:auto;right:0;top:0;bottom:0;width:440px;max-height:none;border-radius:0}}
 .ptop{position:sticky;top:-14px;margin:-14px -16px 6px;padding:8px 10px;display:flex;align-items:center;justify-content:space-between;background:var(--bg);z-index:5;border-bottom:1px solid var(--line)}
 .ptop .px{border:0;background:#fff;border-radius:50%;width:40px;height:40px;font-size:18px;box-shadow:0 1px 4px rgba(0,0,0,.2)}
@@ -87,7 +87,10 @@ textarea{min-height:110px;resize:vertical}
 .muted{color:var(--muted);font-size:13px}
 .pin{width:30px;height:30px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center}
 .pin span{transform:rotate(45deg);font-size:15px}
-.pin.visited{opacity:.55}
+.pinw{position:relative;width:30px;height:30px}
+.pin.visited{border-color:#2e9e44}
+.vchk{position:absolute;right:-7px;top:-7px;width:17px;height:17px;border-radius:50%;background:#2e9e44;border:2px solid #fff;color:#fff;font-size:11px;font-weight:900;line-height:13px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.4)}
+.lchk{display:inline-block;background:#2e9e44;color:#fff;border-radius:50%;width:17px;height:17px;font-size:11px;font-weight:900;line-height:17px;text-align:center;margin-right:4px;vertical-align:1px}
 .toast{position:fixed;left:50%;top:calc(64px + env(safe-area-inset-top));transform:translateX(-50%);background:#222;color:#fff;padding:10px 16px;border-radius:20px;z-index:2000;display:none;font-size:14px;max-width:90%}
 hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 
@@ -95,10 +98,11 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 .xh svg{position:absolute;left:0;top:0}
 .xh .grip{position:absolute;left:12px;top:70px;width:40px;height:40px;border-radius:50%;background:rgba(200,116,44,.9);border:3px solid #fff;box-shadow:0 1px 6px rgba(0,0,0,.5);color:#fff;font-size:20px;display:flex;align-items:center;justify-content:center}
 .xh .stem{position:absolute;left:31px;top:52px;width:2px;height:20px;background:#fff;box-shadow:0 0 2px #000}
-.placebar{position:absolute;left:8px;right:8px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:650;background:#fff;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.35);padding:10px;display:none}
+.placebar{position:absolute;left:8px;right:8px;bottom:calc(16px + var(--sb));z-index:650;background:#fff;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.35);padding:10px;display:none}
 .placebar .actions{margin-top:6px;flex-wrap:nowrap}.placebar .btn{padding:10px 12px}
 #map.placing .fab{display:none}
 #map.placing,#map.placing .leaflet-grab,#map.placing .leaflet-interactive,#map.placing .leaflet-dragging .leaflet-grab{cursor:crosshair !important}
+@media (pointer:coarse){:root{--sb:max(env(safe-area-inset-bottom,0px),48px)}}
 </style>
 </head>
 <body>
@@ -108,11 +112,11 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
     <div class="hint" id="hint">Tippe ungefähr auf die Stelle – danach fein einstellen · <u id="hintCancel">Abbrechen</u></div>
     <div class="placebar" id="placebar"><div class="muted" id="pbInfo">Am Griff ✥ ziehen</div>
       <div class="actions"><button class="btn" id="pbOk">✓ Punkt hier setzen</button><button class="btn sec" id="pbNo">Abbrechen</button></div></div>
-    <button class="fab add" id="navAdd" title="Punkt setzen" style="bottom:calc(260px + env(safe-area-inset-bottom))">＋</button>
-    <button class="fab" id="navHere" title="Hier merken (aktueller Standort)" style="bottom:calc(200px + env(safe-area-inset-bottom))">📍</button>
-    <button class="fab" id="navList" title="Liste" style="bottom:calc(140px + env(safe-area-inset-bottom))">☰</button>
+    <button class="fab add" id="navAdd" title="Punkt setzen" style="bottom:calc(260px + var(--sb))">＋</button>
+    <button class="fab" id="navHere" title="Hier merken (aktueller Standort)" style="bottom:calc(200px + var(--sb))">📍</button>
+    <button class="fab" id="navList" title="Liste" style="bottom:calc(140px + var(--sb))">☰</button>
     <button class="fab" id="locBtn" title="Mein Standort">◎</button>
-    <button class="fab" id="filtBtn" title="Filter: was auf der Karte angezeigt wird" style="bottom:calc(80px + env(safe-area-inset-bottom))"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"><path d="M3 4h18l-7 8.5V19l-4 2v-8.5z"/></svg></button>
+    <button class="fab" id="filtBtn" title="Filter: was auf der Karte angezeigt wird" style="bottom:calc(80px + var(--sb))"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"><path d="M3 4h18l-7 8.5V19l-4 2v-8.5z"/></svg></button>
   </div>
 </div>
 
@@ -173,7 +177,7 @@ function bindStars(root){root.querySelectorAll(".stars").forEach(w=>w.querySelec
 function rateText(p){const cr=RATE[p.cat];if(!cr)return "";const r=p.rate||{};
   return [p.stars?"Gesamt "+starTxt(p.stars):"",...cr.map(([k,l,ty])=>ty?(isOn(r[k])?`${l}${r[k].t?" – "+r[k].t:""}`:""):r[k]&&(r[k].s||r[k].t)?`${l}: ${starTxt(r[k].s)}${r[k].t?" – "+r[k].t:""}`:"")].filter(Boolean).join("\n");}
 const GROUP="ibexmap";
-const VERSION="v1.19";
+const VERSION="v1.20";
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
 const MA_SECTORS=[
  {n:"A Norden",zeit:"5.–10. April",klima:"Frühling, grün; 15–22 °C, im Rif Regen möglich, Nächte kühl",info:"Tanger Med, Chefchaouen, Fès, Meknès – ankommen, Städte, einkaufen. Eher Campings.",box:[[33.8,-5.9,35.95,-1.0]]},
@@ -290,7 +294,8 @@ const map=L.map("map",{zoomControl:false}).setView([31.8,-6.5],6);
 const BASE={
   "Strassen":L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,attribution:"Karte © Esri, HERE, Garmin, OpenStreetMap-Mitwirkende"}),
   "Satellit":L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,attribution:"Bilder © Esri, Maxar, Earthstar Geographics"}),
-  "Topo":L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",{subdomains:"abc",maxZoom:17,attribution:"© OpenStreetMap-Mitwirkende, SRTM | © OpenTopoMap (CC-BY-SA)"})
+  "Topo":L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",{subdomains:"abc",maxZoom:17,attribution:"© OpenStreetMap-Mitwirkende, SRTM | © OpenTopoMap (CC-BY-SA)"}),
+  "swisstopo (Schweiz)":L.tileLayer("https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg",{maxZoom:19,minZoom:6,bounds:[[45.6,5.8],[47.95,10.65]],attribution:"© swisstopo"})
 };
 let baseName="Strassen";try{baseName=localStorage.getItem("rb_base")||"Strassen";}catch(e){}
 (BASE[baseName]||BASE["Strassen"]).addTo(map);
@@ -301,7 +306,7 @@ let points=[];const thumbs={};
 
 function pinIcon(p){const c=CATS[p.cat]||CATS.other;
   return L.divIcon({className:"",iconSize:[30,30],iconAnchor:[15,30],popupAnchor:[0,-28],
-    html:`<div class="pin ${p.status==="besucht"?"visited":""}" style="background:${c.c}"><span>${svgI(p.cat in CATS?p.cat:"other",16)}</span></div>`});}
+    html:`<div class="pinw"><div class="pin ${p.status==="besucht"?"visited":""}" style="background:${c.c}"><span>${svgI(p.cat in CATS?p.cat:"other",16)}</span></div>${p.status==="besucht"?`<span class="vchk">✓</span>`:""}</div>`});}
 let hiddenCats=[];try{hiddenCats=JSON.parse(localStorage.getItem("rb_hidden")||"[]");}catch(e){}
 let mapTrip="",mapCountry="";try{mapTrip=localStorage.getItem("rb_mtrip")||"";mapCountry=localStorage.getItem("rb_mcountry")||"";}catch(e){}
 const saveMapScope=()=>{try{localStorage.setItem("rb_mtrip",mapTrip);localStorage.setItem("rb_mcountry",mapCountry);}catch(e){}};
@@ -673,7 +678,7 @@ async function renderItems(){
   let h="";
   for(const p of list){const c=CATS[p.cat]||CATS.other;const u=p.photos?.length?await photoURL(p.photos[0]):"";
     h+=`<div class="item" data-id="${p.id}">${u?`<img src="${u}">`:`<div class="noimg" style="background:${c.c}">${svgI(p.cat in CATS?p.cat:"other",34)}</div>`}
-      <div><div class="t">${esc(ptTitle(p))}${p.stars&&RATE[p.cat]?` <span class="sv" style="font-weight:400;font-size:13px">${starTxt(p.stars)}</span>`:""}</div><div class="s"><span class="dot" style="background:${c.c}"></span>${esc(c.n)} · ${esc(STATUS[p.status]||"")}${p.section?" · "+esc(p.section):""} · ${esc(fmtD(p.visited||p.created))}${me?" · "+distKm(me,p).toFixed(0)+" km":""}</div></div></div>`;}
+      <div><div class="t">${p.status==="besucht"?`<span class="lchk">✓</span>`:""}${esc(ptTitle(p))}${p.stars&&RATE[p.cat]?` <span class="sv" style="font-weight:400;font-size:13px">${starTxt(p.stars)}</span>`:""}</div><div class="s"><span class="dot" style="background:${c.c}"></span>${esc(c.n)} · ${esc(STATUS[p.status]||"")}${p.section?" · "+esc(p.section):""} · ${esc(fmtD(p.visited||p.created))}${me?" · "+distKm(me,p).toFixed(0)+" km":""}</div></div></div>`;}
   $("#lItems").innerHTML=h||`<p class="muted">Keine Punkte gefunden.</p>`;
   $("#lItems").querySelectorAll(".item").forEach(e=>e.onclick=()=>showDetail(e.dataset.id));
 }
