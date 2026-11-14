@@ -137,7 +137,7 @@ function bindStars(root){root.querySelectorAll(".stars").forEach(w=>w.querySelec
 function rateText(p){const cr=RATE[p.cat];if(!cr)return "";const r=p.rate||{};
   return [p.stars?"Gesamt "+starTxt(p.stars):"",...cr.map(([k,l])=>r[k]&&(r[k].s||r[k].t)?`${l}: ${starTxt(r[k].s)}${r[k].t?" – "+r[k].t:""}`:"")].filter(Boolean).join("\n");}
 const GROUP="ibexmap";
-const VERSION="v11";
+const VERSION="v12";
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
 const MA_SECTORS=[
  {n:"A Norden",zeit:"5.–10. April",klima:"Frühling, grün; 15–22 °C, im Rif Regen möglich, Nächte kühl",info:"Tanger Med, Chefchaouen, Fès, Meknès – ankommen, Städte, einkaufen. Eher Campings.",box:[[33.8,-5.9,35.95,-1.0]]},
@@ -654,9 +654,10 @@ function loadGIS(){return new Promise((res,rej)=>{if(window.google&&google.accou
   const e=document.createElement("script");e.src="https://accounts.google.com/gsi/client";e.onload=res;e.onerror=()=>rej(new Error("Google-Anmeldung nicht ladbar"));document.head.appendChild(e);});}
 async function gdAuth(){if(gdToken&&Date.now()<gdExp-60000)return gdToken;await loadGIS();
   return new Promise((res,rej)=>{const c=google.accounts.oauth2.initTokenClient({client_id:gdClient(),scope:GD_SCOPE,
+    hint:ls("rb_gmail")||undefined,
     callback:r=>{if(r.error)return rej(new Error(r.error_description||r.error));gdToken=r.access_token;gdExp=Date.now()+(+r.expires_in||3600)*1000;ls("rb_gconn","1");res(gdToken);},
     error_callback:e=>rej(new Error(e&&e.type==="popup_closed"?"Anmeldung abgebrochen":"Anmeldefenster blockiert oder abgebrochen"))});
-    c.requestAccessToken({prompt:ls("rb_gconn")?"":"consent"});});}
+    const o={prompt:ls("rb_gconn")?"":"select_account consent"};const h=ls("rb_gmail");if(h)o.hint=h;c.requestAccessToken(o);});}
 async function gd(path,opt={}){const t=await gdAuth();
   const r=await fetch("https://www.googleapis.com/"+path,Object.assign({},opt,{headers:Object.assign({Authorization:"Bearer "+t},opt.headers||{})}));
   if(r.status===401){gdToken=null;throw new Error("Anmeldung abgelaufen – nochmals ⟳ tippen");}
@@ -695,11 +696,16 @@ function gdSettings(){
    <p class="muted">Einmalig nötig: ein Zugangsschlüssel («OAuth-Client-ID») aus der Google Cloud Console deines <b>privaten</b> Google-Kontos. Die App darf damit nur ihren eigenen, versteckten Ordner in deinem Drive lesen und schreiben – nicht deine anderen Dateien.</p>
    <p class="muted">Bei der Einrichtung als «Autorisierter JavaScript-Ursprung» eintragen:<br><b>${esc(location.origin)}</b></p>
    <label>OAuth-Client-ID</label><input id="gId" value="${esc(gdClient())}" placeholder="1234…apps.googleusercontent.com">
-   <div class="actions"><button class="btn" id="gSave">Speichern und verbinden</button>${gdClient()?`<button class="btn warn" id="gOff">Trennen</button>`:""}<button class="btn sec" id="gBack">Zurück</button></div>
+   <label>Google-Konto für den Abgleich (E-Mail)</label><input id="gMail" type="email" value="${esc(ls("rb_gmail"))}" placeholder="deine.private@gmail.com">
+   <p class="muted">Auf allen Geräten dasselbe Konto eintragen. Ist auf dem Gerät ein anderes Google-Konto angemeldet, wählst du im Google-Fenster «Anderes Konto verwenden».</p>
+   <div class="actions"><button class="btn" id="gSave">Speichern und verbinden</button>${gdClient()?`<button class="btn sec" id="gSwitch">Konto wechseln</button><button class="btn warn" id="gOff">Trennen</button>`:""}<button class="btn sec" id="gBack">Zurück</button></div>
    <p class="muted">Die Daten auf dem Gerät bleiben immer erhalten – der Abgleich kopiert nur hin und her. Das Reisepaket funktioniert weiterhin als Backup ohne Internet.</p>`);
   $("#gBack").onclick=()=>$("#navMenu").onclick();
-  $("#gSave").onclick=()=>{const v=$("#gId").value.trim();if(!/\.apps\.googleusercontent\.com$/.test(v))return toast("Das sieht nicht nach einer Client-ID aus (endet auf .apps.googleusercontent.com)",5000);
+  $("#gSave").onclick=()=>{const v=$("#gId").value.trim(),mail=$("#gMail").value.trim();
+    if(mail!==ls("rb_gmail")){ls("rb_gmail",mail||null);ls("rb_gconn",null);gdToken=null;}if(!/\.apps\.googleusercontent\.com$/.test(v))return toast("Das sieht nicht nach einer Client-ID aus (endet auf .apps.googleusercontent.com)",5000);
     if(v!==gdClient()){ls("rb_gclient",v);ls("rb_gconn",null);gdToken=null;}showSyncBtn();closePanel();syncDrive();};
+  const sw=$("#gSwitch");if(sw)sw.onclick=()=>{try{if(gdToken&&window.google)google.accounts.oauth2.revoke(gdToken,()=>{});}catch(e){}
+    gdToken=null;ls("rb_gconn",null);ls("rb_gmail",$("#gMail").value.trim()||null);closePanel();syncDrive();};
   const o=$("#gOff");if(o)o.onclick=()=>{try{if(gdToken&&window.google)google.accounts.oauth2.revoke(gdToken,()=>{});}catch(e){}
     gdToken=null;ls("rb_gclient",null);ls("rb_gconn",null);showSyncBtn();toast("Google Drive getrennt – Daten auf dem Gerät bleiben");$("#navMenu").onclick();};}
 

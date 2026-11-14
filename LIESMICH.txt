@@ -1,4 +1,4 @@
-IBEXMAP – Prototyp v11 (privates Projekt)
+IBEXMAP – Prototyp v12 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -76,3 +76,6 @@ NEU IN v10
 
 NEU IN v11
 - Seite für die Familie heisst jetzt ibexmap.intern.html (statt familie.html).
+
+NEU IN v12
+- Google-Abgleich: Konto (E-Mail) festlegbar, Kontoauswahl beim ersten Verbinden, Knopf "Konto wechseln".
