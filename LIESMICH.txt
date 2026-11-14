@@ -1,0 +1,48 @@
+REISEBUCH – Prototyp v7 (privates Projekt)
+==========================================
+
+Inhalt des Ordners
+  index.html            die App
+  sw.js                 Offline-Zwischenspeicher (App + angeschaute Kartenausschnitte)
+  manifest.webmanifest  damit man die App auf Handy/Tablet installieren kann
+  icon-192.png / icon-512.png
+
+1) Am PC ausprobieren
+  - Ordner entpacken, index.html mit Chrome oder Edge öffnen.
+  - Punkte setzen, Fotos per Ziehen oder Ctrl+V einfügen, Liste, Export testen.
+  - Hinweis: GPS und Offline-Funktion gehen am PC über "Datei öffnen" nur eingeschränkt.
+
+2) Auf Tablet und Handy installieren
+  Für GPS, Kamera und Installation braucht die App eine https-Adresse.
+  Der Ordner muss dafür auf einen (privaten) Webspeicher, z. B.:
+    - Netlify Drop: Ordner ins Browserfenster ziehen -> https-Adresse
+    - GitHub Pages (privates GitHub-Konto)
+  Dann die Adresse in Chrome auf dem Gerät öffnen -> Menü -> "Zum Startbildschirm hinzufügen" / "App installieren".
+  Wichtig: Auf dem Webspeicher liegt NUR der Programmcode. Eure Punkte und Fotos
+  bleiben auf dem jeweiligen Gerät gespeichert und werden nirgends hochgeladen.
+
+3) Daten zwischen PC, Tablet und Handy abgleichen
+  Menü -> "Reisepaket exportieren" (eine .json-Datei mit allen Punkten und Fotos,
+  jedes Mal mit neuem Dateinamen) -> auf dem anderen Gerät Menü -> "importieren"
+  -> "Zusammenführen" (neuere Version gewinnt, auch Löschungen) oder "Alles ersetzen".
+  Das Reisepaket ist auch euer Backup – regelmässig exportieren!
+
+4) OsmAnd
+  - Im Punkt "Navigieren (OsmAnd)" antippen -> Android fragt nach der App.
+  - Menü -> "GPX exportieren": alle Punkte in EINER Gruppe "Reisebuch".
+  - Die bisherige Datei Marokko_2027_Fixpunkte.gpx kann über "importieren" geladen werden.
+
+Noch nicht enthalten (nächste Schritte)
+  - Echte Offline-Karte für ganz Marokko (jetzt: nur bereits angeschaute Gebiete offline)
+  - Automatischer Abgleich über einen eigenen Server
+
+NEU IN v6
+- Kartenfilter ⛃: Orte aus OpenStreetMap wie in OsmAnd (Einkauf, Tankstelle,
+  Werkstatt/Reifen). Einmal "Ganz Marokko herunterladen" mit Internet, danach offline.
+  Sichtbar ab Zoomstufe 10. Antippen: Infos, Navigieren, als eigenen Punkt übernehmen.
+- Abschnitte: 10 Marokko-Sektoren (A Norden … J Rückweg Nord) mit Zeitfenster,
+  Klima und Inhalt. Neue Punkte erhalten den Sektor automatisch.
+
+NEU IN v7
+- Handy: Seite passt sich der Bildschirmhöhe an (scrollt nicht mehr),
+  untere Knopfleiste wird nicht mehr von der Android-Navigationsleiste verdeckt.
