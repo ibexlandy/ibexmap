@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, interactive-widget=resizes-content">
 <meta name="theme-color" content="#2f3b2f">
 <title>ibexmap</title>
 <link rel="manifest" href="manifest.webmanifest">
@@ -85,8 +85,9 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 .xh svg{position:absolute;left:0;top:0}
 .xh .grip{position:absolute;left:12px;top:70px;width:40px;height:40px;border-radius:50%;background:rgba(200,116,44,.9);border:3px solid #fff;box-shadow:0 1px 6px rgba(0,0,0,.5);color:#fff;font-size:20px;display:flex;align-items:center;justify-content:center}
 .xh .stem{position:absolute;left:31px;top:52px;width:2px;height:20px;background:#fff;box-shadow:0 0 2px #000}
-.placebar{position:absolute;left:8px;right:8px;bottom:12px;z-index:650;background:#fff;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.35);padding:10px;display:none}
-.placebar .actions{margin-top:8px}
+.placebar{position:absolute;left:8px;right:8px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:650;background:#fff;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.35);padding:10px;display:none}
+.placebar .actions{margin-top:6px;flex-wrap:nowrap}.placebar .btn{padding:10px 12px}
+#map.placing .fab{display:none}
 #map.placing,#map.placing .leaflet-grab,#map.placing .leaflet-interactive,#map.placing .leaflet-dragging .leaflet-grab{cursor:crosshair !important}
 </style>
 </head>
@@ -95,7 +96,7 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
   <header><img src="icon-192.png" alt="" style="width:28px;height:28px;border-radius:7px;flex:none"><h1>ibexmap <span id="ver" style="font-size:12px;font-weight:400;opacity:.7"></span></h1><button class="hbtn" id="tripName" title="Aktuelle Reise – antippen zum Wechseln" style="font-size:12px;max-width:40vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></button><span class="gps" id="gpsInfo">GPS aus</span><button class="hbtn" id="syncBtn" title="Mit Google Drive abgleichen" style="display:none">⟳</button><button class="hbtn" id="navMenu" title="Menü" aria-label="Menü" style="font-weight:700;padding:2px 12px">⋮</button></header>
   <div id="map">
     <div class="hint" id="hint">Tippe ungefähr auf die Stelle – danach fein einstellen · <u id="hintCancel">Abbrechen</u></div>
-    <div class="placebar" id="placebar"><div class="muted" id="pbInfo">Kreuz am Griff ● ziehen, bis es genau stimmt. Zoomen geht weiterhin.</div>
+    <div class="placebar" id="placebar"><div class="muted" id="pbInfo">Am Griff ✥ ziehen</div>
       <div class="actions"><button class="btn" id="pbOk">✓ Punkt hier setzen</button><button class="btn sec" id="pbNo">Abbrechen</button></div></div>
     <button class="fab add" id="navAdd" title="Punkt setzen" style="bottom:calc(260px + env(safe-area-inset-bottom))">＋</button>
     <button class="fab" id="navHere" title="Hier merken (aktueller Standort)" style="bottom:calc(200px + env(safe-area-inset-bottom))">📍</button>
@@ -144,7 +145,7 @@ function bindStars(root){root.querySelectorAll(".stars").forEach(w=>w.querySelec
 function rateText(p){const cr=RATE[p.cat];if(!cr)return "";const r=p.rate||{};
   return [p.stars?"Gesamt "+starTxt(p.stars):"",...cr.map(([k,l,ty])=>ty?(isOn(r[k])?`${l}${r[k].t?" – "+r[k].t:""}`:""):r[k]&&(r[k].s||r[k].t)?`${l}: ${starTxt(r[k].s)}${r[k].t?" – "+r[k].t:""}`:"")].filter(Boolean).join("\n");}
 const GROUP="ibexmap";
-const VERSION="v1.17";
+const VERSION="v1.18";
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
 const MA_SECTORS=[
  {n:"A Norden",zeit:"5.–10. April",klima:"Frühling, grün; 15–22 °C, im Rif Regen möglich, Nächte kühl",info:"Tanger Med, Chefchaouen, Fès, Meknès – ankommen, Städte, einkaufen. Eher Campings.",box:[[33.8,-5.9,35.95,-1.0]]},
@@ -567,7 +568,7 @@ const crossIcon=L.divIcon({className:"",iconSize:[64,120],iconAnchor:[32,32],htm
   <g stroke="#c62828" stroke-width="2.5"><line x1="32" y1="2" x2="32" y2="24"/><line x1="32" y1="40" x2="32" y2="62"/><line x1="2" y1="32" x2="24" y2="32"/><line x1="40" y1="32" x2="62" y2="32"/></g>
   <circle cx="32" cy="32" r="3" fill="#c62828" stroke="#fff" stroke-width="1.5"/><circle cx="32" cy="32" r="12" fill="none" stroke="#c62828" stroke-width="1.5" stroke-dasharray="3 3"/></svg>
   <div class="stem"></div><div class="grip">✥</div></div>`});
-function pbInfo(){if(!cross)return;const ll=cross.getLatLng();$("#pbInfo").textContent=`${ll.lat.toFixed(5)}, ${ll.lng.toFixed(5)} – Kreuz am Griff ● ziehen, bis es genau stimmt. Tippen auf die Karte setzt das Kreuz neu.`;}
+function pbInfo(){if(!cross)return;const ll=cross.getLatLng();$("#pbInfo").textContent=`${ll.lat.toFixed(5)}, ${ll.lng.toFixed(5)} · am Griff ✥ ziehen`;}
 function setPlacing(on){placing=on;$("#hint").style.display=on&&!cross?"block":"none";map.getContainer().classList.toggle("placing",on);
   if(!on){if(cross){map.removeLayer(cross);cross=null;}$("#placebar").style.display="none";}}
 function putCross(ll){if(!cross){cross=L.marker(ll,{icon:crossIcon,draggable:true,autoPan:true,zIndexOffset:2000,keyboard:false}).addTo(map);cross.on("drag",pbInfo);}

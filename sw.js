@@ -1,4 +1,4 @@
-const APP="reisebuch-app-v1.17",TILES="reisebuch-tiles-v2",OFFLINE="reisebuch-offline",MAXTILES=5000;
+const APP="reisebuch-app-v1.18",TILES="reisebuch-tiles-v2",OFFLINE="reisebuch-offline",MAXTILES=5000;
 const SHELL=["./","index.html","manifest.webmanifest","icon-192.png","icon-512.png","icon-maskable-512.png","favicon.png",
 "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css",
 "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"];

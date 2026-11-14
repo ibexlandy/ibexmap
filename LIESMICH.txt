@@ -1,4 +1,4 @@
-IBEXMAP – v1.17 (privates Projekt)
+IBEXMAP – v1.18 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -105,3 +105,6 @@ NEU IN v1.17
 - Fussleiste entfernt: Punkt setzen (+), Hier merken, Liste als runde Knöpfe rechts. Zoom-Knöpfe entfernt.
 - Bewertung: "Am Wasser" ist jetzt ein Häkchen statt Sterne.
 - Schönere Symbole: Wanderung 🏔️, Achtung ⚠️, Sonstiges 🔹.
+
+NEU IN v1.18
+- Punkt setzen: Leiste unten nicht mehr von der Android-Navigationsleiste verdeckt, kompakter; runde Knöpfe während des Setzens ausgeblendet.
