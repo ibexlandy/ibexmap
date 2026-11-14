@@ -82,6 +82,12 @@ textarea{min-height:110px;resize:vertical}
 .item .t{font-weight:600}
 .item .s{font-size:12px;color:var(--muted)}
 .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:middle}
+.detail .dtitle{font-size:23px;margin:2px 0 10px}
+.meta{display:flex;flex-direction:column;gap:7px;font-size:15.5px;color:#444;margin-bottom:6px}
+.mrow{display:flex;align-items:center;gap:10px}
+.mrow>svg{margin:0 3px}
+.detail .desc{font-size:16.5px;line-height:1.5}
+.detail .rate{font-size:15.5px}
 .detail img.big{width:100%;border-radius:10px;margin-bottom:6px}
 .desc{white-space:pre-wrap;line-height:1.45}
 .muted{color:var(--muted);font-size:13px}
@@ -132,7 +138,7 @@ const CATS={
   wild:{n:"Stellplatz",c:"#2e7d32",i:"🌲"},
   camp:{n:"Camping",c:"#1565c0",i:"⛺"},
   sight:{n:"Sehenswürdigkeit",c:"#8e24aa",i:"★"},
-  hike:{n:"Wanderung / Hochtour",c:"#6d4c41",i:"🏔️"},
+  hike:{n:"Wanderung",c:"#6d4c41",i:"🏔️"},
   wildlife:{n:"Tierbeobachtung",c:"#c49000",i:"🔭"},
   shop:{n:"Einkauf / Supermarkt",c:"#00897b",i:"🛒"},
   fuel:{n:"Tankstelle",c:"#ef6c00",i:"⛽"},
@@ -155,14 +161,27 @@ const ICON={
   service:`<path d="M15.2 3.2a5 5 0 0 0-5.6 6.8L3 16.6 7.4 21l6.6-6.6a5 5 0 0 0 6.8-5.6l-3.1 3.1-3.3-.9-.9-3.3z" fill="#fff"/>`,
   water:`<path d="M12 2.5C9 7.2 5.5 10.6 5.5 14.6a6.5 6.5 0 0 0 13 0c0-4-3.5-7.4-6.5-12.1z" fill="#fff"/><path d="M9 14.8a3 3 0 0 0 3 3" stroke="${D}" stroke-width="1.8" fill="none" stroke-linecap="round"/>`,
   warn:`<path d="M12 2.8 22.2 20.5H1.8z" fill="#fff" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/><rect x="10.9" y="8.5" width="2.2" height="6.5" rx="1" fill="${D}"/><circle cx="12" cy="17.6" r="1.3" fill="${D}"/>`,
+  lake:`<path d="M5 10.5c1.5-3 4-4.5 7-4.5s5.5 1.5 7 4.5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M3 14c1.5 1.3 3 1.3 4.5 0s3-1.3 4.5 0 3 1.3 4.5 0 3-1.3 4.5 0M3 18c1.5 1.3 3 1.3 4.5 0s3-1.3 4.5 0 3 1.3 4.5 0 3-1.3 4.5 0" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/>`,
   other:`<circle cx="12" cy="12" r="9.5" fill="#fff"/><circle cx="12" cy="7.3" r="1.5" fill="${D}"/><rect x="10.8" y="10" width="2.4" height="8" rx="1" fill="${D}"/>`
 };
+const MI={
+  cal:`<rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/>`,
+  bag:`<rect x="3" y="7.5" width="18" height="12.5" rx="2"/><path d="M9 7.5V5.5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 5.5v2M3 12.5h18"/>`,
+  globe:`<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.8 3.8 5.8 3.8 9s-1.2 6.2-3.8 9c-2.6-2.8-3.8-5.8-3.8-9S9.4 5.8 12 3z"/>`,
+  pin:`<path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>`,
+  book:`<path d="M12 6.5C10 5 7 4.5 3.5 5v13c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5zM12 6.5v13"/>`,
+  flag:`<path d="M5 21V4M5 4h11l-2.5 4L16 12H5"/>`,
+  ruler:`<path d="M4 20 20 4M7 17l-2-2M10 14l-1.5-1.5M13 11l-2-2M16 8l-1.5-1.5"/>`,
+  sec:`<path d="M4 6h16M4 12h10M4 18h13"/>`
+};
+const mi=(k,sz=17)=>`<svg viewBox="0 0 24 24" width="${sz}" height="${sz}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none;opacity:.75">${MI[k]}</svg>`;
 const svgI=(k,sz=18)=>`<svg viewBox="0 0 24 24" width="${sz}" height="${sz}" aria-hidden="true" style="display:block">${ICON[k]||ICON.other}</svg>`;
 const icoBadge=(k,color,sz=22)=>`<span class="ico" style="background:${color};width:${sz}px;height:${sz}px">${svgI(k,Math.round(sz*.68))}</span>`;
 const STATUS={idee:"Idee",fix:"Fixpunkt",besucht:"Besucht"};
 const WATERQ={trink:"Trinkwasser",brauch:"Nur Brauchwasser (abkochen/filtern)",unklar:"Unbekannt"};
 const RATE={
   wild:[["umgebung","Umgebung"],["wohl","Wohlfühlen"],["wasser","Am Wasser","ja"]],
+  sight:[],
   camp:[["sanitaer","Sanitär"],["platz","Stellplatz"],["preis","Kosten/Nutzen"],["resto","Restaurant"],["wasser","Am Wasser","ja"]]
 };
 const fmtD=d=>d?new Date(String(d).length===10?d+"T12:00:00":d).toLocaleDateString("de-CH"):"";
@@ -177,7 +196,7 @@ function bindStars(root){root.querySelectorAll(".stars").forEach(w=>w.querySelec
 function rateText(p){const cr=RATE[p.cat];if(!cr)return "";const r=p.rate||{};
   return [p.stars?"Gesamt "+starTxt(p.stars):"",...cr.map(([k,l,ty])=>ty?(isOn(r[k])?`${l}${r[k].t?" – "+r[k].t:""}`:""):r[k]&&(r[k].s||r[k].t)?`${l}: ${starTxt(r[k].s)}${r[k].t?" – "+r[k].t:""}`:"")].filter(Boolean).join("\n");}
 const GROUP="ibexmap";
-const VERSION="v1.20";
+const VERSION="v1.21";
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
 const MA_SECTORS=[
  {n:"A Norden",zeit:"5.–10. April",klima:"Frühling, grün; 15–22 °C, im Rif Regen möglich, Nächte kühl",info:"Tanger Med, Chefchaouen, Fès, Meknès – ankommen, Städte, einkaufen. Eher Campings.",box:[[33.8,-5.9,35.95,-1.0]]},
@@ -499,14 +518,19 @@ async function showDetail(id){const p=points.find(x=>x.id===id);if(!p)return;con
   let imgs="";for(const ph of p.photos||[]){const u=await photoURL(ph);if(u)imgs+=`<img class="big" src="${u}">`;}
   const d=me?` · ${distKm(me,p).toFixed(1)} km Luftlinie`:"";
   openPanel(`<div class="detail">
-    <h2>${esc(ptTitle(p))}</h2>
-    <div class="muted">🗓 Erfasst ${esc(fmtDT(p.created))}${p.visited?` · Besucht ${esc(fmtD(p.visited))}`:""}${p.updated&&p.created&&p.updated-p.created>60000?` · geändert ${esc(fmtDT(p.updated))}`:""}</div>
-    <div class="muted">${icoBadge(p.cat in CATS?p.cat:"other",c.c,22)} ${esc(c.n)}${p.cat==="water"&&p.water==="trink"?" (Trinkwasser)":p.cat==="water"&&p.water==="brauch"?" (Brauchwasser)":""} · ${esc(STATUS[p.status]||"")}${p.section?" · "+esc(p.section):""}${d}</div>
-    <div class="muted">${p.trip&&tripName(p.trip)?`🧳 ${esc(tripName(p.trip))} · `:""}🌍 ${esc(countryName(p.country)||"Land unbekannt")}${p.region?` · 📍 ${esc(p.region)}`:""}</div>
-    ${p.cat==="water"?`<div><b>💧 ${esc(WATERQ[p.water||"unklar"])}</b></div>`:""}
-    ${p.story?`<div class="muted">📖 Storypoint – wird auf der Familienseite gezeigt</div>`:""}
+    <h2 class="dtitle">${esc(ptTitle(p))}</h2>
+    <div class="meta">
+      <div class="mrow">${icoBadge(p.cat in CATS?p.cat:"other",c.c,24)}<span><b>${esc(c.n)}</b>${p.cat==="water"&&p.water==="trink"?" (Trinkwasser)":p.cat==="water"&&p.water==="brauch"?" (Brauchwasser)":""} · ${p.status==="besucht"?`<span class="lchk">✓</span>`:""}${esc(STATUS[p.status]||"")}</span></div>
+      ${p.section?`<div class="mrow">${mi("sec")}<span>${esc(p.section)}</span></div>`:""}
+      <div class="mrow">${mi("cal")}<span>Erfasst ${esc(fmtDT(p.created))}${p.visited?` · besucht ${esc(fmtD(p.visited))}`:""}</span></div>
+      ${p.trip&&tripName(p.trip)?`<div class="mrow">${mi("bag")}<span>${esc(tripName(p.trip))}</span></div>`:""}
+      <div class="mrow">${mi("globe")}<span>${esc(countryName(p.country)||"Land unbekannt")}${p.region?" · "+esc(p.region):""}</span></div>
+      ${me?`<div class="mrow">${mi("ruler")}<span>${distKm(me,p).toFixed(1)} km Luftlinie</span></div>`:""}
+      ${p.cat==="water"?`<div class="mrow">${icoBadge("water","#0288d1",24)}<span><b>${esc(WATERQ[p.water||"unklar"])}</b></span></div>`:""}
+      ${p.story?`<div class="mrow">${mi("book")}<span>Storypoint – wird publiziert</span></div>`:""}
+    </div>
     ${RATE[p.cat]&&(p.stars||Object.keys(p.rate||{}).length)?`<div class="rate">${p.stars?`<div class="rrow"><b>Gesamt</b><span class="sv" style="font-size:20px">${starTxt(p.stars)}</span></div>`:""}
-      ${RATE[p.cat].map(([k,l,ty])=>{const v=(p.rate||{})[k];if(ty)return isOn(v)?`<div class="rrow"><b>💧 ${l}</b><span>✓</span></div>${v.t?`<div class="muted">${esc(v.t)}</div>`:""}`:"";return v&&(v.s||v.t)?`<div class="rrow"><b>${l}</b><span class="sv">${starTxt(v.s)}</span></div>${v.t?`<div class="muted">${esc(v.t)}</div>`:""}`:"";}).join("")}</div>`:""}
+      ${RATE[p.cat].map(([k,l,ty])=>{const v=(p.rate||{})[k];if(ty)return isOn(v)?`<div class="rrow"><b>${icoBadge("lake","#0288d1",22)} ${l}</b><span>✓</span></div>${v.t?`<div class="muted">${esc(v.t)}</div>`:""}`:"";return v&&(v.s||v.t)?`<div class="rrow"><b>${l}</b><span class="sv">${starTxt(v.s)}</span></div>${v.t?`<div class="muted">${esc(v.t)}</div>`:""}`:"";}).join("")}</div>`:""}
     <hr>${imgs}
     ${p.desc?`<div class="desc">${esc(p.desc)}</div>`:""}
     ${p.note?`<label>Notiz unterwegs</label><div class="desc">${esc(p.note)}</div>`:""}
@@ -542,7 +566,7 @@ async function editPoint(p,isNew=false){
    <div id="fWaterWrap" style="display:${p.cat==="water"?"block":"none"}"><label>Wasser</label><select id="fWater">${Object.entries(WATERQ).map(([k,v])=>`<option value="${k}" ${(p.water||"unklar")===k?"selected":""}>${v}</option>`).join("")}</select></div>
    <div id="fRateBox"></div>
    <label style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink);margin-top:14px"><input type="checkbox" id="fStory" style="width:auto;margin:0" ${p.story?"checked":""}> 📖 Storypoint – auf der Familienseite zeigen</label>
-   <textarea id="fStoryText" placeholder="Text für die Familie (leer = Beschreibung wird verwendet)" style="min-height:70px;margin-top:6px;display:${p.story?"block":"none"}">${esc(p.storyText||"")}</textarea>
+   <textarea id="fStoryText" placeholder="Text für Publikation" style="min-height:70px;margin-top:6px;display:${p.story?"block":"none"}">${esc(p.storyText||"")}</textarea>
    <label>Beschreibung</label><textarea id="fDesc">${esc(p.desc)}</textarea>
    <label>Notiz unterwegs</label><textarea id="fNote" style="min-height:70px">${esc(p.note)}</textarea>
    <label>Quelle</label><input id="fSource" value="${esc(p.source)}" placeholder="Reiseführer S. …, Webseite …">
@@ -564,7 +588,7 @@ async function editPoint(p,isNew=false){
   const renderRate=()=>{const cr=RATE[$("#fCat").value],box=$("#fRateBox");
     if(!cr){box.innerHTML="";return;}
     box.innerHTML=`<label>Bewertung</label><div class="rate"><div class="rrow"><b>Gesamt</b>${starsWidget("__all",draftStars)}</div>
-      ${cr.map(([k,l,ty])=>ty?`<label class="rrow" style="justify-content:flex-start;gap:10px;font-size:14px;color:var(--ink);margin-top:10px"><input type="checkbox" data-tog="${k}" style="width:auto;margin:0" ${isOn(draftRate[k])?"checked":""}> 💧 <b>${l}</b></label><input data-note="${k}" placeholder="Notiz zu ${l} (optional, z. B. Fluss, See, Meer)" value="${esc((draftRate[k]||{}).t||"")}">`
+      ${cr.map(([k,l,ty])=>ty?`<label class="rrow" style="justify-content:flex-start;gap:10px;font-size:14px;color:var(--ink);margin-top:10px"><input type="checkbox" data-tog="${k}" style="width:auto;margin:0" ${isOn(draftRate[k])?"checked":""}> ${icoBadge("lake","#0288d1",24)} <b>${l}</b></label><input data-note="${k}" placeholder="Notiz zu ${l} (optional, z. B. Fluss, See, Meer)" value="${esc((draftRate[k]||{}).t||"")}">`
         :`<div class="rrow"><b>${l}</b>${starsWidget(k,(draftRate[k]||{}).s)}</div><input data-note="${k}" placeholder="Notiz zu ${l} (optional)" value="${esc((draftRate[k]||{}).t||"")}">`).join("")}
       <div class="muted" style="margin-top:6px">Stern nochmals antippen = Bewertung entfernen.</div></div>`;bindStars(box);};
   renderRate();

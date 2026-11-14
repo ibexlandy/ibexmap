@@ -1,4 +1,4 @@
-IBEXMAP – v1.20 (privates Projekt)
+IBEXMAP – v1.21 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -120,3 +120,8 @@ NEU IN v1.20
 - Neue Kartenebene "swisstopo (Schweiz)" (Landeskarte), auch offline speicherbar.
 - Besuchte Punkte deutlich: grüner Rand und grüner Haken (Karte und Liste).
 - Auf Handy/Tablet immer mind. 48 px Abstand unten (Formulare, Leisten, Knöpfe), auch wenn Android den Abstand nicht meldet.
+
+NEU IN v1.21
+- Kategorie heisst nur noch «Wanderung».
+- Sehenswürdigkeit mit Gesamtbewertung 1–5 Sterne.
+- Detailansicht grösser, mit schlichten Symbolen statt Emojis.
