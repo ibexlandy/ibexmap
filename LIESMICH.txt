@@ -1,4 +1,4 @@
-REISEBUCH – Prototyp v7 (privates Projekt)
+REISEBUCH – Prototyp v8 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -46,3 +46,10 @@ NEU IN v6
 NEU IN v7
 - Handy: Seite passt sich der Bildschirmhöhe an (scrollt nicht mehr),
   untere Knopfleiste wird nicht mehr von der Android-Navigationsleiste verdeckt.
+
+NEU IN v8
+- Online-Abgleich über das private Google Drive (versteckter App-Ordner):
+  Menü → Google Drive einrichten (einmalig OAuth-Client-ID eintragen), danach ⟳ oben rechts.
+  Alle Geräte müssen dasselbe Google-Konto verwenden.
+- Karte offline: Menü → Karte offline speichern (Marokko grob, rund um die Punkte detailliert).
+- App bittet Android, den Speicher dauerhaft zu behalten.

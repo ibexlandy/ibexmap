@@ -16,6 +16,9 @@ html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none;font-fam
 header{flex:none;display:flex;align-items:center;gap:8px;padding:calc(8px + env(safe-area-inset-top)) 12px 8px;background:var(--accent);color:#fff}
 header h1{font-size:18px;margin:0;flex:1;font-weight:600;letter-spacing:.3px}
 header .gps{font-size:12px;opacity:.85}
+.hbtn{border:1px solid rgba(255,255,255,.5);background:none;color:#fff;border-radius:8px;font-size:18px;padding:2px 10px;margin-left:6px}
+.hbtn.busy{opacity:.5}
+.bar{height:10px;background:#ddd;border-radius:5px;overflow:hidden;margin:10px 0}.bar div{height:100%;background:var(--accent2);width:0}
 #map{flex:1;position:relative;min-height:0}
 nav{flex:none;display:grid;grid-template-columns:repeat(4,1fr);background:#fff;border-top:1px solid var(--line);padding-bottom:max(env(safe-area-inset-bottom),0px)}
 nav button{border:0;background:none;padding:10px 4px 12px;font-size:13px;color:var(--ink);display:flex;flex-direction:column;align-items:center;gap:2px}
@@ -69,7 +72,7 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 </head>
 <body>
 <div id="app">
-  <header><h1>Reisebuch</h1><span class="gps" id="gpsInfo">GPS aus</span></header>
+  <header><h1>Reisebuch</h1><span class="gps" id="gpsInfo">GPS aus</span><button class="hbtn" id="syncBtn" title="Mit Google Drive abgleichen" style="display:none">⟳</button></header>
   <div id="map">
     <div class="hint" id="hint">Tippe auf die Karte, um den Punkt zu setzen · <u id="hintCancel">Abbrechen</u></div>
     <button class="fab" id="locBtn" title="Mein Standort">◎</button>
@@ -134,6 +137,7 @@ function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open("reisebu
 function tx(store,mode,fn){return new Promise((res,rej)=>{const t=db.transaction(store,mode);const s=t.objectStore(store);const out=fn(s);t.oncomplete=()=>res(out&&out.result!==undefined?out.result:out);t.onerror=()=>rej(t.error);});}
 const getAll=st=>new Promise((res,rej)=>{const r=db.transaction(st).objectStore(st).getAll();r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});
 const getOne=(st,id)=>new Promise((res,rej)=>{const r=db.transaction(st).objectStore(st).get(id);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});
+const keysOf=st=>new Promise((res,rej)=>{const r=db.transaction(st).objectStore(st).getAllKeys();r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});
 const put=(st,v)=>tx(st,"readwrite",s=>s.put(v));
 const del=(st,id)=>tx(st,"readwrite",s=>s.delete(id));
 let sections=[];let regionData=null;
@@ -458,13 +462,22 @@ $("#navMenu").onclick=async()=>{
    <h3>Regionen automatisch</h3>
    <p class="muted">${regionData?`Regionsgrenzen geladen (${(regionData.prov||[]).length} Provinzen, ${(regionData.reg||[]).length} Regionen) – funktioniert offline.`:"Einmalig mit Internet laden (Marokko: Provinzen und Regionen). Danach offline."}</p>
    <div class="actions"><button class="btn sec" id="mReg">${regionData?"Neu laden":"Regionsgrenzen laden"}</button>${regionData?`<button class="btn sec" id="mRegAll">Region für alle Punkte ermitteln</button>`:""}</div>
+   <h3>Online-Abgleich (Google Drive)</h3>
+   ${gdClient()?`<p class="muted">Eingerichtet. Letzter Abgleich: ${lastSync()}. Mit ⟳ oben rechts oder hier abgleichen – nur mit Internet.</p>
+   <div class="actions"><button class="btn" id="mSync">Jetzt synchronisieren</button><button class="btn sec" id="mGset">Einstellungen</button></div>`
+   :`<p class="muted">Gleicht PC, Handy und Tablet über dein privates Google Drive ab (versteckter App-Ordner). Einmalig einrichten.</p>
+   <div class="actions"><button class="btn sec" id="mGset">Google Drive einrichten</button></div>`}
+   <h3>Karte offline</h3>
+   <p class="muted">Kartenbilder rund um eure Punkte vorab speichern (zu Hause im WLAN), damit die Karte in Marokko ohne Netz geht.</p>
+   <div class="actions"><button class="btn sec" id="mOff">Karte offline speichern</button></div>
    <h3>Für OsmAnd</h3>
    <p class="muted">Alle Punkte als GPX in einer einzigen Gruppe «${GROUP}».</p>
    <div class="actions"><button class="btn sec" id="mGpx">GPX exportieren</button></div>
-   <hr><p class="muted">Karten: Strassen (Esri), Satellit (Esri), Topo (OpenTopoMap) – oben rechts umschalten. Die Karte braucht im Prototyp noch Internet; bereits angeschaute Gebiete bleiben im Zwischenspeicher.</p>`);
+   <hr><p class="muted">Karten: Strassen (Esri), Satellit (Esri), Topo (OpenTopoMap) – oben rechts umschalten. Ohne Internet zeigt die Karte die offline gespeicherten und bereits angeschauten Gebiete.</p>`);
   $("#mSec").onclick=manageSections;
   $("#mReg").onclick=async()=>{toast("Lade Regionsgrenzen …",8000);try{const d=await downloadRegions();toast(`Geladen: ${d.prov.length} Provinzen, ${d.reg.length} Regionen`);$("#navMenu").onclick();}catch(e){toast("Laden fehlgeschlagen – Internet?",5000);}};
   const ra=$("#mRegAll");if(ra)ra.onclick=async()=>{let n=0;for(const p of points){const r=regionOf(p.lat,p.lon);if(r&&r!==p.region){p.region=r;p.updated=Date.now();await put("points",p);n++;}}await loadPoints();toast(`${n} Punkte aktualisiert`);};
+  $("#mGset").onclick=gdSettings;const ms=$("#mSync");if(ms)ms.onclick=syncDrive;$("#mOff").onclick=offlineDialog;
   $("#mExport").onclick=exportPackage;$("#mGpx").onclick=exportGPX;$("#mImport").onclick=()=>$("#fileImport").click();
 };
 function manageSections(){
@@ -533,9 +546,124 @@ async function importGPX(text){const doc=new DOMParser().parseFromString(text,"a
     await put("points",newPoint(la,lo,{title:g("name")||"Wegpunkt",desc:g("desc"),section:sec,region:regionOf(la,lo),status:/option/i.test(typ)?"idee":"fix"}));n++;}
   await loadPoints();closePanel();toast(`${n} Wegpunkte aus GPX importiert`);}
 
+
+/* ---------- Google-Drive-Abgleich ---------- */
+const GD_SCOPE="https://www.googleapis.com/auth/drive.appdata",GD_DATA="reisebuch_daten.json";
+let gdToken=null,gdExp=0,syncing=false;
+const ls=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k)||"";if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v);}catch(e){return "";}};
+const gdClient=()=>ls("rb_gclient");
+const lastSync=()=>{const t=+ls("rb_lastsync");return t?new Date(t).toLocaleString("de-CH",{dateStyle:"short",timeStyle:"short"}):"noch nie";};
+function showSyncBtn(){$("#syncBtn").style.display=gdClient()?"":"none";}
+$("#syncBtn").onclick=()=>syncDrive();
+function loadGIS(){return new Promise((res,rej)=>{if(window.google&&google.accounts&&google.accounts.oauth2)return res();
+  const e=document.createElement("script");e.src="https://accounts.google.com/gsi/client";e.onload=res;e.onerror=()=>rej(new Error("Google-Anmeldung nicht ladbar"));document.head.appendChild(e);});}
+async function gdAuth(){if(gdToken&&Date.now()<gdExp-60000)return gdToken;await loadGIS();
+  return new Promise((res,rej)=>{const c=google.accounts.oauth2.initTokenClient({client_id:gdClient(),scope:GD_SCOPE,
+    callback:r=>{if(r.error)return rej(new Error(r.error_description||r.error));gdToken=r.access_token;gdExp=Date.now()+(+r.expires_in||3600)*1000;ls("rb_gconn","1");res(gdToken);},
+    error_callback:e=>rej(new Error(e&&e.type==="popup_closed"?"Anmeldung abgebrochen":"Anmeldefenster blockiert oder abgebrochen"))});
+    c.requestAccessToken({prompt:ls("rb_gconn")?"":"consent"});});}
+async function gd(path,opt={}){const t=await gdAuth();
+  const r=await fetch("https://www.googleapis.com/"+path,Object.assign({},opt,{headers:Object.assign({Authorization:"Bearer "+t},opt.headers||{})}));
+  if(r.status===401){gdToken=null;throw new Error("Anmeldung abgelaufen – nochmals ⟳ tippen");}
+  if(!r.ok)throw new Error("Google Drive antwortet mit Fehler "+r.status);return r;}
+async function gdList(){let out=[],pt="";do{const r=await(await gd(`drive/v3/files?spaces=appDataFolder&pageSize=1000&fields=nextPageToken,files(id,name)${pt?"&pageToken="+encodeURIComponent(pt):""}`)).json();
+  out=out.concat(r.files||[]);pt=r.nextPageToken||"";}while(pt);return out;}
+async function gdUpload(name,blob,id){const fd=new FormData();
+  fd.append("metadata",new Blob([JSON.stringify(id?{}:{name,parents:["appDataFolder"]})],{type:"application/json"}));fd.append("file",blob);
+  await gd(`upload/drive/v3/files${id?"/"+id:""}?uploadType=multipart`,{method:id?"PATCH":"POST",body:fd});}
+async function syncDrive(){if(syncing)return;
+  if(!gdClient())return gdSettings();
+  if(!navigator.onLine)return toast("Kein Internet – später synchronisieren",4000);
+  syncing=true;$("#syncBtn").classList.add("busy");toast("Synchronisiere …",120000);
+  try{const files=await gdList();const byName=Object.fromEntries(files.map(f=>[f.name,f]));
+    let remote={points:[],sections:[]};
+    if(byName[GD_DATA])remote=await(await gd(`drive/v3/files/${byName[GD_DATA].id}?alt=media`)).json();
+    const local=Object.fromEntries((await getAll("points")).map(p=>[p.id,p]));let nIn=0;
+    for(const p of remote.points||[]){const ex=local[p.id];if(ex&&(ex.updated||0)>=(p.updated||0))continue;
+      if(ex&&!ex.deleted)for(const id of ex.photos||[])if(!(p.photos||[]).includes(id))await del("photos",id);
+      await put("points",p);local[p.id]=p;nIn++;}
+    let secCh=false;for(const x of remote.sections||[])if(!sections.includes(x)){sections.push(x);secCh=true;}if(secCh)await saveSections();
+    const have=new Set(await keysOf("photos"));const need=new Set();
+    Object.values(local).filter(p=>!p.deleted).forEach(p=>(p.photos||[]).forEach(id=>need.add(id)));
+    let up=0,down=0,i=0;
+    for(const id of need){const fn="foto_"+id+".jpg";i++;
+      if(have.has(id)&&!byName[fn]){const ph=await getOne("photos",id);if(ph){toast(`Fotos hochladen … (${i}/${need.size})`,120000);await gdUpload(fn,ph.blob);up++;}}
+      else if(!have.has(id)&&byName[fn]){toast(`Fotos herunterladen … (${i}/${need.size})`,120000);await put("photos",{id,blob:await(await gd(`drive/v3/files/${byName[fn].id}?alt=media`)).blob()});down++;}}
+    await gdUpload(GD_DATA,new Blob([JSON.stringify({app:"Reisebuch",format:3,updated:Date.now(),sections,points:Object.values(local)})],{type:"application/json"}),byName[GD_DATA]&&byName[GD_DATA].id);
+    for(const f of files)if(/^foto_.+\.jpg$/.test(f.name)&&!need.has(f.name.slice(5,-4)))await gd(`drive/v3/files/${f.id}`,{method:"DELETE"}).catch(()=>{});
+    ls("rb_lastsync",String(Date.now()));await loadPoints();
+    toast(`Abgeglichen: ${nIn} Änderungen geholt, ${up} Fotos hoch-, ${down} heruntergeladen`,5000);
+  }catch(e){toast("Abgleich fehlgeschlagen: "+e.message,7000);}
+  finally{syncing=false;$("#syncBtn").classList.remove("busy");}}
+function gdSettings(){
+  openPanel(`<h2>Google Drive einrichten</h2>
+   <p class="muted">Einmalig nötig: ein Zugangsschlüssel («OAuth-Client-ID») aus der Google Cloud Console deines <b>privaten</b> Google-Kontos. Die App darf damit nur ihren eigenen, versteckten Ordner in deinem Drive lesen und schreiben – nicht deine anderen Dateien.</p>
+   <p class="muted">Bei der Einrichtung als «Autorisierter JavaScript-Ursprung» eintragen:<br><b>${esc(location.origin)}</b></p>
+   <label>OAuth-Client-ID</label><input id="gId" value="${esc(gdClient())}" placeholder="1234…apps.googleusercontent.com">
+   <div class="actions"><button class="btn" id="gSave">Speichern und verbinden</button>${gdClient()?`<button class="btn warn" id="gOff">Trennen</button>`:""}<button class="btn sec" id="gBack">Zurück</button></div>
+   <p class="muted">Die Daten auf dem Gerät bleiben immer erhalten – der Abgleich kopiert nur hin und her. Das Reisepaket funktioniert weiterhin als Backup ohne Internet.</p>`);
+  $("#gBack").onclick=()=>$("#navMenu").onclick();
+  $("#gSave").onclick=()=>{const v=$("#gId").value.trim();if(!/\.apps\.googleusercontent\.com$/.test(v))return toast("Das sieht nicht nach einer Client-ID aus (endet auf .apps.googleusercontent.com)",5000);
+    if(v!==gdClient()){ls("rb_gclient",v);ls("rb_gconn",null);gdToken=null;}showSyncBtn();closePanel();syncDrive();};
+  const o=$("#gOff");if(o)o.onclick=()=>{try{if(gdToken&&window.google)google.accounts.oauth2.revoke(gdToken,()=>{});}catch(e){}
+    gdToken=null;ls("rb_gclient",null);ls("rb_gconn",null);showSyncBtn();toast("Google Drive getrennt – Daten auf dem Gerät bleiben");$("#navMenu").onclick();};}
+
+/* ---------- Karte offline ---------- */
+const OFFLINE="reisebuch-offline",MA_BOX={s:27.6,w:-13.3,n:35.95,e:-1.0};
+let offRun=null;
+function tileXY(lat,lon,z){const n=2**z,r=lat*Math.PI/180;
+  return [Math.max(0,Math.min(n-1,Math.floor((lon+180)/360*n))),Math.max(0,Math.min(n-1,Math.floor((1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*n)))];}
+function tileKeys(areas,zmin,zmax){const set=new Set();
+  for(const a of areas)for(let z=zmin;z<=zmax;z++){const[x1,y1]=tileXY(a.n,a.w,z),[x2,y2]=tileXY(a.s,a.e,z);
+    for(let x=x1;x<=x2;x++)for(let y=y1;y<=y2;y++)set.add(z+"/"+x+"/"+y);}return set;}
+function tileURL(lay,k){const[z,x,y]=k.split("/");const sd=lay.options.subdomains||"abc";
+  return lay._url.replace("{s}",sd[Math.abs(+x+ +y)%sd.length]).replace("{z}",z).replace("{x}",x).replace("{y}",y);}
+function offPlan(o){const lay=BASE[o.layer];const maxZ=Math.min(o.zmax,lay.options.maxZoom||19);
+  const keys=tileKeys([MA_BOX],5,8);
+  const km=o.radius,src=o.only==="fix"?points.filter(p=>p.status!=="idee"):points;
+  const areas=src.map(p=>{const dy=km/111,dx=km/(111*Math.cos(p.lat*Math.PI/180));return {s:p.lat-dy,n:p.lat+dy,w:p.lon-dx,e:p.lon+dx};});
+  tileKeys(areas,9,maxZ).forEach(k=>keys.add(k));return {lay,keys:[...keys],n:src.length};}
+async function offlineDialog(){
+  const o={layer:ls("rb_offL")||(map.hasLayer(BASE["Topo"])?"Topo":"Strassen"),radius:+ls("rb_offR")||10,zmax:+ls("rb_offZ")||14,only:ls("rb_offO")||"all"};
+  let cnt=0;try{cnt=(await(await caches.open(OFFLINE)).keys()).length;}catch(e){}
+  const draw=()=>{const pl=offPlan(o);const mb=Math.round(pl.keys.length*(o.layer==="Satellit"?0.03:0.02));
+    openPanel(`<h2>Karte offline speichern</h2>
+     <p class="muted">Gespeichert: ${cnt} Kartenbilder. Ganz Marokko wird grob (bis Zoom 8) gespeichert, rund um eure Punkte detailliert.</p>
+     <label>Karte</label><select id="oL">${Object.keys(BASE).map(k=>`<option ${k===o.layer?"selected":""}>${k}</option>`).join("")}</select>
+     <label>Umkreis um jeden Punkt</label><select id="oR">${[5,10,20,30].map(v=>`<option value="${v}" ${v===o.radius?"selected":""}>${v} km</option>`).join("")}</select>
+     <label>Detailstufe</label><select id="oZ">${[[12,"12 – Übersicht"],[13,"13 – Strassen gut lesbar"],[14,"14 – Pisten und Wege (empfohlen)"],[15,"15 – sehr detailliert (viel Speicher)"]].map(([v,t])=>`<option value="${v}" ${v===o.zmax?"selected":""}>${t}</option>`).join("")}</select>
+     <label>Welche Punkte</label><select id="oO"><option value="all" ${o.only==="all"?"selected":""}>Alle Punkte</option><option value="fix" ${o.only==="fix"?"selected":""}>Nur Fixpunkte und besuchte</option></select>
+     <p><b>${pl.keys.length.toLocaleString("de-CH")} Kartenbilder</b> für ${pl.n} Punkte, ca. ${mb} MB${pl.keys.length>20000?" – <b>zu viel</b>, bitte Umkreis oder Detailstufe verkleinern (max. 20 000)":""}.</p>
+     <div class="bar" id="oBar" style="display:none"><div></div></div><p class="muted" id="oInfo"></p>
+     <div class="actions"><button class="btn" id="oGo" ${pl.keys.length>20000?"disabled":""}>Herunterladen</button><button class="btn sec" id="oStop" style="display:none">Abbrechen</button>
+     <button class="btn warn" id="oDel">Offline-Karte löschen</button><button class="btn sec" id="oBack">Zurück</button></div>
+     <p class="muted">Am besten zu Hause im WLAN und mit geöffneter App (Bildschirm an). Bereits gespeicherte Bilder werden übersprungen – Abbrechen und später weitermachen geht. Die Kartendienste sind für normale Nutzung gedacht: bitte nur so viel speichern, wie ihr wirklich braucht. Zum Navigieren bleibt OsmAnd mit seinen Offline-Karten zuständig.</p>`);
+    const ch=(id,k,f)=>$(id).onchange=e=>{o[k]=f(e.target.value);ls({layer:"rb_offL",radius:"rb_offR",zmax:"rb_offZ",only:"rb_offO"}[k],String(o[k]));draw();};
+    ch("#oL","layer",String);ch("#oR","radius",Number);ch("#oZ","zmax",Number);ch("#oO","only",String);
+    $("#oBack").onclick=()=>{if(offRun)offRun.stop=true;$("#navMenu").onclick();};
+    $("#oDel").onclick=()=>confirmBox("Alle offline gespeicherten Kartenbilder löschen?",async()=>{await caches.delete(OFFLINE);cnt=0;toast("Offline-Karte gelöscht");draw();});
+    $("#oStop").onclick=()=>{if(offRun)offRun.stop=true;};
+    $("#oGo").onclick=()=>offDownload(pl);};
+  draw();}
+async function offDownload(pl){if(!navigator.onLine)return toast("Kein Internet",4000);
+  const c=await caches.open(OFFLINE);const have=new Set((await c.keys()).map(r=>r.url));
+  const todo=pl.keys.map(k=>tileURL(pl.lay,k)).filter(u=>!have.has(u));
+  const run=offRun={stop:false};let done=0,fail=0;const total=todo.length;
+  $("#oBar").style.display="";$("#oStop").style.display="";$("#oGo").disabled=true;
+  const upd=()=>{const b=$("#oBar div");if(b)b.style.width=(total?Math.round(done/total*100):100)+"%";const i=$("#oInfo");if(i)i.textContent=`${done} von ${total} neu geladen${fail?`, ${fail} Fehler`:""}${pl.keys.length-total?` (${pl.keys.length-total} schon vorhanden)`:""}`;};
+  upd();let idx=0;
+  const worker=async()=>{while(!run.stop&&idx<todo.length){const u=todo[idx++];
+    try{let r=await fetch(u,{mode:"cors"}).catch(()=>null);if(!r||!r.ok)r=await fetch(u,{mode:"no-cors"});await c.put(u,r);}catch(e){fail++;}
+    done++;if(done%10===0||done===total)upd();}};
+  await Promise.all([worker(),worker(),worker(),worker()]);offRun=null;upd();
+  toast(run.stop?"Abgebrochen – später weitermachen möglich":`Fertig: ${done-fail} Kartenbilder gespeichert${fail?", "+fail+" Fehler (nochmals starten)":""}`,6000);
+  const s=$("#oStop");if(s)s.style.display="none";const g=$("#oGo");if(g)g.disabled=false;}
+
 /* ---------- Start ---------- */
 (async()=>{
   try{db=await openDB();}catch(e){toast("Speicher nicht verfügbar – Daten werden nicht gesichert",6000);return;}
+  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
+  showSyncBtn();
   await loadMeta();
   if(!sections.length&&!(await getOne("meta","sections"))){sections=MA_SECTORS.map(x=>x.n);await saveSections();}
   await loadPoints();
