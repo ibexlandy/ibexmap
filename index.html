@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, interactive-widget=resizes-content">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#2f3b2f">
 <title>ibexmap</title>
 <link rel="manifest" href="manifest.webmanifest">
@@ -41,11 +41,21 @@ nav button.on{color:var(--accent2)}
 .sv{color:#e0a100;letter-spacing:1px}
 .clu{border-radius:50%;border:3px solid #fff;box-shadow:0 1px 6px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;position:relative;font-size:18px}
 .clu b{position:absolute;right:-6px;top:-6px;background:#222;color:#fff;font-size:11px;min-width:20px;height:20px;border-radius:10px;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid #fff}
+.ico{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;flex:none;vertical-align:middle}
+.chip .ico{margin-right:4px}
+.catgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:6px;margin-top:4px}
+.catgrid button{display:flex;flex-direction:column;align-items:center;gap:4px;border:2px solid var(--line);background:#fff;border-radius:10px;padding:8px 4px;font:inherit;font-size:12px;color:var(--ink);line-height:1.2;text-align:center}
+.catgrid button.on{border-color:var(--accent2);background:#fff6ec;font-weight:600}
+.osmpin{border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center}
 .hint{position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:600;background:var(--accent2);color:#fff;padding:8px 14px;border-radius:20px;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.3);display:none}
 .sheet{position:fixed;left:0;right:0;top:0;height:100vh;height:100dvh;z-index:1000;background:rgba(0,0,0,.35);display:none}
 .sheet.open{display:block}
 .panel{position:absolute;left:0;right:0;bottom:0;max-height:92%;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-bottom:calc(24px + env(safe-area-inset-bottom)) !important;background:var(--bg);border-radius:16px 16px 0 0;padding:14px 16px 24px}
 @media (min-width:900px){.panel{left:auto;right:0;top:0;bottom:0;width:440px;max-height:none;border-radius:0}}
+.ptop{position:sticky;top:-14px;margin:-14px -16px 6px;padding:8px 10px;display:flex;align-items:center;justify-content:space-between;background:var(--bg);z-index:5;border-bottom:1px solid var(--line)}
+.ptop .px{border:0;background:#fff;border-radius:50%;width:40px;height:40px;font-size:18px;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.ptop .pback{border:0;background:none;font-size:16px;font-weight:600;color:var(--accent);padding:8px 6px}
+.ptop .pgrab{width:40px;height:5px;border-radius:3px;background:#cfc8b8}
 .panel h2{margin:4px 0 12px;font-size:19px}
 .row{display:flex;gap:8px;align-items:center}
 .row>*{flex:1}
@@ -78,7 +88,7 @@ textarea{min-height:110px;resize:vertical}
 .pin{width:30px;height:30px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center}
 .pin span{transform:rotate(45deg);font-size:15px}
 .pin.visited{opacity:.55}
-.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#222;color:#fff;padding:10px 16px;border-radius:20px;z-index:2000;display:none;font-size:14px;max-width:90%}
+.toast{position:fixed;left:50%;top:calc(64px + env(safe-area-inset-top));transform:translateX(-50%);background:#222;color:#fff;padding:10px 16px;border-radius:20px;z-index:2000;display:none;font-size:14px;max-width:90%}
 hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 
 .xh{position:relative;width:64px;height:120px}
@@ -115,8 +125,8 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 "use strict";
 /* ---------- Konstanten ---------- */
 const CATS={
-  wild:{n:"Stellplatz",c:"#2e7d32",i:"⛺"},
-  camp:{n:"Camping",c:"#1565c0",i:"🚿"},
+  wild:{n:"Stellplatz",c:"#2e7d32",i:"🌲"},
+  camp:{n:"Camping",c:"#1565c0",i:"⛺"},
   sight:{n:"Sehenswürdigkeit",c:"#8e24aa",i:"★"},
   hike:{n:"Wanderung / Hochtour",c:"#6d4c41",i:"🏔️"},
   wildlife:{n:"Tierbeobachtung",c:"#c49000",i:"🔭"},
@@ -127,6 +137,24 @@ const CATS={
   warn:{n:"Achtung",c:"#c62828",i:"⚠️"},
   other:{n:"Sonstiges",c:"#757575",i:"🔹"}
 };
+
+/* ---------- Eigene Symbole (wie OSM/OsmAnd: weisses Piktogramm auf Farbe) ---------- */
+const D="rgba(0,0,0,.38)";
+const ICON={
+  wild:`<path d="M7.5 2 3 9h2.4L2.5 14h10l-2.9-5H12z" fill="#fff"/><rect x="6.6" y="14" width="1.8" height="5" fill="#fff"/><path d="M13 12.5h9M13 15.5h9M14 15.5V20M21 15.5V20" stroke="#fff" stroke-width="2" stroke-linecap="round" fill="none"/>`,
+  camp:`<path d="M12 3 2 20h20z" fill="#fff"/><path d="M12 11.5 8.8 20h6.4z" fill="${D}"/><path d="M10 2.5l2 3 2-3" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/>`,
+  sight:`<path d="M12 2.5 2.5 8h19z" fill="#fff"/><rect x="4.5" y="9.5" width="2.6" height="8" fill="#fff"/><rect x="10.7" y="9.5" width="2.6" height="8" fill="#fff"/><rect x="16.9" y="9.5" width="2.6" height="8" fill="#fff"/><rect x="2.5" y="18.5" width="19" height="2.5" rx=".5" fill="#fff"/>`,
+  hike:`<path d="M1.5 20.5 9 7l4 6.5L16 9l6.5 11.5z" fill="#fff"/><path d="M9 7l-2.1 3.8L9 10l1.6 1.6z" fill="${D}"/>`,
+  wildlife:`<rect x="4" y="4" width="5" height="9" rx="1.5" fill="#fff"/><rect x="15" y="4" width="5" height="9" rx="1.5" fill="#fff"/><rect x="9" y="7" width="6" height="3.5" fill="#fff"/><circle cx="6.5" cy="16" r="4" fill="#fff"/><circle cx="17.5" cy="16" r="4" fill="#fff"/><circle cx="6.5" cy="16" r="2" fill="${D}"/><circle cx="17.5" cy="16" r="2" fill="${D}"/>`,
+  shop:`<path d="M2 4h3l2.6 10.5h10.8L21 7H6.4" stroke="#fff" stroke-width="2.2" fill="none" stroke-linejoin="round" stroke-linecap="round"/><circle cx="9" cy="19" r="1.9" fill="#fff"/><circle cx="17" cy="19" r="1.9" fill="#fff"/>`,
+  fuel:`<rect x="3.5" y="3" width="10" height="18" rx="1.5" fill="#fff"/><rect x="5.5" y="5.5" width="6" height="4.5" fill="${D}"/><path d="M13.5 9.5h2.2a1.5 1.5 0 0 1 1.5 1.5v5.5a1.6 1.6 0 0 0 3.2 0V8L17.7 5.2" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`,
+  service:`<path d="M15.2 3.2a5 5 0 0 0-5.6 6.8L3 16.6 7.4 21l6.6-6.6a5 5 0 0 0 6.8-5.6l-3.1 3.1-3.3-.9-.9-3.3z" fill="#fff"/>`,
+  water:`<path d="M12 2.5C9 7.2 5.5 10.6 5.5 14.6a6.5 6.5 0 0 0 13 0c0-4-3.5-7.4-6.5-12.1z" fill="#fff"/><path d="M9 14.8a3 3 0 0 0 3 3" stroke="${D}" stroke-width="1.8" fill="none" stroke-linecap="round"/>`,
+  warn:`<path d="M12 2.8 22.2 20.5H1.8z" fill="#fff" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/><rect x="10.9" y="8.5" width="2.2" height="6.5" rx="1" fill="${D}"/><circle cx="12" cy="17.6" r="1.3" fill="${D}"/>`,
+  other:`<circle cx="12" cy="12" r="9.5" fill="#fff"/><circle cx="12" cy="7.3" r="1.5" fill="${D}"/><rect x="10.8" y="10" width="2.4" height="8" rx="1" fill="${D}"/>`
+};
+const svgI=(k,sz=18)=>`<svg viewBox="0 0 24 24" width="${sz}" height="${sz}" aria-hidden="true" style="display:block">${ICON[k]||ICON.other}</svg>`;
+const icoBadge=(k,color,sz=22)=>`<span class="ico" style="background:${color};width:${sz}px;height:${sz}px">${svgI(k,Math.round(sz*.68))}</span>`;
 const STATUS={idee:"Idee",fix:"Fixpunkt",besucht:"Besucht"};
 const WATERQ={trink:"Trinkwasser",brauch:"Nur Brauchwasser (abkochen/filtern)",unklar:"Unbekannt"};
 const RATE={
@@ -145,7 +173,7 @@ function bindStars(root){root.querySelectorAll(".stars").forEach(w=>w.querySelec
 function rateText(p){const cr=RATE[p.cat];if(!cr)return "";const r=p.rate||{};
   return [p.stars?"Gesamt "+starTxt(p.stars):"",...cr.map(([k,l,ty])=>ty?(isOn(r[k])?`${l}${r[k].t?" – "+r[k].t:""}`:""):r[k]&&(r[k].s||r[k].t)?`${l}: ${starTxt(r[k].s)}${r[k].t?" – "+r[k].t:""}`:"")].filter(Boolean).join("\n");}
 const GROUP="ibexmap";
-const VERSION="v1.18";
+const VERSION="v1.19";
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
 const MA_SECTORS=[
  {n:"A Norden",zeit:"5.–10. April",klima:"Frühling, grün; 15–22 °C, im Rif Regen möglich, Nächte kühl",info:"Tanger Med, Chefchaouen, Fès, Meknès – ankommen, Städte, einkaufen. Eher Campings.",box:[[33.8,-5.9,35.95,-1.0]]},
@@ -273,7 +301,7 @@ let points=[];const thumbs={};
 
 function pinIcon(p){const c=CATS[p.cat]||CATS.other;
   return L.divIcon({className:"",iconSize:[30,30],iconAnchor:[15,30],popupAnchor:[0,-28],
-    html:`<div class="pin ${p.status==="besucht"?"visited":""}" style="background:${c.c}"><span>${c.i}</span></div>`});}
+    html:`<div class="pin ${p.status==="besucht"?"visited":""}" style="background:${c.c}"><span>${svgI(p.cat in CATS?p.cat:"other",16)}</span></div>`});}
 let hiddenCats=[];try{hiddenCats=JSON.parse(localStorage.getItem("rb_hidden")||"[]");}catch(e){}
 let mapTrip="",mapCountry="";try{mapTrip=localStorage.getItem("rb_mtrip")||"";mapCountry=localStorage.getItem("rb_mcountry")||"";}catch(e){}
 const saveMapScope=()=>{try{localStorage.setItem("rb_mtrip",mapTrip);localStorage.setItem("rb_mcountry",mapCountry);}catch(e){}};
@@ -292,7 +320,7 @@ function drawPoints(){layer.clearLayers();
     const c=CATS[cat],la=list.reduce((a,p)=>a+p.lat,0)/list.length,lo=list.reduce((a,p)=>a+p.lon,0)/list.length;
     const n=list.length,sz=n<10?38:n<50?44:50;
     L.marker([la,lo],{icon:L.divIcon({className:"",iconSize:[sz,sz],iconAnchor:[sz/2,sz/2],
-      html:`<div class="clu" style="width:${sz}px;height:${sz}px;background:${c.c}"><span>${c.i}</span><b>${n}</b></div>`}),zIndexOffset:500})
+      html:`<div class="clu" style="width:${sz}px;height:${sz}px;background:${c.c}">${svgI(cat,Math.round(sz*.55))}<b>${n}</b></div>`}),zIndexOffset:500})
      .addTo(layer).on("click",()=>{const b=L.latLngBounds(list.map(p=>[p.lat,p.lon]));
        if(b.getNorthEast().equals(b.getSouthWest()))map.setView(b.getCenter(),CLUSTER_MAXZOOM);else map.fitBounds(b,{padding:[50,50],maxZoom:CLUSTER_MAXZOOM});});}}
 const CLUSTER_MAXZOOM=13;let clusterOn=true;try{clusterOn=localStorage.getItem("rb_cluster")!=="0";}catch(e){}
@@ -348,13 +376,14 @@ function drawOsm(){osmLayer.clearLayers();
   if(!osmShow.length||!osmData.items.length||map.getZoom()<OSM_MINZOOM)return;
   const b=map.getBounds().pad(.2);
   osmData.items.forEach(x=>{if(!osmShow.includes(x.ty)||!b.contains([x.lat,x.lon]))return;const c=OSM[x.ty];
-    L.circleMarker([x.lat,x.lon],{renderer:osmCanvas,radius:map.getZoom()>=14?8:6,color:"#fff",weight:2,fillColor:c.c,fillOpacity:.95})
-     .addTo(osmLayer).on("click",ev=>{L.DomEvent.stopPropagation(ev);showOsm(x);});});}
+    const mk=map.getZoom()>=14?L.marker([x.lat,x.lon],{icon:L.divIcon({className:"",iconSize:[24,24],iconAnchor:[12,12],html:`<div class="osmpin" style="width:24px;height:24px;background:${c.c}">${svgI(x.ty,15)}</div>`})})
+      :L.circleMarker([x.lat,x.lon],{renderer:osmCanvas,radius:6,color:"#fff",weight:2,fillColor:c.c,fillOpacity:.95});
+    mk.addTo(osmLayer).on("click",ev=>{L.DomEvent.stopPropagation(ev);showOsm(x);});});}
 map.on("moveend zoomend",drawOsm);
 function showOsm(x){const c=OSM[x.ty],t=x.t;const nm=t.name||t["name:fr"]||t.brand||osmKind(t)||c.n;
   const d=me?` · ${distKm(me,x).toFixed(1)} km Luftlinie`:"";
   const row=(l,v)=>v?`<div><b>${l}:</b> ${esc(v)}</div>`:"";
-  openPanel(`<div class="detail"><h2>${c.i} ${esc(nm)}</h2>
+  openPanel(`<div class="detail"><h2>${icoBadge(x.ty,c.c,28)} ${esc(nm)}</h2>
     <div class="muted">${esc(osmKind(t)||c.n)}${t.brand&&t.brand!==nm?" · "+esc(t.brand):""}${d}</div>
     ${row("Arabisch",t["name:ar"])}${row("Öffnungszeiten",t.opening_hours)}${row("Telefon",t.phone||t["contact:phone"])}
     ${row("Adresse",[t["addr:street"],t["addr:city"]].filter(Boolean).join(", "))}${row("Diesel",t["fuel:diesel"]==="yes"?"ja":t["fuel:diesel"]==="no"?"nein":"")}
@@ -397,8 +426,27 @@ function resize(file,max=1600,q=.82){return new Promise((res,rej)=>{const img=ne
 async function photoURL(id){if(thumbs[id])return thumbs[id];const p=await getOne("photos",id);if(!p)return "";thumbs[id]=URL.createObjectURL(p.blob);return thumbs[id];}
 
 /* ---------- Panel ---------- */
-function openPanel(html){$("#panel").innerHTML=html;$("#sheet").classList.add("open");$("#panel").scrollTop=0;}
-function closePanel(){$("#sheet").classList.remove("open");}
+/* Panels: oben immer ✕ (schliessen) und – wenn aus dem Menü geöffnet – «‹ Menü». Android-Zurück schliesst ebenfalls. */
+let panelKind="",panelBack=null,panelHist=false;
+const PARENTS={menu:["‹ Menü",()=>$("#navMenu").onclick()],list:["‹ Liste",()=>showList()]};
+let panelBackLbl="";
+function openPanel(html,kind=""){
+  if(!kind)kind=/^\s*<h2>Menü<\/h2>/.test(html)?"menu":/^\s*<h2>Punkte \(/.test(html)?"list":"";
+  const open=isPanelOpen();
+  if(PARENTS[kind]){panelBack=null;}
+  else if(open&&PARENTS[panelKind]){[panelBackLbl,panelBack]=PARENTS[panelKind];}
+  else if(!(open&&panelBack)){panelBack=null;}
+  panelKind=kind;
+  $("#panel").innerHTML=`<div class="ptop">${panelBack?`<button class="pback" id="pBack">${panelBackLbl}</button>`:"<span></span>"}<span class="pgrab"></span><button class="px" id="pX" aria-label="Schliessen">✕</button></div>`+html;
+  $("#sheet").classList.add("open");$("#panel").scrollTop=0;
+  $("#pX").onclick=closePanel;const b=$("#pBack");if(b)b.onclick=panelBack;
+  if(!panelHist){try{history.pushState({rbPanel:1},"");panelHist=true;}catch(e){}}}
+const isPanelOpen=()=>$("#sheet").classList.contains("open");
+function hidePanel(){$("#sheet").classList.remove("open");panelKind="";panelBack=null;}
+let ignorePop=false;
+function closePanel(){if(!isPanelOpen())return;hidePanel();if(panelHist){panelHist=false;ignorePop=true;try{history.back();}catch(e){ignorePop=false;}}}
+window.addEventListener("popstate",()=>{if(ignorePop){ignorePop=false;return;}if(panelHist||isPanelOpen()){panelHist=false;hidePanel();}});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&isPanelOpen())closePanel();});
 $("#sheet").addEventListener("click",e=>{if(e.target.id==="sheet")closePanel();});
 
 /* ---------- Kartenfilter ---------- */
@@ -410,13 +458,13 @@ function showMapFilter(){
     <h3>Reise</h3><div class="chips"><button class="chip ${!mapTrip?"on":""}" data-mt="">Alle Reisen</button>${trips.map(t=>`<button class="chip ${mapTrip===t.id?"on":""}" data-mt="${t.id}">🧳 ${esc(t.name)} (${points.filter(p=>p.trip===t.id).length})</button>`).join("")}</div>
     <h3>Land</h3><div class="chips"><button class="chip ${!mapCountry?"on":""}" data-mc="">Alle Länder</button>${cList.map(c=>`<button class="chip ${mapCountry===c?"on":""}" data-mc="${c}">${esc(countryName(c))} (${points.filter(p=>p.country===c).length})</button>`).join("")}</div>
     <h3>Eigene Punkte</h3>
-    <div class="chips">${Object.entries(CATS).map(([k,v])=>`<button class="chip ${hiddenCats.includes(k)?"":"on"}" data-k="${k}"><span class="dot" style="background:${v.c}"></span>${v.i} ${v.n} (${cnt(k)})</button>`).join("")}</div>
+    <div class="chips">${Object.entries(CATS).map(([k,v])=>`<button class="chip ${hiddenCats.includes(k)?"":"on"}" data-k="${k}">${icoBadge(k,v.c,20)}${v.n} (${cnt(k)})</button>`).join("")}</div>
     <div class="chips"><button class="chip ${clusterOn?"on":""}" id="mfClu">◉ Nahe Punkte gruppieren (bis Zoom ${CLUSTER_MAXZOOM-1})</button></div>
     <h3>Status</h3>
     <div class="chips">${Object.entries(STATUS).map(([k,v])=>`<button class="chip ${hiddenStat.includes(k)?"":"on"}" data-st="${k}">${{idee:"💡",fix:"📌",besucht:"✔️"}[k]||""} ${v} (${points.filter(p=>(p.status||"idee")===k).length})</button>`).join("")}</div>
     <p class="muted">Antippen blendet ein oder aus – z. B. «Besucht» ausschalten, um nur noch offene Ziele zu sehen.</p>
     <h3>Orte aus OpenStreetMap (wie OsmAnd)</h3>
-    <div class="chips">${Object.entries(OSM).map(([k,v])=>`<button class="chip ${osmShow.includes(k)?"on":""}" data-o="${k}"><span class="dot" style="background:${v.c}"></span>${v.i} ${v.n} (${osmData.items.filter(x=>x.ty===k).length})</button>`).join("")}</div>
+    <div class="chips">${Object.entries(OSM).map(([k,v])=>`<button class="chip ${osmShow.includes(k)?"on":""}" data-o="${k}">${icoBadge(k,v.c,20)}${v.n} (${osmData.items.filter(x=>x.ty===k).length})</button>`).join("")}</div>
     <p class="muted">${osmData.items.length?`${osmData.items.length} Orte gespeichert (${esc(osmData.scope)}, Stand ${new Date(osmData.loaded).toLocaleDateString("de-CH")}) – funktioniert offline. Sichtbar ab Zoomstufe ${OSM_MINZOOM}, damit die Karte übersichtlich bleibt.`:"Noch keine Orte gespeichert. Einmal mit Internet laden, danach offline."}</p>
     <div class="actions">${osmCC()?`<button class="btn sec" id="oMA">Ganzes Land laden: ${esc(countryName(osmCC()))}</button>`:""}<button class="btn sec" id="oView">Kartenausschnitt laden</button></div>
     <h3>Eigene Punkte</h3>
@@ -448,7 +496,7 @@ async function showDetail(id){const p=points.find(x=>x.id===id);if(!p)return;con
   openPanel(`<div class="detail">
     <h2>${esc(ptTitle(p))}</h2>
     <div class="muted">🗓 Erfasst ${esc(fmtDT(p.created))}${p.visited?` · Besucht ${esc(fmtD(p.visited))}`:""}${p.updated&&p.created&&p.updated-p.created>60000?` · geändert ${esc(fmtDT(p.updated))}`:""}</div>
-    <div class="muted"><span class="dot" style="background:${c.c}"></span>${esc(c.n)}${p.cat==="water"&&p.water==="trink"?" (Trinkwasser)":p.cat==="water"&&p.water==="brauch"?" (Brauchwasser)":""} · ${esc(STATUS[p.status]||"")}${p.section?" · "+esc(p.section):""}${d}</div>
+    <div class="muted">${icoBadge(p.cat in CATS?p.cat:"other",c.c,22)} ${esc(c.n)}${p.cat==="water"&&p.water==="trink"?" (Trinkwasser)":p.cat==="water"&&p.water==="brauch"?" (Brauchwasser)":""} · ${esc(STATUS[p.status]||"")}${p.section?" · "+esc(p.section):""}${d}</div>
     <div class="muted">${p.trip&&tripName(p.trip)?`🧳 ${esc(tripName(p.trip))} · `:""}🌍 ${esc(countryName(p.country)||"Land unbekannt")}${p.region?` · 📍 ${esc(p.region)}`:""}</div>
     ${p.cat==="water"?`<div><b>💧 ${esc(WATERQ[p.water||"unklar"])}</b></div>`:""}
     ${p.story?`<div class="muted">📖 Storypoint – wird auf der Familienseite gezeigt</div>`:""}
@@ -478,8 +526,9 @@ async function editPoint(p,isNew=false){
   const stOpts=Object.entries(STATUS).map(([k,v])=>`<option value="${k}" ${p.status===k?"selected":""}>${v}</option>`).join("");
   openPanel(`<h2>${isNew?"Neuer Punkt":"Punkt bearbeiten"}</h2>
    <label>Titel <span class="muted">(freiwillig)</span></label><input id="fTitle" value="${esc(p.title)}" placeholder="leer = automatisch, z. B. ${esc(ptTitle(Object.assign({},p,{title:""})))}">
-   <div class="row"><div><label>Kategorie</label><select id="fCat">${catOpts}</select></div>
-   <div><label>Status</label><select id="fStatus">${stOpts}</select></div></div>
+   <label>Kategorie</label><div class="catgrid" id="fCatGrid">${Object.entries(CATS).map(([k,v])=>`<button type="button" data-cat="${k}" class="${p.cat===k?"on":""}">${icoBadge(k,v.c,34)}<span>${esc(v.n)}</span></button>`).join("")}</div>
+   <select id="fCat" style="display:none">${catOpts}</select>
+   <label>Status</label><select id="fStatus">${stOpts}</select>
    <div id="fVisWrap" style="display:${p.status==="besucht"?"block":"none"}"><label>Besucht am</label><input id="fVisited" type="date" value="${esc(p.visited||new Date().toISOString().slice(0,10))}"></div>
    <div class="row"><div><label>Reise</label><select id="fTrip">${trips.map(t=>`<option value="${t.id}" ${(p.trip||curTrip)===t.id?"selected":""}>${esc(t.name)}</option>`).join("")}<option value="">– keine Reise –</option></select></div>
    <div><label>Abschnitt</label><select id="fSection">${secOpts(p.trip||curTrip,p.section)}</select></div></div>
@@ -514,6 +563,8 @@ async function editPoint(p,isNew=false){
         :`<div class="rrow"><b>${l}</b>${starsWidget(k,(draftRate[k]||{}).s)}</div><input data-note="${k}" placeholder="Notiz zu ${l} (optional)" value="${esc((draftRate[k]||{}).t||"")}">`).join("")}
       <div class="muted" style="margin-top:6px">Stern nochmals antippen = Bewertung entfernen.</div></div>`;bindStars(box);};
   renderRate();
+  $("#fCatGrid").querySelectorAll("[data-cat]").forEach(b=>b.onclick=()=>{$("#fCatGrid").querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));
+    $("#fCat").value=b.dataset.cat;$("#fCat").dispatchEvent(new Event("change"));});
   $("#fCat").onchange=()=>{readRate();renderRate();$("#fWaterWrap").style.display=$("#fCat").value==="water"?"block":"none";};
   $("#fStatus").addEventListener("change",e=>{$("#fVisWrap").style.display=e.target.value==="besucht"?"block":"none";});
   $("#fStory").onchange=e=>{$("#fStoryText").style.display=e.target.checked?"block":"none";};
@@ -595,7 +646,7 @@ $("#navHere").onclick=()=>{
 let fCat="",fStatus="",fText="",fSec="",fTrip="",fCountry="";
 $("#navList").onclick=()=>showList();
 async function showList(){
-  const catChips=Object.entries(CATS).map(([k,v])=>`<button class="chip ${fCat===k?"on":""}" data-c="${k}"><span class="dot" style="background:${v.c}"></span>${v.i} ${v.n}</button>`).join("");
+  const catChips=Object.entries(CATS).map(([k,v])=>`<button class="chip ${fCat===k?"on":""}" data-c="${k}">${icoBadge(k,v.c,20)}${v.n}</button>`).join("");
   const stChips=Object.entries(STATUS).map(([k,v])=>`<button class="chip ${fStatus===k?"on":""}" data-s="${k}">${v}</button>`).join("");
   openPanel(`<h2>Punkte (${points.length})</h2>
     <input id="lSearch" placeholder="Suchen …" value="${esc(fText)}">
@@ -621,7 +672,7 @@ async function renderItems(){
   else if(lSort==="stars")list.sort((a,b)=>(b.stars||0)-(a.stars||0)||dkey(b)-dkey(a));
   let h="";
   for(const p of list){const c=CATS[p.cat]||CATS.other;const u=p.photos?.length?await photoURL(p.photos[0]):"";
-    h+=`<div class="item" data-id="${p.id}">${u?`<img src="${u}">`:`<div class="noimg" style="background:${c.c}22">${c.i}</div>`}
+    h+=`<div class="item" data-id="${p.id}">${u?`<img src="${u}">`:`<div class="noimg" style="background:${c.c}">${svgI(p.cat in CATS?p.cat:"other",34)}</div>`}
       <div><div class="t">${esc(ptTitle(p))}${p.stars&&RATE[p.cat]?` <span class="sv" style="font-weight:400;font-size:13px">${starTxt(p.stars)}</span>`:""}</div><div class="s"><span class="dot" style="background:${c.c}"></span>${esc(c.n)} · ${esc(STATUS[p.status]||"")}${p.section?" · "+esc(p.section):""} · ${esc(fmtD(p.visited||p.created))}${me?" · "+distKm(me,p).toFixed(0)+" km":""}</div></div></div>`;}
   $("#lItems").innerHTML=h||`<p class="muted">Keine Punkte gefunden.</p>`;
   $("#lItems").querySelectorAll(".item").forEach(e=>e.onclick=()=>showDetail(e.dataset.id));

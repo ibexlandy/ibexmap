@@ -1,4 +1,4 @@
-IBEXMAP – v1.18 (privates Projekt)
+IBEXMAP – v1.19 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -108,3 +108,10 @@ NEU IN v1.17
 
 NEU IN v1.18
 - Punkt setzen: Leiste unten nicht mehr von der Android-Navigationsleiste verdeckt, kompakter; runde Knöpfe während des Setzens ausgeblendet.
+
+NEU IN v1.19
+- Jedes Fenster mit ✕ oben rechts und «‹ Menü»/«‹ Liste» zurück; Android-Zurück schliesst das Fenster.
+- Untere Leisten wieder sicher über der Android-Navigationsleiste; Meldungen erscheinen oben.
+- Symbole: Stellplatz 🌲, Camping ⛺.
+- Eigene Karten-Symbole wie bei OSM/OsmAnd (Stellplatz = Tanne mit Bank usw.) statt Emojis auf Karte, Liste, Filter.
+- Kategorie im Formular als Symbol-Raster statt Auswahlliste. OSM-Orte ab Zoom 14 mit Symbol.
