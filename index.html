@@ -155,6 +155,20 @@ body.adm #locBtn{display:flex !important}
 .panel select.pnew{width:auto;max-width:175px;flex:none;font-size:13px;padding:6px 6px}.panel select.pnew.on{border-color:var(--accent2);background:#fff6ec;font-weight:600}
 .pbx{position:absolute;top:calc(12px + env(safe-area-inset-top));right:12px;width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,255,255,.2);color:#fff;font-size:20px}
 .pbig{position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,.9);display:flex;align-items:center;justify-content:center;cursor:zoom-out}.pbig img{max-width:96vw;max-height:94vh;border-radius:6px}
+.bigpage{position:fixed;inset:0;z-index:1400;background:#eef3ec;display:none;flex-direction:column}
+.bpbody{flex:1;overflow:auto;padding:12px 14px 30px}
+.bpsum{margin:2px 2px 10px;font-size:14px}
+.bpopt{display:inline-flex;align-items:center;gap:6px;font-size:13.5px;color:#13200f;margin:0}
+.bpopt select{font:inherit;font-size:13.5px;padding:6px 6px;border:1px solid #6f9469;border-radius:8px;background:#fff}
+.bpgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.bpcard{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.1);position:relative;border:3px solid transparent;opacity:.75}
+.bpcard.on{border-color:var(--accent2);opacity:1}
+.bpimg{aspect-ratio:4/3;background:#dfe6dc center/cover;cursor:zoom-in}
+.bpchk{position:absolute;top:8px;right:8px;background:#fff;border-radius:8px;padding:5px;box-shadow:0 1px 4px rgba(0,0,0,.3);margin:0;display:flex}
+.bpchk input{width:22px;height:22px;margin:0}
+.bptx{padding:8px 10px}.bptx b{display:block;font-size:14px}.bptx small{display:block;color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bprest{background:#fff6ec;border:1px solid #ecd3b8;border-radius:12px;padding:12px 14px;margin-top:16px}.bprest small{display:block;color:var(--muted);margin-top:2px}
+@media (max-width:899px){.bpgrid{grid-template-columns:repeat(2,1fr);gap:8px}.wzbar .bpopt{font-size:12.5px}}
 #wiz{position:fixed;inset:0;z-index:1400;background:#eef3ec;display:none;flex-direction:column}
 .wzbar{flex:none;display:flex;align-items:center;gap:8px;padding:calc(8px + env(safe-area-inset-top)) 12px 8px;background:#92b78c url(topo.svg) repeat;background-size:360px;border-bottom:1px solid #6f9469;flex-wrap:wrap}
 .wzbar b{font-size:16px;color:#13200f}.wzbar .btn{padding:9px 14px}.abtn:disabled{opacity:.4}
@@ -372,7 +386,7 @@ const ADM=(()=>{try{if(new URLSearchParams(location.search).has("admin")){sessio
   return sessionStorage.getItem("rb_admin")==="1"&&matchMedia("(min-width:900px)").matches;}catch(e){return false;}})();
 if(ADM)document.body.classList.add("adm");
 const GROUP="IbexMap";
-const VERSION="v2.10";
+const VERSION="v2.11";
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
 const MA_SECTORS=[
  {n:"A Norden",zeit:"5.–10. April",klima:"Frühling, grün; 15–22 °C, im Rif Regen möglich, Nächte kühl",info:"Tanger Med, Chefchaouen, Fès, Meknès – ankommen, Städte, einkaufen. Eher Campings.",box:[[33.8,-5.9,35.95,-1.0]]},
@@ -1381,60 +1395,57 @@ async function assignPhotos(files){if(!files.length)return toast("Keine Fotos ge
   const rows=[];let k=0;for(const f of files){k++;if(k%5===0||k===files.length)progress("Fotos zuordnen",k,files.length,"Aufnahmeorte werden gelesen …");
     let ll=nameGPS(f.name),how="OsmAnd-Dateiname";
     if(!ll){try{const b=f.lazy?await f.lazy():f;const ex=await exifGPS(b);if(ex){ll=ex;how="Foto-Standort";}}catch(e){}}
-    rows.push({f,ll,how,near:near(ll),on:null,mk:false});}
+    rows.push({f,ll,how,near:near(ll),on:null});}
   /* Einstellungen (werden gemerkt) */
   const o={r:+ls("rb_paR")||0.3,empty:ls("rb_paE")!=="0",max:+(ls("rb_paM")||3)};
-  const plan=()=>{/* Zuordnung berechnen: nächster Punkt im Umkreis, nur Punkte ohne Foto (optional), höchstens n Fotos pro Punkt */
-    const per=new Map();
+  const plan=()=>{const per=new Map();
     rows.forEach(r=>{r.tgt=null;r.why="";if(!r.near||r.near.d>o.r)return;const p=r.near.p;
       if(o.empty&&(p.photos||[]).length){r.why="Punkt hat schon Fotos";return;}r.tgt=p;});
     [...rows].filter(r=>r.tgt).sort((a,b)=>a.near.d-b.near.d).forEach(r=>{const p=r.tgt,have=(p.photos||[]).length,n=per.get(p.id)||0;
       if(o.max&&have+n>=o.max){r.over=true;}else{r.over=false;per.set(p.id,n+1);}});
     rows.forEach(r=>{if(r.on===null||r._auto){r.on=!!r.tgt&&!r.over;r._auto=true;}});};
-  const draw=()=>{plan();const sc=isPanelOpen()?$("#panel").scrollTop:0;
-    const cnt=()=>rows.filter(r=>(r.tgt&&r.on)||(!r.tgt&&r.mk)).length;
-    const nGps=rows.filter(r=>r.ll).length;
-    openPanel(`<h2>Fotos zuordnen</h2>
-     <div class="mgrp" style="padding:10px 12px">
-       <div class="row"><div><label style="margin-top:0">Umkreis</label><select id="paR">${[[0.1,"100 m"],[0.3,"300 m"],[1,"1 km"],[3,"3 km"]].map(([v,t])=>`<option value="${v}" ${v===o.r?"selected":""}>${t}</option>`).join("")}</select></div>
-       <div><label style="margin-top:0">Höchstens pro Punkt</label><select id="paM">${[[1,"1 Foto"],[3,"3 Fotos"],[5,"5 Fotos"],[0,"alle"]].map(([v,t])=>`<option value="${v}" ${v===o.max?"selected":""}>${t}</option>`).join("")}</select></div></div>
-       <label style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink);margin-top:10px"><input type="checkbox" id="paE" style="width:auto;margin:0" ${o.empty?"checked":""}> Nur Punkten ohne Foto zuordnen</label></div>
-     <p style="margin:10px 0 4px">${rows.filter(r=>r.tgt).length} von ${rows.length} Fotos passen zu einem Punkt · ${nGps} mit Aufnahmeort.</p>
-     ${rows.map((r,i)=>!r.tgt?"":`<div class="item" style="cursor:default;align-items:center"><div class="pth" data-th="${i}" title="Antippen = gross"></div>
-       <div style="flex:1;min-width:0"><div class="t" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.f.name)}</div>
-       <div class="s">${r.tgt?`→ <b>${esc(ptTitle(r.tgt))}</b> (${Math.round(r.near.d*1000)} m)${r.over?` · <span style="color:var(--accent2)">schon ${o.max} Fotos</span>`:""}`
-         :r.ll?(r.near?`${r.why?`<b>${esc(ptTitle(r.near.p))}</b> (${kmTxt(r.near.d)}) – ${r.why}`:`kein Punkt im Umkreis – nächster: ${esc(ptTitle(r.near.p))} (${kmTxt(r.near.d)})`}`:"kein Punkt vorhanden"):"kein Aufnahmeort im Foto"}</div></div>
-       ${r.tgt?`<input type="checkbox" data-on="${i}" ${r.on?"checked":""} style="width:22px;height:22px;flex:none" title="zuordnen">`
-         :""}</div>`).join("")}
-     ${rows.some(r=>!r.tgt)?`<div class="mgrp" style="padding:10px 12px;margin-top:8px"><b>${rows.filter(r=>!r.tgt).length} weitere Fotos</b> ohne passenden Punkt ausgeblendet
-       <small style="display:block;color:var(--muted);margin-top:2px">${rows.filter(r=>!r.tgt&&r.ll&&!r.why).length} mit Aufnahmeort, aber kein Punkt im Umkreis · ${rows.filter(r=>r.why).length} bei Punkten, die schon Fotos haben · ${rows.filter(r=>!r.ll).length} ohne Aufnahmeort</small>
-       <div class="actions" style="margin-top:8px"><button class="btn sec" id="paWiz">${mi("pin",16)} Daraus neue Punkte erfassen …</button></div></div>`:""}
-     <div class="actions"><button class="btn" id="paGo">${cnt()} Fotos zuordnen</button><button class="btn sec" id="paNo">Abbrechen</button></div>
-     <p class="muted">Häkchen rechts = dieses Foto zuordnen. Fotos werden verkleinert (1280 px) gespeichert. </p>`);
-    {const w=$("#paWiz");if(w)w.onclick=()=>{photoWizard(rows.filter(r=>!r.tgt&&!r.why).map(r=>r.f));};}
-    $("#panel").scrollTop=sc;
+  /* Grosse, eigene Seite statt Seitenleiste */
+  let W=$("#paW");if(!W){W=document.createElement("div");W.id="paW";W.className="bigpage";document.body.appendChild(W);}
+  const close=()=>{W.style.display="none";W.innerHTML="";};
+  if(isPanelOpen()&&panelHist){panelHist=false;hidePanel();ovl.push(close);}else{if(isPanelOpen())hidePanel();ovlPush(close);}
+  W.style.display="flex";
+  const thumbIO=new IntersectionObserver(async es=>{for(const e of es){if(!e.isIntersecting)continue;const el=e.target;thumbIO.unobserve(el);const r=rows[+el.dataset.th];
+      try{if(!r.thumb){const src=r.f.lazy?await r.f.lazy():r.f;const bm=await createImageBitmap(src,{resizeWidth:420,resizeQuality:"medium"});
+          const c=document.createElement("canvas");c.width=bm.width;c.height=bm.height;c.getContext("2d").drawImage(bm,0,0);bm.close();r.thumb=c.toDataURL("image/jpeg",.75);}
+        el.style.backgroundImage=`url(${r.thumb})`;}catch(err){el.textContent="?";}}},{rootMargin:"400px"});
+  const draw=()=>{plan();const body=W.querySelector(".bpbody"),sc=body?body.scrollTop:0;
+    const cnt=()=>rows.filter(r=>r.tgt&&r.on).length;const hit=rows.filter(r=>r.tgt),rest=rows.filter(r=>!r.tgt);
+    W.innerHTML=`<div class="wzbar"><button class="abtn" id="paNo">✕ Schliessen</button><b>Fotos Punkten zuordnen</b>
+       <span class="bpopt">Umkreis <select id="paR">${[[0.1,"100 m"],[0.3,"300 m"],[1,"1 km"],[3,"3 km"]].map(([v,t])=>`<option value="${v}" ${v===o.r?"selected":""}>${t}</option>`).join("")}</select></span>
+       <span class="bpopt">Höchstens <select id="paM">${[[1,"1 Foto"],[3,"3 Fotos"],[5,"5 Fotos"],[0,"alle"]].map(([v,t])=>`<option value="${v}" ${v===o.max?"selected":""}>${t}</option>`).join("")}</select> pro Punkt</span>
+       <label class="bpopt"><input type="checkbox" id="paE" ${o.empty?"checked":""}> nur Punkte ohne Foto</label>
+       <span style="flex:1"></span><button class="btn" id="paGo" style="margin:0">${cnt()} Fotos zuordnen</button></div>
+     <div class="bpbody"><p class="bpsum">${hit.length} von ${rows.length} Fotos passen zu einem Punkt · ${rows.filter(r=>r.ll).length} mit Aufnahmeort. Foto antippen = gross ansehen, Häkchen = zuordnen.</p>
+       <div class="bpgrid">${rows.map((r,i)=>!r.tgt?"":`<div class="bpcard ${r.on?"on":""}" data-c="${i}"><div class="bpimg" data-th="${i}"></div>
+         <label class="bpchk"><input type="checkbox" data-on="${i}" ${r.on?"checked":""}></label>
+         <div class="bptx"><b>→ ${esc(ptTitle(r.tgt))}</b><small>${Math.round(r.near.d*1000)} m · ${esc(r.f.name)}${r.over?` · <span style="color:var(--accent2)">schon ${o.max} Fotos</span>`:""}</small></div></div>`).join("")}</div>
+       ${rest.length?`<div class="bprest"><b>${rest.length} weitere Fotos</b> ohne passenden Punkt ausgeblendet
+         <small>${rest.filter(r=>r.ll&&!r.why).length} mit Aufnahmeort, aber kein Punkt im Umkreis · ${rest.filter(r=>r.why).length} bei Punkten, die schon Fotos haben · ${rest.filter(r=>!r.ll).length} ohne Aufnahmeort</small>
+         <div class="actions" style="margin-top:8px"><button class="btn sec" id="paWiz">${mi("pin",16)} Daraus neue Punkte erfassen …</button></div></div>`:""}
+       <p class="muted" style="margin:14px 2px">Fotos werden verkleinert (1280 px) gespeichert, die Originale bleiben unverändert.</p></div>`;
+    W.querySelector(".bpbody").scrollTop=sc;
     const upd=()=>{$("#paGo").textContent=`${cnt()} Fotos zuordnen`;};
-    $("#paNo").onclick=closePanel;
+    $("#paNo").onclick=ovlClose;
     $("#paR").onchange=e=>{o.r=+e.target.value;ls("rb_paR",String(o.r));rows.forEach(r=>r._auto=true);draw();};
     $("#paM").onchange=e=>{o.max=+e.target.value;ls("rb_paM",String(o.max));rows.forEach(r=>r._auto=true);draw();};
     $("#paE").onchange=e=>{o.empty=e.target.checked;ls("rb_paE",o.empty?"1":"0");rows.forEach(r=>r._auto=true);draw();};
-    $("#panel").querySelectorAll("[data-on]").forEach(c=>c.onchange=()=>{const r=rows[+c.dataset.on];r.on=c.checked;r._auto=false;upd();});
-    $("#panel").querySelectorAll("[data-new]").forEach(c=>c.onchange=()=>{rows[+c.dataset.new].mk=c.value||false;c.classList.toggle("on",!!c.value);upd();});
-    /* Vorschaubilder erst laden, wenn sie sichtbar werden (spart Speicher bei vielen Fotos) */
-    const io=new IntersectionObserver(async es=>{for(const e of es){if(!e.isIntersecting)continue;const el=e.target;io.unobserve(el);const r=rows[+el.dataset.th];
-        try{if(!r.thumb){const src=r.f.lazy?await r.f.lazy():r.f;
-            const bm=await createImageBitmap(src,{resizeWidth:160,resizeQuality:"medium"});const c=document.createElement("canvas");c.width=bm.width;c.height=bm.height;c.getContext("2d").drawImage(bm,0,0);bm.close();r.thumb=c.toDataURL("image/jpeg",.7);}
-          el.style.backgroundImage=`url(${r.thumb})`;
-          el.onclick=async e=>{e.stopPropagation();showBig(r.f.lazy?await r.f.lazy():r.f);};}
-        catch(err){el.textContent="?";}}},{root:$("#panel"),rootMargin:"300px"});
-    $("#panel").querySelectorAll("[data-th]").forEach(el=>io.observe(el));
-    $("#paGo").onclick=async()=>{const todo=rows.filter(r=>(r.tgt&&r.on)||(!r.tgt&&r.mk));let n=0,i=0;const touched=new Map();
-      for(const r of todo){let p=r.tgt&&r.on?r.tgt:null;
-        if(!p){p=newPoint(+r.ll[0].toFixed(6),+r.ll[1].toFixed(6),{cat:r.mk||"wild",status:"besucht",trip:"",section:"",visited:new Date(r.f.lastModified||Date.now()).toISOString().slice(0,10)});}
-        i++;progress("Fotos speichern",i,todo.length,`→ ${ptTitle(p)}`);
+    W.querySelectorAll("[data-on]").forEach(c=>c.onchange=()=>{const r=rows[+c.dataset.on];r.on=c.checked;r._auto=false;c.closest(".bpcard").classList.toggle("on",c.checked);upd();});
+    W.querySelectorAll("[data-th]").forEach(el=>{thumbIO.observe(el);el.onclick=async()=>{const r=rows[+el.dataset.th];showBig(r.f.lazy?await r.f.lazy():r.f);};});
+    const wb=$("#paWiz");if(wb)wb.onclick=()=>{const fl=rest.filter(r=>!r.why).map(r=>r.f);wb.disabled=true;wb.textContent="Fotos werden gelesen …";
+      /* Verlaufseintrag dieser Seite an die neue Seite weitergeben */
+      photoWizardKeep(fl,()=>close());};
+    $("#paGo").onclick=async()=>{const todo=rows.filter(r=>r.tgt&&r.on);if(!todo.length)return toast("Keine Fotos angehakt");let n=0,i=0;const touched=new Map();
+      $("#paGo").disabled=true;
+      for(const r of todo){const p=r.tgt;i++;$("#paGo").textContent=`Speichere ${i} / ${todo.length} …`;
         try{const src=r.f.lazy?await r.f.lazy():r.f;const b=await resize(src);const id=uid();await put("photos",{id,blob:b});p.photos=p.photos||[];p.photos.push(id);p.updated=Date.now();touched.set(p.id,p);n++;}catch(err){}}
       for(const p of touched.values())await put("points",p);
-      await loadPoints();openPanel(`<h2>Fertig</h2><p style="font-size:16px">✓ ${n} Fotos zugeordnet${touched.size?` (${touched.size} Punkte)`:""}.</p><p class="muted">Mit ⟳ oben rechts auf die anderen Geräte abgleichen.</p><div class="actions"><button class="btn" id="pfOk">OK</button></div>`);$("#pfOk").onclick=closePanel;};};
+      await loadPoints();ovlClose();
+      openPanel(`<h2>Fertig</h2><p style="font-size:16px">✓ ${n} Fotos zugeordnet${touched.size?` (${touched.size} Punkte)`:""}.</p><p class="muted">Mit ⟳ oben rechts auf die anderen Geräte abgleichen.</p><div class="actions"><button class="btn" id="pfOk">OK</button></div>`);$("#pfOk").onclick=closePanel;};};
   draw();}
 /* ---------- Neue Punkte aus Fotos: Fotos (z. B. ein Ordner) → Punkte, auf einer eigenen, grossen Seite vervollständigen ---------- */
 async function exifInfo(file){/* Aufnahmeort und -zeit aus dem Foto */
@@ -1456,10 +1467,12 @@ function wizardStart(){openPanel(`<h2>Neue Punkte aus Fotos</h2>
   const pick=dir=>{const i=document.createElement("input");i.type="file";i.accept="image/jpeg,image/*";i.multiple=true;if(dir)i.webkitdirectory=true;
     i.onchange=()=>{const fl=[...i.files].filter(f=>/^image\//.test(f.type)||/\.jpe?g$/i.test(f.name));if(!fl.length)return toast("Keine Fotos gefunden");photoWizard(fl);};i.click();};
   $("#wzF").onclick=()=>pick(false);const d=$("#wzD");if(d)d.onclick=()=>pick(true);}
-let wz=null;
+let wz=null,wzKeep=false;
+function photoWizardKeep(files,closeOld){wzKeep=closeOld;photoWizard(files);}
 async function photoWizard(files){if(!files.length)return toast("Keine Fotos");
-  progress("Fotos lesen",0,files.length,"Aufnahmeort und -datum …");const items=[];let k=0;
-  for(const f of files){k++;if(k%5===0||k===files.length)progress("Fotos lesen",k,files.length,"Aufnahmeort und -datum …");
+  const prg=(a,b)=>{if(wzKeep)toast(`Fotos lesen … ${a} / ${b}`,60000);else progress("Fotos lesen",a,b,"Aufnahmeort und -datum …");};
+  prg(0,files.length);const items=[];let k=0;
+  for(const f of files){k++;if(k%5===0||k===files.length)prg(k,files.length);
     let src=f;try{if(f.lazy)src=await f.lazy();}catch(e){}const ex=await exifInfo(src);if(!ex.ll){const g=nameGPS(f.name);if(g)ex.ll=g;}
     if(!ex.date&&f.lastModified)ex.date=new Date(f.lastModified).toISOString().slice(0,10);
     items.push({f,src,ll:ex.ll,date:ex.date,time:ex.time||f.lastModified||0});}
@@ -1475,7 +1488,8 @@ function wizOpen(){let w=$("#wiz");if(!w){w=document.createElement("div");w.id="
    <div class="wzbody"><div class="wzpics"><div class="wzbig" id="wzBig"></div><div class="wzth" id="wzTh"></div></div>
      <div class="wzform"><div id="wzMap"></div><div id="wzNear"></div><div id="wzF"></div></div></div>`;
   w.style.display="flex";document.body.classList.add("wzopen");{const fn=()=>wizClose(true);/* den Verlaufseintrag des offenen Fensters übernehmen (kein zweites «Zurück») */
-    if(isPanelOpen()&&panelHist){panelHist=false;hidePanel();ovl.push(fn);}else{if(isPanelOpen())hidePanel();ovlPush(fn);}}
+    if(wzKeep){const co=wzKeep;wzKeep=false;co();if(ovl.length)ovl[ovl.length-1]=fn;else ovlPush(fn);toast("",1);}
+    else if(isPanelOpen()&&panelHist){panelHist=false;hidePanel();ovl.push(fn);}else{if(isPanelOpen())hidePanel();ovlPush(fn);}}
   const m=L.map("wzMap",{zoomControl:true});const lay=BASE[baseName]||BASE["Strassen"];
   L.tileLayer(lay._url,Object.assign({},lay.options)).addTo(m);wz.map=m;wz.mk=null;
   m.on("click",e=>{const g=wz.groups[wz.i];g.ll=[e.latlng.lat,e.latlng.lng];wizMarker();wizNear();});

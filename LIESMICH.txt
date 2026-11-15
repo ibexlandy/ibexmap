@@ -1,4 +1,4 @@
-IbexMap – v2.10 (privates Projekt)
+IbexMap – v2.11 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -233,3 +233,6 @@ NEU IN v2.10
 - «Fotos Punkten zuordnen»: Liste zeigt nur noch Fotos mit passendem Punkt; die übrigen sind zusammengefasst, mit Knopf «Daraus neue Punkte erfassen».
 - Neu: «Neue Punkte aus Fotos» (Menü › Daten): Fotos oder ganzen Ordner wählen; Fotos vom gleichen Ort und Tag werden zu einem Punkt zusammengefasst; jede Stelle auf einer eigenen grossen Seite erfassen (grosses Foto, Karte mit verschiebbarer Position, Titel, Kategorie, Status, von–bis, Reise, Abschnitt, Sterne, Beschreibung, Notiz). Hinweis, wenn in der Nähe schon ein Punkt ist (Fotos dort anhängen).
 - Fotovorschau und «Neue Punkte aus Fotos»: Zurück-Taste (Android) bzw. Antippen schliesst nur die Vorschau bzw. die Seite – man bleibt im Fenster und kann weitermachen. Vorschau mit ✕-Knopf.
+
+NEU IN v2.11
+- «Fotos Punkten zuordnen» auf einer grossen, eigenen Seite: Fotos als grosse Kacheln mit Zielpunkt und Distanz, Häkchen zum Zuordnen, Einstellungen oben.
