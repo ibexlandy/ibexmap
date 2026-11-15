@@ -1,4 +1,4 @@
-IbexMap – v2.6 (privates Projekt)
+IbexMap – v2.7 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -213,3 +213,9 @@ NEU IN v2.5
 NEU IN v2.6
 - Titelleiste, Werkzeugleiste der Verwaltung und die Leisten unten («Punkt hier setzen», Kartenausschnitt) im Logo-Stil: Grün mit Höhenlinien, dunkle Schrift. Statusleiste von Android passend grün.
 - «Datum ermitteln»: auf Wunsch auch «Erfasst» auf das gefundene Datum setzen (Häkchen, voreingestellt). Funktioniert auch für Punkte, bei denen das Besuchsdatum schon übernommen wurde.
+
+NEU IN v2.7
+- Funktion «Datum ermitteln» wieder entfernt (Spalte «Besucht» in der Verwaltung bleibt).
+- App-Logo: Schrift «IBEX MAP» in der Bildmitte.
+- Familienseite neu gestaltet (ähnlich Polarsteps): Kopf mit Reisedaten und Zahlen (Tage, km, Länder, Orte), Zeitleiste mit «Tag 1, Tag 2 …», Distanz zwischen den Orten, grosse Fotos, Fotos im Vollbild zum Durchblättern, Route auf der Karte mit Foto-Punkten, Karte folgt beim Scrollen. Nach dem Update in IbexMap einmal «Storypoints veröffentlichen».
+- Verwaltung: Karte rechts zeigt beim Anklicken eines Punkts eine Übersicht (Region) statt Strassenebene.

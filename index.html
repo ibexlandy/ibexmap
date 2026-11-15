@@ -248,7 +248,6 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 <div class="sheet" id="sheet"><div class="panel" id="panel"></div></div>
 <div class="toast" id="toast"></div>
 <input type="file" id="photoAssign" accept="image/*,.osf,.zip,application/zip,application/octet-stream" multiple hidden>
-<input type="file" id="osfDates" accept=".osf,.zip,application/zip,application/octet-stream" hidden>
 <input type="file" id="fileImport" accept=".json,.geojson,.gpx,.csv,.osf,.zip,application/json,application/geo+json,application/gpx+xml,text/csv,application/zip,application/octet-stream" hidden>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
@@ -351,7 +350,7 @@ const ADM=(()=>{try{if(new URLSearchParams(location.search).has("admin")){sessio
   return sessionStorage.getItem("rb_admin")==="1"&&matchMedia("(min-width:900px)").matches;}catch(e){return false;}})();
 if(ADM)document.body.classList.add("adm");
 const GROUP="IbexMap";
-const VERSION="v2.6";
+const VERSION="v2.7";
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
 const MA_SECTORS=[
  {n:"A Norden",zeit:"5.–10. April",klima:"Frühling, grün; 15–22 °C, im Rif Regen möglich, Nächte kühl",info:"Tanger Med, Chefchaouen, Fès, Meknès – ankommen, Städte, einkaufen. Eher Campings.",box:[[33.8,-5.9,35.95,-1.0]]},
@@ -963,9 +962,9 @@ async function showDetail(id){const p=points.find(x=>x.id===id);if(!p)return;con
 }
 
 /* ---------- Bearbeiten ---------- */
-let draftPhotos=[],draftPhDate={};
+let draftPhotos=[];
 async function editPoint(p,isNew=false){
-  draftPhotos=[...(p.photos||[])];draftPhDate={};
+  draftPhotos=[...(p.photos||[])];
   const catOpts=Object.entries(CATS).map(([k,v])=>`<option value="${k}" ${p.cat===k?"selected":""}>${v.i} ${v.n}</option>`).join("");
   const stOpts=Object.entries(STATUS).map(([k,v])=>`<option value="${k}" ${p.status===k?"selected":""}>${v}</option>`).join("");
   openPanel(`<h2>${isNew?"Neuer Punkt":"Punkt bearbeiten"}</h2>
@@ -1022,7 +1021,7 @@ async function editPoint(p,isNew=false){
   const updReg=()=>{const la=parseFloat($("#fLat").value.replace(",",".")),lo=parseFloat($("#fLon").value.replace(",","."));if(regionData&&isFinite(la)&&isFinite(lo))$("#fRegion").textContent=regionOf(la,lo)||"ausserhalb der Regionsdaten";};
   $("#fLat").oninput=updReg;$("#fLon").oninput=updReg;
   const addFiles=async files=>{for(const f of files){if(!f.type.startsWith("image/"))continue;
-      try{const dt=await exifDate(f);const b=await resize(f);const id=uid();await put("photos",{id,blob:b});draftPhotos.push(id);if(dt)draftPhDate[id]=dt;}catch(e){toast(e.message);}}
+      try{const b=await resize(f);const id=uid();await put("photos",{id,blob:b});draftPhotos.push(id);}catch(e){toast(e.message);}}
     renderDraftPhotos();};
   $("#fCam").onchange=e=>addFiles(e.target.files);
   $("#fGal").onchange=e=>addFiles(e.target.files);
@@ -1045,7 +1044,6 @@ async function editPoint(p,isNew=false){
     p.story=$("#fStory").checked;p.storyText=$("#fStoryText").value.trim();
     Object.assign(p,{title:$("#fTitle").value.trim(),cat:$("#fCat").value,status:$("#fStatus").value,section:sec,region:regionOf(lat,lon)||p.region||"",
       desc:$("#fDesc").value,note:$("#fNote").value,source:$("#fSource").value.trim(),lat,lon,photos:draftPhotos,updated:Date.now()});
-    {const pd=Object.assign({},p.phDate||{},draftPhDate);for(const k of Object.keys(pd))if(!draftPhotos.includes(k))delete pd[k];if(Object.keys(pd).length)p.phDate=pd;else delete p.phDate;}
     if(p.status==="besucht")p.visited=$("#fVisited").value||p.visited||new Date().toISOString().slice(0,10);
     {const t=$("#fVisTo").value;if(p.status==="besucht"&&STAY.includes(p.cat)&&t&&nights(p.visited,t)>0)p.visitedTo=t;else delete p.visitedTo;}
     await put("points",p);try{navigator.storage?.persist?.();}catch(e){}
@@ -1364,7 +1362,7 @@ async function assignPhotos(files){if(!files.length)return toast("Keine Fotos ge
     for(const [idx,r] of rows.entries()){let p=r.best&&r.best.p;
       if(!p&&mk.includes(idx)){p=newPoint(+r.ll[0].toFixed(6),+r.ll[1].toFixed(6),{cat:"wild",status:"besucht",trip:"",section:"",visited:new Date(r.f.lastModified||Date.now()).toISOString().slice(0,10)});}
       if(!p)continue;i++;progress("Fotos speichern",i,ok.length+mk.length,`→ ${ptTitle(p)}`);
-      try{const src=r.f.lazy?await r.f.lazy():r.f;const dt=(await exifDate(src))||(r.f.lazy&&r.f.lastModified?isoDay(r.f.lastModified):"");const b=await resize(src);const id=uid();await put("photos",{id,blob:b});p.photos=p.photos||[];p.photos.push(id);if(dt)p.phDate=Object.assign(p.phDate||{},{[id]:dt});p.updated=Date.now();touched.set(p.id,p);n++;}catch(err){}}
+      try{const src=r.f.lazy?await r.f.lazy():r.f;const b=await resize(src);const id=uid();await put("photos",{id,blob:b});p.photos=p.photos||[];p.photos.push(id);p.updated=Date.now();touched.set(p.id,p);n++;}catch(err){}}
     for(const p of touched.values())await put("points",p);
     await loadPoints();openPanel(`<h2>Fertig</h2><p style="font-size:16px">✓ ${n} Fotos zugeordnet${touched.size?` (${touched.size} Punkte)`:""}.</p><p class="muted">Mit ⟳ oben rechts auf die anderen Geräte abgleichen.</p><div class="actions"><button class="btn" id="pfOk">OK</button></div>`);$("#pfOk").onclick=closePanel;};}
 /* ---------- OsmAnd-Favoriten übernehmen (ohne Reise) ---------- */
@@ -1726,7 +1724,8 @@ async function famPublish(){const c=famCfg();if(!famReady())return famSettings()
     /* 3. Daten */
     const data={title:c.title||"Unsere Reise",updated:Date.now(),points:sp.map(p=>{const k=CATS[p.cat]||CATS.other;
       return {id:p.id,title:ptTitle(p),text:p.storyText||p.desc||"",date:p.visited||new Date(p.created||Date.now()).toISOString().slice(0,10),
-        lat:p.lat,lon:p.lon,region:p.region||"",icon:k.i,color:k.c,photos:(p.photos||[]).filter(id=>need.has(id+"_"+tag+".bin")).map(id=>id+"_"+tag)};})};
+        lat:p.lat,lon:p.lon,region:(p.region||"").split(/[,(]/)[0].trim(),country:p.country||"",cat:k.n,t:p.created||0,
+        to:STAY.includes(p.cat)&&p.visitedTo&&p.visitedTo>(p.visited||"")?p.visitedTo:undefined,icon:k.i,color:k.c,photos:(p.photos||[]).filter(id=>need.has(id+"_"+tag+".bin")).map(id=>id+"_"+tag)};})};
     const enc=await famEnc(key,new TextEncoder().encode(JSON.stringify(data)));
     const file=new TextEncoder().encode(JSON.stringify({v:1,salt:c.salt,iter:FAM_ITER,data:b64(enc)}));
     const exD=await gh(c,"data.json","GET",null,true);
@@ -1796,7 +1795,7 @@ async function checkUpdate(){if(!navigator.onLine)return toast("Kein Internet",3
 const AF={trip:new Set(),cc:new Set(),cat:new Set(),st:new Set(),sec:new Set(),x:new Set()};let admQ="",admSel=new Set(),admCur="",admLast="";
 let admSort={k:"updated",d:-1};try{const s=JSON.parse(localStorage.getItem("rb_asort")||"null");if(s&&s.k)admSort=s;}catch(e){}
 const admShown=new Set();const admHi=L.layerGroup().addTo(map);
-const ST_ORD={idee:0,fix:1,besucht:2};
+const ST_ORD={idee:0,fix:1,besucht:2};const ADM_Z=8;/* Verwaltung: Karte zeigt beim Anklicken einer Zeile eine Übersicht (Region), nicht Strassenebene */
 const ADM_COLS=[["title","Titel"],["cat","Kategorie"],["st","Status"],["trip","Reise"],["sec","Abschnitt"],["cc","Land / Region"],["stars","Sterne"],["story","Story"],["photos","Fotos"],["vis","Besucht"],["created","Erfasst"],["updated","Geändert"]];
 const admKey={title:p=>ptTitle(p).toLowerCase(),cat:p=>(CATS[p.cat]||CATS.other).n,st:p=>ST_ORD[p.status||"idee"]??0,trip:p=>tripName(p.trip).toLowerCase()||"~",
   sec:p=>(p.section||"~").toLowerCase(),cc:p=>countryName(p.country).toLowerCase()||"~",region:p=>(p.region||"~").toLowerCase(),stars:p=>p.stars||0,story:p=>p.story?1:0,
@@ -1829,7 +1828,6 @@ function admToolbar(){
    ${Object.values(AF).some(s=>s.size)||admQ?`<button class="alink" id="aReset">Alle Filter zurücksetzen</button>`:""}
    <span class="acount" id="aCount"></span>
    <button class="abtn${document.body.classList.contains("nomap")?"":" on"}" id="aMap" title="Karte rechts ein-/ausblenden">${mi("map",16)} Karte</button>
-   <button class="abtn" id="aDates" title="Besuchsdatum aus Titel/Beschreibung und Fotos ermitteln">${mi("cal",16)} Datum ermitteln</button>
    <button class="abtn" id="aCsv" title="Gefilterte Liste als CSV (für Google Tabellen)">${mi("download",16)} CSV</button>`;
   if(openK){const d=$("#dd_"+openK);if(d)d.classList.add("open");}
   const q=$("#aQ");q.oninput=()=>{admQ=q.value;admRender(true);};
@@ -1839,7 +1837,7 @@ function admToolbar(){
   tb.querySelectorAll("input[data-f]").forEach(i=>i.onchange=()=>{const s=AF[i.dataset.f];i.checked?s.add(i.value):s.delete(i.value);admRender();});
   tb.querySelectorAll("[data-clr]").forEach(b=>b.onclick=()=>{AF[b.dataset.clr].clear();admRender();});
   const r=$("#aReset");if(r)r.onclick=()=>{Object.values(AF).forEach(s=>s.clear());admQ="";admRender();};
-  $("#aCsv").onclick=admCSV;$("#aDates").onclick=admDates;
+  $("#aCsv").onclick=admCSV;
   $("#aMap").onclick=()=>{const off=document.body.classList.toggle("nomap");ls("rb_anomap",off?"1":"0");$("#aMap").classList.toggle("on",!off);if(!off)setTimeout(()=>map.invalidateSize(),50);};}
 function admList(){const k=admKey[admSort.k]||admKey.updated,d=admSort.d;
   return points.filter(p=>admMatch(p)).sort((a,b)=>{const x=k(a),y=k(b);return (x<y?-1:x>y?1:0)*d||ptTitle(a).localeCompare(ptTitle(b),"de");});}
@@ -1893,7 +1891,7 @@ function admBulk(){const n=admSel.size,b=$("#admBulk");b.style.display=n?"flex":
 function admFocus(id,pan){admCur=id;const p=points.find(x=>x.id===id);
   $("#admTable").querySelectorAll("tr.cur").forEach(r=>r.classList.remove("cur"));const tr=$("#admTable").querySelector(`tr[data-id="${id}"]`);if(tr)tr.classList.add("cur");
   admHi.clearLayers();if(!p)return;L.circleMarker([p.lat,p.lon],{radius:22,color:"#c8742c",weight:4,fill:false,interactive:false}).addTo(admHi);
-  if(pan)map.setView([p.lat,p.lon],Math.max(map.getZoom(),13));
+  if(pan)map.setView([p.lat,p.lon],Math.min(map.getZoom(),ADM_Z),{animate:true});
   return tr;}
 async function admSet(p,f,v){
   if(f==="trip"){p.trip=v;const t=tripOf(v);if(!t||!t.sections.includes(p.section))p.section="";}
@@ -1935,79 +1933,6 @@ function admCSV(){const l=admList();const q=v=>`"${String(v??"").replace(/"/g,'"
   const rows=[["Titel","Kategorie","Status","Reise","Abschnitt","Land","Region","Sterne","Storypoint","Fotos","Breite","Länge","Beschreibung","Notiz","Quelle","Erfasst","Geändert"]]
    .concat(l.map(p=>[ptTitle(p),(CATS[p.cat]||CATS.other).n,STATUS[p.status||"idee"],tripName(p.trip),p.section||"",countryName(p.country),p.region||"",p.stars||"",p.story?"ja":"",(p.photos||[]).length,p.lat,p.lon,p.desc||"",p.note||"",p.source||"",fmtDT(p.created),fmtDT(p.updated)]));
   download(`IbexMap_Punkte_${stamp()}.csv`,new Blob(["\ufeff"+rows.map(r=>r.map(q).join(",")).join("\r\n")],{type:"text/csv"}));}
-/* ---------- Besuchsdatum ermitteln: aus Titel/Beschreibung/Notiz und aus Foto-Aufnahmedaten ---------- */
-const MON={jan:1,januar:1,feb:2,februar:2,"mär":3,"märz":3,mrz:3,apr:4,april:4,mai:5,jun:6,juni:6,jul:7,juli:7,aug:8,august:8,sep:9,sept:9,september:9,okt:10,oktober:10,nov:11,november:11,dez:12,dezember:12};
-function parseDates(t,yGuess){t=String(t||"");const Y=y=>{y=+y;if(y<100)y+=2000;return y;};
-  const ok=(y,m,d)=>{const x=new Date(Date.UTC(y,m-1,d));return y>=1990&&y<=new Date().getFullYear()+1&&x.getUTCMonth()===m-1&&x.getUTCDate()===d;};
-  const iso=(y,m,d)=>`${y}-${z2(m)}-${z2(d)}`;let m;
-  const MN="(jan(?:uar)?|feb(?:ruar)?|m(?:ä|ae)rz|mrz|apr(?:il)?|mai|juni?|juli?|aug(?:ust)?|sept?(?:ember)?|okt(?:ober)?|nov(?:ember)?|dez(?:ember)?)\\.?";
-  const mon=s=>{s=s.toLowerCase().replace(/\.$/,"").replace("ae","ä");return MON[s]||MON[s.slice(0,3)];};
-  if(m=t.match(/(\d{1,2})\.\s*(?:(\d{1,2})\.?\s*(\d{4}|\d{2})?)?\s*(?:-|–|bis)\s*(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4}|\d{2})(?!\d)/)){
-    const y2=Y(m[6]),m2=+m[5],d2=+m[4],m1=m[2]?+m[2]:m2,y1=m[3]?Y(m[3]):y2,d1=+m[1];
-    if(ok(y1,m1,d1)&&ok(y2,m2,d2)&&iso(y1,m1,d1)<=iso(y2,m2,d2))return {from:iso(y1,m1,d1),to:iso(y2,m2,d2),txt:m[0]};}
-  if(m=t.match(new RegExp("(\\d{1,2})\\.?\\s*(?:-|–|bis)\\s*(\\d{1,2})\\.?\\s*"+MN+"\\s*(\\d{4})","i"))){const mm=mon(m[3]),y=+m[4];
-    if(mm&&ok(y,mm,+m[1])&&ok(y,mm,+m[2]))return {from:iso(y,mm,+m[1]),to:iso(y,mm,+m[2]),txt:m[0]};}
-  if(m=t.match(/(?<![\d.])(\d{1,2})\.(\d{1,2})\.(\d{4}|\d{2})(?!\d)/)){const y=Y(m[3]);if(ok(y,+m[2],+m[1]))return {from:iso(y,+m[2],+m[1]),txt:m[0]};}
-  if(m=t.match(/(?<!\d)((?:19|20)\d\d)-(\d\d)-(\d\d)(?!\d)/)){if(ok(+m[1],+m[2],+m[3]))return {from:iso(+m[1],+m[2],+m[3]),txt:m[0]};}
-  if(m=t.match(new RegExp("(\\d{1,2})\\.?\\s*"+MN+"\\s*(\\d{4})","i"))){const mm=mon(m[2]),y=+m[3];if(mm&&ok(y,mm,+m[1]))return {from:iso(y,mm,+m[1]),txt:m[0]};}
-  /* ohne Jahr (z. B. «26.-27.6.») – Jahr wird geschätzt */
-  if(yGuess){if(m=t.match(/(?<![\d.])(\d{1,2})\.\s*(?:-|–|bis)\s*(\d{1,2})\.(\d{1,2})\.(?!\d)/)){const y=yGuess;if(ok(y,+m[3],+m[1])&&ok(y,+m[3],+m[2])&&+m[1]<=+m[2])return {from:iso(y,+m[3],+m[1]),to:iso(y,+m[3],+m[2]),txt:m[0],guess:1};}
-    if(m=t.match(/(?<![\d.])(\d{1,2})\.(\d{1,2})\.(?![\d])/)){const y=yGuess;if(ok(y,+m[2],+m[1]))return {from:iso(y,+m[2],+m[1]),txt:m[0],guess:1};}}
-  return null;}
-/* Aufnahmedatum aus dem Foto (EXIF DateTimeOriginal) */
-async function exifDate(file){try{const buf=await file.slice(0,262144).arrayBuffer();const v=new DataView(buf);if(v.byteLength<4||v.getUint16(0)!==0xFFD8)return "";let o=2;
-  while(o<v.byteLength-10){const mk=v.getUint16(o);if((mk&0xFF00)!==0xFF00)break;const len=v.getUint16(o+2);
-    if(mk===0xFFE1&&v.getUint32(o+4)===0x45786966){const t=o+10,le=v.getUint16(t)===0x4949,u16=a=>v.getUint16(a,le),u32=a=>v.getUint32(a,le);
-      const str=(e)=>{const off=t+u32(e+8);let s="";for(let i=0;i<19;i++)s+=String.fromCharCode(v.getUint8(off+i));return s;};
-      const ifd0=t+u32(t+4);let sub=0,dt="";for(let i=0;i<u16(ifd0);i++){const e=ifd0+2+i*12;if(u16(e)===0x8769)sub=t+u32(e+8);if(u16(e)===0x0132)dt=str(e);}
-      if(sub)for(let i=0;i<u16(sub);i++){const e=sub+2+i*12;if(u16(e)===0x9003){dt=str(e);break;}}
-      const m=dt.match(/^(\d{4}):(\d\d):(\d\d)/);return m&&m[1]>"1990"?`${m[1]}-${m[2]}-${m[3]}`:"";}
-    o+=2+len;}}catch(e){}return "";}
-const isoDay=t=>{const x=new Date(t);return `${x.getFullYear()}-${z2(x.getMonth()+1)}-${z2(x.getDate())}`;};
-let dateOsf={};/* Punkt-ID → [Fotodaten] aus einer gelesenen OsmAnd-Datei */
-function dateCands(list){const out=[];
-  for(const p of list){const cy=p.created?new Date(p.created).getFullYear():0;
-    let c=null;for(const [k,lab] of [["title","Titel"],["desc","Beschreibung"],["note","Notiz"],["storyText","Storytext"]]){const r=parseDates(p[k],cy);if(r){c=Object.assign(r,{src:`aus ${lab}: «${r.txt.trim()}»`});break;}}
-    const ph=[...Object.values(p.phDate||{}),...(dateOsf[p.id]||[])].filter(Boolean).sort();
-    if((!c||c.guess)&&ph.length){const a=ph[0],b=ph[ph.length-1];c={from:a,to:b>a?b:undefined,src:`aus ${ph.length} Foto${ph.length>1?"s":""} (Aufnahmedatum)`};}
-    if(!c)continue;if(!STAY.includes(p.cat))delete c.to;
-    const same=p.visited===c.from&&(p.visitedTo||undefined)===c.to;const crLate=!p.created||isoDay(p.created)>c.from;
-    if(same&&!crLate)continue;
-    const importDay=p.created&&p.visited===isoDay(p.created);
-    c.sel=!c.guess&&(!p.visited||importDay||same);c.same=same;c.crLate=crLate;out.push({p,c});}
-  return out;}
-function admDates(){const list=admList();const rows=dateCands(list);
-  const cur=p=>p.visited?`bisher besucht ${visTxt(p)}`:"bisher ohne Besuchsdatum";
-  const prop=c=>{const n=c.to?nights(c.from,c.to):0;return `${fmtD(c.from)}${c.to?` – ${fmtD(c.to)} (${n} ${n==1?"Nacht":"Nächte"})`:""}`;};
-  openPanel(`<h2>Besuchsdatum ermitteln</h2>
-   <p class="muted">Gesucht in den ${list.length} angezeigten Punkten: Datum in Titel, Beschreibung oder Notiz (z. B. «06. - 07.10.2018») und Aufnahmedatum der Fotos. Angehakte Punkte bekommen das Datum als «besucht» (Camping/Stellplatz von–bis) und den Status «Besucht».</p>
-   <div class="actions" style="margin-top:6px"><button class="btn sec" id="dOsf">${mi("photo",16)} Fotodaten aus OsmAnd-Datei (.osf) lesen</button></div>
-   ${rows.length?`<label style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink);margin-top:12px"><input type="checkbox" id="dCr" style="width:auto;margin:0" ${ls("rb_dcr")!=="0"?"checked":""}> Auch «Erfasst» auf dieses Datum setzen (nur wenn es später erfasst wurde)</label>
-   <div class="actions" style="margin-top:8px"><button class="alink" id="dAll">alle anhaken</button><button class="alink" id="dNone">keine</button></div>
-   <div class="mgrp">${rows.map((r,i)=>`<label class="mrow wrap" style="align-items:flex-start"><input type="checkbox" data-d="${i}" ${r.c.sel?"checked":""} style="width:18px;height:18px;margin-top:3px;flex:none">
-     <span class="mtx"><b>${esc(ptTitle(r.p))}</b><small style="color:var(--ink)">→ <b>${prop(r.c)}</b>${r.c.guess?` <span style="color:var(--accent2)">(Jahr geschätzt)</span>`:""}</small><small>${esc(r.c.src)}</small><small>${r.c.same?"Besuchsdatum stimmt schon":cur(r.p)}${r.c.crLate?` · erfasst ${fmtD(r.p.created)}`:""}</small></span></label>`).join("")}</div>`
-   :`<p style="margin-top:12px">Keine Daten gefunden.</p>`}
-   <div class="actions"><button class="btn" id="dGo" ${rows.length?"":"disabled"}>Übernehmen</button><button class="btn sec" id="dNo">Schliessen</button></div>`);
-  const cnt=()=>{const n=[...$("#panel").querySelectorAll("[data-d]")].filter(x=>x.checked).length;$("#dGo").textContent=`${n} Punkte übernehmen`;$("#dGo").disabled=!n;};
-  $("#panel").querySelectorAll("[data-d]").forEach(x=>x.onchange=cnt);if(rows.length)cnt();
-  const all=v=>()=>{$("#panel").querySelectorAll("[data-d]").forEach(x=>x.checked=v);cnt();};
-  if(rows.length){$("#dAll").onclick=all(true);$("#dNone").onclick=all(false);}
-  $("#dNo").onclick=closePanel;
-  $("#dOsf").onclick=()=>pickWait($("#osfDates"),"Fotodaten aus OsmAnd-Datei","Die .osf-Sicherung auswählen. Es werden nur Aufnahmeort und -datum der Fotos gelesen, nichts importiert.");
-  const dc=$("#dCr");if(dc)dc.onchange=()=>ls("rb_dcr",dc.checked?"1":"0");
-  $("#dGo").onclick=async()=>{const setCr=dc&&dc.checked;let n=0;for(const x of $("#panel").querySelectorAll("[data-d]")){if(!x.checked)continue;const {p,c}=rows[+x.dataset.d];
-      if(setCr&&c.crLate)p.created=new Date(c.from+"T12:00:00").getTime();
-      p.visited=c.from;if(c.to&&STAY.includes(p.cat))p.visitedTo=c.to;else delete p.visitedTo;p.status="besucht";p.updated=Date.now();await put("points",p);n++;}
-    closePanel();await loadPoints();toast(`${n} Punkte mit Besuchsdatum aktualisiert`,4000);};}
-async function osfDates(file){progress("OsmAnd-Datei lesen",0,0,`«${file.name}» wird gelesen …`);let ents;
-  try{ents=await zipEntries(file);}catch(e){return osfError((e&&e.message)||"Datei konnte nicht gelesen werden");}
-  const imgs=ents.filter(x=>/\.(jpe?g)$/i.test(x.name));dateOsf={};let n=0,k=0;const live=points.filter(p=>!p.deleted);
-  for(const en of imgs){k++;if(k%20===0)progress("OsmAnd-Datei lesen",k,imgs.length,"Fotos werden zugeordnet …");
-    const ll=nameGPS(en.name.split("/").pop());if(!ll)continue;let b=null;
-    for(const p of live){const d=distKm({lat:ll[0],lon:ll[1]},p);if(!b||d<b.d)b={p,d};}
-    if(b&&b.d<=0.3){(dateOsf[b.p.id]=dateOsf[b.p.id]||[]).push(isoDay(en.date));n++;}}
-  toast(`${n} Fotodaten gelesen (${Object.keys(dateOsf).length} Punkte)`,4000);admDates();}
-$("#osfDates").onchange=e=>{const f=e.target.files[0];e.target.value="";if(f)osfDates(f);};
 /* ---------- Start ---------- */
 (async()=>{
   try{db=await openDB();}catch(e){toast("Speicher nicht verfügbar – Daten werden nicht gesichert",6000);return;}
