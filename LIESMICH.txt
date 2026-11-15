@@ -1,4 +1,4 @@
-IbexMap – v2.5 (privates Projekt)
+IbexMap – v2.6 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -209,3 +209,7 @@ NEU IN v2.4
 NEU IN v2.5
 - Verwaltung: «Datum ermitteln» – Besuchsdatum (Camping/Stellplatz von–bis) aus Titel, Beschreibung oder Notiz (z. B. «06. - 07.10.2018», «26.-28.05.22») und aus Foto-Aufnahmedaten; Vorschau mit Häkchen, erst dann gespeichert. Fotodaten auch aus OsmAnd-Datei (.osf) lesbar.
 - Neue Fotos merken sich ihr Aufnahmedatum. Verwaltung: neue Spalte «Besucht».
+
+NEU IN v2.6
+- Titelleiste, Werkzeugleiste der Verwaltung und die Leisten unten («Punkt hier setzen», Kartenausschnitt) im Logo-Stil: Grün mit Höhenlinien, dunkle Schrift. Statusleiste von Android passend grün.
+- «Datum ermitteln»: auf Wunsch auch «Erfasst» auf das gefundene Datum setzen (Häkchen, voreingestellt). Funktioniert auch für Punkte, bei denen das Besuchsdatum schon übernommen wurde.
