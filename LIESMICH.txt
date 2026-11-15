@@ -1,4 +1,4 @@
-IbexMap – v2.14 (privates Projekt)
+IbexMap – v2.15 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -264,3 +264,10 @@ NEU IN v2.14
 - Abgleich-Erinnerung: oranger Punkt am ⟳, wenn Änderungen offen sind oder der letzte Abgleich über einen Tag her ist.
 - Punkt bearbeiten: Quelle und Koordinaten unter «Mehr» eingeklappt.
 - POI-Overlay laden: Land wird in Gebieten à 1° × 1° geladen (kleine Anfragen, jede bis zu 3× versucht). Bei Überlastung «Laden unterbrochen» mit Stand; «Weiter laden» setzt beim letzten Gebiet fort.
+
+NEU IN v2.15
+- Beschriftung der Knöpfe rechts wieder entfernt.
+- Kartenfilter und Liste: beim An-/Abwählen bleibt die Scrollposition erhalten.
+- Filter nach Bewertung: Kartenfilter (Alle / ab ★★★ / ab ★★★★ / ★★★★★, auch im Hinweis «Gefiltert»), Liste (ab ★★★ …) und Verwaltung (Sterne, Mehrfachauswahl inkl. «ohne Bewertung»).
+- Punkt erfassen/bearbeiten: Fenster schliesst sich nicht mehr, wenn man beim Markieren von Text mit der Maus über den Rand fährt oder daneben klickt (nur noch mit ✕, Abbrechen oder Speichern). Andere Fenster schliessen weiterhin mit Klick daneben.
+- POI-Overlay laden repariert: schlankere Abfrage (gleiche Arten zusammengefasst), längere Wartezeit (bis 3 Min. pro Gebiet), Server nacheinander statt gleichzeitig, 2 Gebiete parallel, zu volle Gebiete werden automatisch geviertelt. Sehr häufige Arten (Sitzbank, Bushaltestelle, Moschee/Kirche, WLAN, Spielplatz, Recycling/Entsorgung) nur noch in der Online-Suche.

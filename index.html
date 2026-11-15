@@ -35,8 +35,6 @@ nav button{border:0;background:none;padding:10px 4px 12px;font-size:13px;color:v
 nav button .ic{font-size:22px;line-height:1}
 nav button.primary{color:var(--accent2);font-weight:700}
 nav button.on{color:var(--accent2)}
-.fablbl{display:none;position:absolute;right:calc(100% + 8px);top:50%;transform:translateY(-50%);background:rgba(19,32,15,.85);color:#fff;font-size:12.5px;font-weight:600;padding:4px 9px;border-radius:12px;white-space:nowrap;pointer-events:none}
-body.fabhelp .fablbl{display:block}
 .fab.add{background:var(--accent2);color:#fff;font-size:28px;font-weight:700;width:56px;height:56px;right:8px}
 #locBtn{bottom:calc(20px + var(--sb))}
 .fab{display:flex;align-items:center;justify-content:center;color:var(--ink);position:absolute;right:12px;bottom:20px;z-index:500;width:48px;height:48px;border-radius:50%;border:0;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.3);font-size:22px}
@@ -297,13 +295,13 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
     <div class="hint" id="hint">Tippe ungefähr auf die Stelle – danach fein einstellen · <u id="hintCancel">Abbrechen</u></div>
     <div class="placebar" id="placebar"><div class="muted" id="pbInfo">Am Griff ✥ ziehen</div>
       <div class="actions"><button class="btn" id="pbOk">✓ Punkt hier setzen</button><button class="btn sec" id="pbNo">Abbrechen</button></div></div>
-    <button class="fab add" id="navAdd" title="Punkt setzen" style="bottom:calc(260px + var(--sb))">＋<span class="fablbl">Punkt setzen</span></button>
-    <button class="fab" id="navHere" title="Hier merken (aktueller Standort)" style="bottom:calc(200px + var(--sb))"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.6" fill="currentColor"/></svg><span class="fablbl">Hier merken</span></button>
-    <button class="fab" id="navList" title="Liste" style="bottom:calc(140px + var(--sb))"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2" fill="currentColor"/><circle cx="4.5" cy="12" r="1.2" fill="currentColor"/><circle cx="4.5" cy="18" r="1.2" fill="currentColor"/></svg><span class="fablbl">Liste</span></button>
-    <button class="fab" id="locBtn" title="Mein Standort">◎<span class="fablbl">Mein Standort</span></button>
+    <button class="fab add" id="navAdd" title="Punkt setzen" style="bottom:calc(260px + var(--sb))">＋</button>
+    <button class="fab" id="navHere" title="Hier merken (aktueller Standort)" style="bottom:calc(200px + var(--sb))"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.6" fill="currentColor"/></svg></button>
+    <button class="fab" id="navList" title="Liste" style="bottom:calc(140px + var(--sb))"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2" fill="currentColor"/><circle cx="4.5" cy="12" r="1.2" fill="currentColor"/><circle cx="4.5" cy="18" r="1.2" fill="currentColor"/></svg></button>
+    <button class="fab" id="locBtn" title="Mein Standort">◎</button>
     <button class="fab" id="flagBtn" title="Fahnen (Vormerker)" style="top:76px;left:12px;right:auto;bottom:auto;display:none"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M5 22V3" stroke="#d84315" stroke-width="2.4" stroke-linecap="round"/><path d="M6 3.5h12l-3 4.5 3 4.5H6z" fill="#d84315"/></svg><b class="fcount"></b></button>
     <button class="fab" id="searchBtn" title="Ort suchen" style="top:12px;left:12px;right:auto;bottom:auto"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg></button>
-    <button class="fab" id="filtBtn" title="Filter: was auf der Karte angezeigt wird" style="bottom:calc(80px + var(--sb))"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"><path d="M3 4h18l-7 8.5V19l-4 2v-8.5z"/></svg><span class="fablbl">Filter</span></button>
+    <button class="fab" id="filtBtn" title="Filter: was auf der Karte angezeigt wird" style="bottom:calc(80px + var(--sb))"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"><path d="M3 4h18l-7 8.5V19l-4 2v-8.5z"/></svg></button>
   </div>
 </div>
 
@@ -416,7 +414,7 @@ const ADM=(()=>{try{if(new URLSearchParams(location.search).has("admin")){sessio
   return sessionStorage.getItem("rb_admin")==="1"&&matchMedia("(min-width:900px)").matches;}catch(e){return false;}})();
 if(ADM)document.body.classList.add("adm");
 const GROUP="IbexMap";
-const VERSION="v2.14";
+const VERSION="v2.15";
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
 const MA_SECTORS=[
  {n:"A Norden",zeit:"5.–10. April",klima:"Frühling, grün; 15–22 °C, im Rif Regen möglich, Nächte kühl",info:"Tanger Med, Chefchaouen, Fès, Meknès – ankommen, Städte, einkaufen. Eher Campings.",box:[[33.8,-5.9,35.95,-1.0]]},
@@ -558,6 +556,8 @@ function pinIcon(p){const c=CATS[p.cat]||CATS.other;
   return L.divIcon({className:"",iconSize:[30,30],iconAnchor:[15,30],popupAnchor:[0,-28],
     html:`<div class="pinw"><div class="pin ${p.status==="besucht"?"visited":""}" style="background:${c.c}"><span>${svgI(p.cat in CATS?p.cat:"other",16)}</span></div>${p.status==="besucht"?`<span class="vchk">✓</span>`:""}${p.story?`<span class="vstory">${storyI(9)}</span>`:""}</div>`});}
 let hiddenCats=[];try{hiddenCats=JSON.parse(localStorage.getItem("rb_hidden")||"[]");}catch(e){}
+/* Kartenfilter Bewertung: nur Punkte ab n Sternen (0 = alle) */
+let mapStars=0;try{mapStars=+localStorage.getItem("rb_mstars")||0;}catch(e){}const saveStars=()=>{try{localStorage.setItem("rb_mstars",String(mapStars));}catch(e){}};
 /* Kartenfilter Reise und Land: Mehrfachauswahl (leer = alle) */
 let mapTrip=[],mapCountry=[];{const rd=k=>{try{const v=localStorage.getItem(k)||"";if(!v)return [];if(v[0]==="[")return JSON.parse(v);return [v];}catch(e){return [];}};mapTrip=rd("rb_mtrip");mapCountry=rd("rb_mcountry");}
 const saveMapScope=()=>{try{localStorage.setItem("rb_mtrip",JSON.stringify(mapTrip));localStorage.setItem("rb_mcountry",JSON.stringify(mapCountry));}catch(e){}};
@@ -568,6 +568,7 @@ function filtState(){const b=$("#filtBtn");if(!b)return;
   if(mapCountry.length)parts.push(mapCountry.map(countryName).join(", "));
   if(hiddenCats.length)parts.push(`${hiddenCats.length} Kategorie${hiddenCats.length>1?"n":""} aus`);
   if(hiddenStat.length)parts.push(hiddenStat.map(k=>STATUS[k]).join(", ")+" aus");
+  if(mapStars)parts.push(mapStars===5?"★★★★★":`ab ${"★".repeat(mapStars)}`);
   b.classList.toggle("active",parts.length>0||poiShow.length>0);
   let n=b.querySelector(".fbadge");if(!n){n=document.createElement("span");n.className="fbadge";b.appendChild(n);}
   n.textContent=parts.length;n.style.display=parts.length?"flex":"none";
@@ -575,10 +576,10 @@ function filtState(){const b=$("#filtBtn");if(!b)return;
   if(!parts.length||ADM){pl.style.display="none";return;}
   pl.style.display="flex";pl.innerHTML=`<span class="ft" title="Filter ändern">${mi("filter",15)}<span class="fx">Gefiltert: ${esc(parts.join(" · "))}</span></span><button title="Alle Filter aufheben">✕</button>`;
   pl.querySelector(".ft").onclick=()=>showMapFilter();
-  pl.querySelector("button").onclick=()=>{mapTrip=[];mapCountry=[];hiddenCats=[];hiddenStat=[];saveMapScope();try{localStorage.setItem("rb_hidden","[]");localStorage.setItem("rb_hidstat","[]");}catch(e){}drawPoints();toast("Alle Filter aufgehoben",2000);};}
+  pl.querySelector("button").onclick=()=>{mapTrip=[];mapCountry=[];hiddenCats=[];hiddenStat=[];mapStars=0;saveStars();saveMapScope();try{localStorage.setItem("rb_hidden","[]");localStorage.setItem("rb_hidstat","[]");}catch(e){}drawPoints();toast("Alle Filter aufgehoben",2000);};}
 function drawPoints(){layer.clearLayers();
   filtState();
-  const vis=ADM?points.filter(p=>admShown.has(p.id)):points.filter(p=>!hiddenCats.includes(p.cat in CATS?p.cat:"other")&&!hiddenStat.includes(p.status||"idee")&&(!mapTrip.length||mapTrip.includes(p.trip))&&(mapTrip.includes(p.trip)||!tripHidden(p.trip))&&(!mapCountry.length||mapCountry.includes(p.country)));
+  const vis=ADM?points.filter(p=>admShown.has(p.id)):points.filter(p=>!hiddenCats.includes(p.cat in CATS?p.cat:"other")&&!hiddenStat.includes(p.status||"idee")&&(!mapTrip.length||mapTrip.includes(p.trip))&&(mapTrip.includes(p.trip)||!tripHidden(p.trip))&&(!mapCountry.length||mapCountry.includes(p.country))&&(!mapStars||(p.stars||0)>=mapStars));
   const z=map.getZoom(),single=p=>L.marker([p.lat,p.lon],{icon:pinIcon(p)}).addTo(layer).on("click",()=>{if(ADM){const tr=admFocus(p.id,false);if(tr)tr.scrollIntoView({block:"center",behavior:"smooth"});}showDetail(p.id);});
   if(z>=CLUSTER_MAXZOOM||!clusterOn){vis.forEach(single);return;}
   /* Gruppieren nach Kategorie: nahe Punkte gleicher Kategorie (Raster 64 px) werden zu einer Blase mit Anzahl */
@@ -611,7 +612,7 @@ const OSM={
   water:{n:"Wasser / Brunnen",c:"#0288d1",i:"💧"}
 };
 const OSM_MINZOOM=10;
-const OVERPASS=["https://overpass-api.de/api/interpreter","https://overpass.private.coffee/api/interpreter","https://maps.mail.ru/osm/tools/overpass/api/interpreter","https://overpass.kumi.systems/api/interpreter"];
+const OVERPASS=["https://overpass-api.de/api/interpreter","https://overpass.kumi.systems/api/interpreter","https://overpass.private.coffee/api/interpreter"];
 let osmData={items:[],loaded:0,scope:""};let osmShow=[];
 try{osmShow=JSON.parse(localStorage.getItem("rb_osm")||"[]");}catch(e){}
 const osmLayer=L.layerGroup().addTo(map);const osmCanvas=L.canvas({padding:.3});
@@ -757,7 +758,12 @@ function showBig(src){const u=URL.createObjectURL(src);const w=document.createEl
   document.body.appendChild(w);ovlPush(()=>{URL.revokeObjectURL(u);w.remove();});w.onclick=e=>{e.stopPropagation();ovlClose();};}
 window.addEventListener("popstate",()=>{if(ovl.length){ovl.pop()();return;}if(ignorePop){ignorePop=false;return;}if(panelHist||isPanelOpen()){panelHist=false;hidePanel();}});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&isPanelOpen())closePanel();});
-$("#sheet").addEventListener("click",e=>{if(e.target.id==="sheet")closePanel();});
+/* Klick neben das Fenster schliesst es – aber nur, wenn auch das Drücken daneben begann (nicht beim Markieren von Text, das über den Rand hinausgeht)
+   und nie bei einem Formular mit Eingaben (Punkt bearbeiten), damit nichts verloren geht */
+let sheetDown=null;
+$("#sheet").addEventListener("pointerdown",e=>{sheetDown=e.target;});
+$("#sheet").addEventListener("click",e=>{const ok=e.target.id==="sheet"&&sheetDown&&sheetDown.id==="sheet";sheetDown=null;
+  if(!ok)return;if($("#fSave")||$("#fmSave")||$("#cGo"))return;closePanel();});
 
 /* ---------- Freie Suche wie OsmAnd: deutsche Begriffe → OpenStreetMap-Kategorien (Umgebung), plus Namen weltweit ---------- */
 /* Kategorien wie in OsmAnd: Gruppe → Arten (Name, Suchwörter, OSM-Abfrage) */
@@ -1037,6 +1043,8 @@ function mergeFlags(rl,rd){const del=new Set([...flagDel,...(rd||[])].map(x=>x.i
 /* ---------- Kartenfilter ---------- */
 $("#filtBtn").onclick=showMapFilter;
 function showMapFilter(){
+  /* beim Neuzeichnen (an-/abwählen) die Scrollposition halten */
+  const keepSc=isPanelOpen()&&$("#mfClose")?$("#panel").scrollTop:0;setTimeout(()=>{if($("#mfClose"))$("#panel").scrollTop=keepSc;},0);
   const cnt=k=>points.filter(p=>(p.cat in CATS?p.cat:"other")===k).length;
   const cList=[...new Set(points.map(p=>p.country).filter(Boolean))].sort((a,b)=>countryName(a).localeCompare(countryName(b)));
   openPanel(`<h2>Auf der Karte anzeigen</h2>
@@ -1045,6 +1053,9 @@ function showMapFilter(){
     <h3>Eigene Punkte</h3>
     <div class="chips">${Object.entries(CATS).map(([k,v])=>`<button class="chip ${hiddenCats.includes(k)?"":"on"}" data-k="${k}">${icoBadge(k,v.c,20)}${v.n} (${cnt(k)})</button>`).join("")}</div>
     <div class="chips"><button class="chip ${clusterOn?"on":""}" id="mfClu">◉ Nahe Punkte gruppieren (bis Zoom ${CLUSTER_MAXZOOM-1})</button></div>
+    <h3>Bewertung</h3>
+    <div class="chips">${[[0,"Alle"],[3,"ab ★★★"],[4,"ab ★★★★"],[5,"★★★★★"]].map(([v,l])=>`<button class="chip ${mapStars===v?"on":""}" data-sr="${v}">${l}${v?` (${points.filter(p=>(p.stars||0)>=v).length})`:""}</button>`).join("")}</div>
+    <p class="muted">Gilt für bewertete Punkte (Stellplatz, Camping, Sehenswürdigkeit) – unbewertete werden dann ausgeblendet.</p>
     <h3>Status</h3>
     <div class="chips">${Object.entries(STATUS).map(([k,v])=>`<button class="chip ${hiddenStat.includes(k)?"":"on"}" data-st="${k}">${mi({idee:"bulb",fix:"pin",besucht:"check"}[k],15)} ${v} (${points.filter(p=>(p.status||"idee")===k).length})</button>`).join("")}</div>
     <p class="muted">Antippen blendet ein oder aus – z. B. «Besucht» ausschalten, um nur noch offene Ziele zu sehen.</p>
@@ -1058,7 +1069,8 @@ function showMapFilter(){
   const save=()=>{try{localStorage.setItem("rb_hidden",JSON.stringify(hiddenCats));}catch(e){}drawPoints();showMapFilter();};
   $("#panel").querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{const k=b.dataset.k;hiddenCats=hiddenCats.includes(k)?hiddenCats.filter(x=>x!==k):[...hiddenCats,k];save();});
   const only=keep=>{hiddenCats=Object.keys(CATS).filter(k=>!keep.includes(k));save();};
-  $("#mfAll").onclick=()=>{hiddenCats=[];hiddenStat=[];mapTrip=[];mapCountry=[];saveMapScope();try{localStorage.setItem("rb_hidstat","[]");}catch(e){}save();};
+  $("#panel").querySelectorAll("[data-sr]").forEach(b=>b.onclick=()=>{mapStars=+b.dataset.sr;saveStars();drawPoints();showMapFilter();});
+  $("#mfAll").onclick=()=>{hiddenCats=[];hiddenStat=[];mapTrip=[];mapCountry=[];mapStars=0;saveStars();saveMapScope();try{localStorage.setItem("rb_hidstat","[]");}catch(e){}save();};
   $("#mfSupply").onclick=()=>{poiShow=["1","6","8"];try{localStorage.setItem("rb_poishow",JSON.stringify(poiShow));}catch(e){}drawOsm();only(["shop","fuel","service","water"]);
     if(!poiOff.length)toast("Für das POI-Overlay zuerst ein Land laden (Filter › POI-Overlay)",4500);};
   $("#mfNight").onclick=()=>only(["wild","camp"]);
@@ -1255,10 +1267,10 @@ $("#navHere").onclick=()=>{
 
 /* ---------- Liste ---------- */
 /* Liste: Mehrfachauswahl je Gruppe (innerhalb einer Gruppe «oder», zwischen Gruppen «und») */
-let fText="";const LF={cat:new Set(),st:new Set(),trip:new Set(),cc:new Set(),sec:new Set()};
+let fText="";const LF={cat:new Set(),st:new Set(),trip:new Set(),cc:new Set(),sec:new Set(),stars:new Set()};
 const lfAny=()=>Object.values(LF).some(x=>x.size);
 $("#navList").onclick=()=>showList();
-async function showList(){
+async function showList(){const keepL=isPanelOpen()&&$("#lSearch")?$("#panel").scrollTop:0;setTimeout(()=>{if($("#lSearch"))$("#panel").scrollTop=keepL;},0);
   const chip=(grp,val,label,extra="")=>`<button class="chip ${LF[grp].has(val)?"on":""}" data-g="${grp}" data-v="${esc(val)}">${extra}${label}</button>`;
   const cnt=f=>points.filter(f).length;
   const countries=[...new Set(points.map(p=>p.country).filter(Boolean))].sort((a,b)=>countryName(a).localeCompare(countryName(b)));
@@ -1268,6 +1280,7 @@ async function showList(){
     <input id="lSearch" placeholder="Suchen …" value="${esc(fText)}">
     ${lfAny()?`<div class="chips"><button class="chip" id="lfReset" style="border-color:var(--accent2);color:var(--accent2)">✕ Alle Filter zurücksetzen</button></div>`:""}
     <div class="lfh">Kategorie</div><div class="chips">${Object.entries(CATS).map(([k,v])=>chip("cat",k,esc(v.n),icoBadge(k,v.c,20))).join("")}</div>
+    <div class="lfh">Bewertung</div><div class="chips">${[["3","ab ★★★"],["4","ab ★★★★"],["5","★★★★★"]].map(([v,l])=>chip("stars",v,`${l} (${cnt(p=>(p.stars||0)>=+v)})`)).join("")}</div>
     <div class="lfh">Status</div><div class="chips">${Object.entries(STATUS).map(([k,v])=>chip("st",k,esc(v))).join("")}</div>
     <div class="lfh">Reise</div><div class="chips">${tripsSorted().map(t=>chip("trip",t.id,`${esc(t.name)} (${cnt(p=>p.trip===t.id)})${t.hidden?" "+hidI:""}`)).join("")}${chip("trip","__none",`ohne Reise (${cnt(p=>!p.trip)})`)}</div>
     ${countries.length?`<div class="lfh">Land</div><div class="chips">${countries.map(c=>chip("cc",c,`${esc(countryName(c))} (${cnt(p=>p.country===c)})`,mi("globe",15))).join("")}</div>`:""}
@@ -1284,7 +1297,7 @@ let lSort="dist";try{lSort=localStorage.getItem("rb_lsort")||"dist";}catch(e){}
 async function renderItems(){
   const q=fText.toLowerCase();
   const inS=(S,v)=>!S.size||S.has(v);
-  let list=points.filter(p=>(!LF.trip.size||LF.trip.has(p.trip||"__none"))&&(LF.trip.has(p.trip)||!tripHidden(p.trip))&&inS(LF.cc,p.country)&&inS(LF.cat,p.cat in CATS?p.cat:"other")&&inS(LF.st,p.status||"idee")&&inS(LF.sec,p.section)&&(!q||(ptTitle(p)+" "+p.desc+" "+p.section+" "+(p.region||"")+" "+countryName(p.country)+" "+tripName(p.trip)+" "+p.note).toLowerCase().includes(q)));
+  let list=points.filter(p=>(!LF.trip.size||LF.trip.has(p.trip||"__none"))&&(LF.trip.has(p.trip)||!tripHidden(p.trip))&&inS(LF.cc,p.country)&&inS(LF.cat,p.cat in CATS?p.cat:"other")&&inS(LF.st,p.status||"idee")&&inS(LF.sec,p.section)&&(!LF.stars.size||(p.stars||0)>=Math.min(...[...LF.stars].map(Number)))&&(!q||(ptTitle(p)+" "+p.desc+" "+p.section+" "+(p.region||"")+" "+countryName(p.country)+" "+tripName(p.trip)+" "+p.note).toLowerCase().includes(q)));
   const dkey=p=>p.visited?new Date(p.visited+"T12:00:00").getTime():(p.created||0);
   if(lSort==="dist"&&me)list=list.map(p=>({p,d:distKm(me,p)})).sort((a,b)=>a.d-b.d).map(x=>x.p);
   else if(lSort==="new")list.sort((a,b)=>dkey(b)-dkey(a));
@@ -2099,7 +2112,7 @@ async function checkUpdate(){if(!navigator.onLine)return toast("Kein Internet",3
     else toast(`Aktuell: ${VERSION} ist die neueste Version`,4000);}
   catch(e){toast("Update-Prüfung fehlgeschlagen",4000);}}
 /* ---------- Admin-Ansicht für den PC: filterbare, sortierbare Tabelle aller Punkte ---------- */
-const AF={trip:new Set(),cc:new Set(),cat:new Set(),st:new Set(),sec:new Set(),x:new Set()};let admQ="",admSel=new Set(),admCur="",admLast="";
+const AF={trip:new Set(),cc:new Set(),cat:new Set(),st:new Set(),sec:new Set(),stars:new Set(),x:new Set()};let admQ="",admSel=new Set(),admCur="",admLast="";
 let admSort={k:"updated",d:-1};try{const s=JSON.parse(localStorage.getItem("rb_asort")||"null");if(s&&s.k)admSort=s;}catch(e){}
 const admShown=new Set();const admHi=L.layerGroup().addTo(map);
 const ST_ORD={idee:0,fix:1,besucht:2};const ADM_Z=8;/* Verwaltung: Karte zeigt beim Anklicken einer Zeile eine Übersicht (Region), nicht Strassenebene */
@@ -2111,7 +2124,7 @@ function admMatch(p,skip){const q=admQ.trim().toLowerCase();
   if(q&&![ptTitle(p),p.desc,p.note,p.source,p.region,p.section,countryName(p.country),tripName(p.trip),(CATS[p.cat]||CATS.other).n].join(" ").toLowerCase().includes(q))return false;
   const t=(k,v)=>k===skip||!AF[k].size||AF[k].has(v);
   if(skip!=="trip"&&tripHidden(p.trip)&&!AF.trip.has(p.trip))return false;
-  if(!t("trip",p.trip||"")||!t("cc",p.country||"")||!t("cat",p.cat in CATS?p.cat:"other")||!t("st",p.status||"idee")||!t("sec",p.section||""))return false;
+  if(!t("trip",p.trip||"")||!t("cc",p.country||"")||!t("cat",p.cat in CATS?p.cat:"other")||!t("st",p.status||"idee")||!t("sec",p.section||"")||!t("stars",String(p.stars||0)))return false;
   if(skip!=="x"&&AF.x.size){const x=AF.x;
     if(x.has("nophoto")&&(p.photos||[]).length)return false;if(x.has("photo")&&!(p.photos||[]).length)return false;
     if(x.has("notitle")&&p.title)return false;if(x.has("story")&&!p.story)return false;if(x.has("nostars")&&(!RATE[p.cat]||p.stars))return false;}
@@ -2131,6 +2144,7 @@ function admToolbar(){
    ${admFilterBtn("cc","Land",admOpts("cc",p=>p.country||"",v=>v?esc(countryName(v)):"<em>unbekannt</em>"))}
    ${admFilterBtn("cat","Kategorie",admOpts("cat",p=>p.cat in CATS?p.cat:"other",v=>`${icoBadge(v,CATS[v].c,18)} ${esc(CATS[v].n)}`))}
    ${admFilterBtn("st","Status",admOpts("st",p=>p.status||"idee",v=>esc(STATUS[v]||v)))}
+   ${admFilterBtn("stars","Sterne",admOpts("stars",p=>String(p.stars||0),v=>v==="0"?"<em>ohne Bewertung</em>":`<span style="color:#e0a100">${"★".repeat(+v)}</span>`).sort((a,b)=>b[0]-a[0]))}
    ${admFilterBtn("sec","Abschnitt",admOpts("sec",p=>p.section||"",v=>v?esc(v):"<em>ohne Abschnitt</em>"))}
    ${admFilterBtn("x","Weitere",xs.map(([v,l])=>[v,l,points.filter(p=>admMatch(p,"x")&&(()=>{const s=AF.x;AF.x=new Set([v]);const r=admMatch(p);AF.x=s;return r;})()).length]))}
    ${Object.values(AF).some(s=>s.size)||admQ?`<button class="alink" id="aReset">Alle Filter zurücksetzen</button>`:""}
@@ -2266,37 +2280,59 @@ async function ovQuery(q,ms){const ctrls=[];
   try{const j=await Promise.any([one(OVERPASS[0]),one(OVERPASS[1]),new Promise((res,rej)=>setTimeout(()=>Promise.any(OVERPASS.slice(2).map(one)).then(res,rej),8000))]);
     ctrls.forEach(c=>{try{c.abort();}catch(e){}});return j;}
   catch(e){throw new Error("OpenStreetMap-Server überlastet – später nochmals versuchen");}}
-/* Ein Land in Kacheln von 1° × 1° laden (kleine Anfragen statt einer riesigen) – bei Abbruch wird beim nächsten Versuch fortgesetzt */
+/* Abfrage für das Offline-Laden: gleiche Schlüssel zusammengefasst (wenige, schnelle Anweisungen);
+   sehr häufige, wenig nützliche Arten (Sitzbank, Bushaltestelle, Moschee/Kirche, WLAN, Spielplatz, Recycling) nur in der Online-Suche */
+const POI_SKIP=/"bench"|"bus_stop"|internet_access|"playground"|recycling|"religion"=/;
+const POI_STMT=(()=>{const simple={},other=[];
+  POI_GROUPS.forEach(g=>g.items.forEach(it=>it[2].split(";").filter(Boolean).forEach(sel=>{if(POI_SKIP.test(sel))return;
+    const m=sel.match(/^(nwr|node|way)\["([^"]+)"(=|~)"([^"]*)"\]$/);
+    if(m){const vals=m[3]==="="?[m[4]]:(m[4].match(/^\^\((.*)\)\$$/)||[,m[4]])[1].split("|");const k=m[1]+"|"+m[2];(simple[k]=simple[k]||new Set());vals.forEach(v=>simple[k].add(v));}
+    else other.push(sel);})));
+  return Object.entries(simple).map(([k,v])=>{const [t,key]=k.split("|");return `${t}["${key}"~"^(${[...v].join("|")})$"];`;}).join("")+other.map(x=>x+";").join("");})();
+/* Server nacheinander versuchen (nicht gleichzeitig – die Server erlauben pro Gerät nur wenige gleichzeitige Abfragen) */
+async function ovSeq(q,ms){let last;
+  for(const ep of OVERPASS){const ac=new AbortController();const to=setTimeout(()=>ac.abort(),ms);
+    try{const r=await fetch(ep,{method:"POST",signal:ac.signal,body:"data="+encodeURIComponent(q),headers:{"Content-Type":"application/x-www-form-urlencoded"}});
+      if(!r.ok)throw new Error("HTTP "+r.status);const j=await r.json();clearTimeout(to);
+      if(!j||!Array.isArray(j.elements))throw new Error("leer");if(j.remark&&/timed out|out of memory/i.test(j.remark))throw new Error("Zeitüberschreitung");return j;}
+    catch(e){clearTimeout(to);last=e;}}
+  throw last||new Error("nicht erreichbar");}
+/* Ein Land in Gebieten von 1° × 1° laden – 2 Gebiete gleichzeitig; zu volle Gebiete werden geviertelt; bei Abbruch wird fortgesetzt */
 async function poiDownload(cc){if(!navigator.onLine)return toast("Kein Internet",3000);
   const title=`Orte ${countryName(cc)} laden`;
   if(!countryData){progress(title,0,0,"Ländergrenzen laden …");try{await downloadCountries();}catch(e){}}
   prepCountries();const f=(countryData||[]).find(x=>x.c===cc);
   if(!f){openPanel(`<h2>Laden nicht möglich</h2><p>Die Ländergrenzen für ${esc(countryName(cc))} fehlen – bitte mit Internet zuerst «Ländergrenzen laden».</p><div class="actions"><button class="btn sec" id="pdNo">Zurück</button></div>`);$("#pdNo").onclick=poiOffDialog;return;}
   const [w,s0,e,n]=f.b,T=1,tiles=[];
-  for(let la=Math.floor(s0);la<n;la+=T)for(let lo=Math.floor(w);lo<e;lo+=T){
-    const pts=[[la,lo],[la+T,lo],[la,lo+T],[la+T,lo+T],[la+T/2,lo+T/2],[la+T/2,lo],[la+T/2,lo+T],[la,lo+T/2],[la+T,lo+T/2],[la+T/4,lo+T/4],[la+3*T/4,lo+3*T/4],[la+T/4,lo+3*T/4],[la+3*T/4,lo+T/4]];
-    if(pts.some(([y,x])=>inGeom(x,y,f.g)))tiles.push({s:la,w:lo,n:la+T,e:lo+T,k:la+"_"+lo});}
+  const hit=(la,lo,t)=>[[la,lo],[la+t,lo],[la,lo+t],[la+t,lo+t],[la+t/2,lo+t/2],[la+t/2,lo],[la+t/2,lo+t],[la,lo+t/2],[la+t,lo+t/2],[la+t/4,lo+t/4],[la+3*t/4,lo+3*t/4],[la+t/4,lo+3*t/4],[la+3*t/4,lo+t/4]].some(([y,x])=>inGeom(x,y,f.g));
+  for(let la=Math.floor(s0);la<n;la+=T)for(let lo=Math.floor(w);lo<e;lo+=T)if(hit(la,lo,T))tiles.push({s:la,w:lo,t:T,k:la+"_"+lo});
   let part=null;try{part=await getOne("meta","poipart_"+cc);}catch(err){}
-  if(!part)part={id:"poipart_"+cc,done:[],items:{}};
-  const sels=POI_GROUPS.flatMap(g=>g.items.flatMap(it=>it[2].split(";").filter(Boolean))).map(x=>x+";").join("");
-  let i=0,failed=0;
-  for(const t of tiles){i++;if(part.done.includes(t.k))continue;
-    progress(title,i-1,tiles.length,`Gebiet ${i} von ${tiles.length} …${failed?` (${failed} erneut versucht)`:""}`);
-    const q=`[out:json][timeout:90][bbox:${t.s},${t.w},${t.n},${t.e}];(${sels});out center tags qt;`;
-    let j=null;for(let a=0;a<3&&!j;a++){try{j=await ovQuery(q,110000);}catch(err){failed++;await sleep(4000);}}
-    if(!j){await put("meta",part);
-      openPanel(`<h2>Laden unterbrochen</h2><p>${part.done.length} von ${tiles.length} Gebieten geladen. Die OpenStreetMap-Server sind gerade überlastet.</p>
-        <p class="muted">Bereits geladene Gebiete bleiben gespeichert – «Weiter laden» setzt dort fort, wo es aufgehört hat.</p>
-        <div class="actions"><button class="btn" id="pdRe">Weiter laden</button><button class="btn sec" id="pdNo">Später</button></div>`);
-      $("#pdRe").onclick=()=>poiDownload(cc);$("#pdNo").onclick=poiOffDialog;return;}
-    for(const el of j.elements){const lat=el.lat??(el.center&&el.center.lat),lon=el.lon??(el.center&&el.center.lon);if(lat==null)continue;
+  if(!part||!part.v2)part={id:"poipart_"+cc,v2:1,done:[],items:{}};
+  const queue=tiles.filter(t=>!part.done.includes(t.k));const total=tiles.length;let errTile=null,saving=Promise.resolve();
+  const doneN=()=>tiles.filter(t=>part.done.includes(t.k)).length;
+  const show=()=>progress(title,doneN(),total,`Gebiet ${Math.min(doneN()+1,total)} von ${total} – kann pro Gebiet bis 2 Minuten dauern`);
+  show();
+  const handle=j=>{for(const el of j.elements){const lat=el.lat??(el.center&&el.center.lat),lon=el.lon??(el.center&&el.center.lon);if(lat==null)continue;
       const t0=el.tags||{},tg={};POI_KEYS.forEach(k=>{if(t0[k]!=null)tg[k]=t0[k];});const m=[];
       POI_GROUPS.forEach((g,gi)=>g.items.forEach((it,ii)=>{try{if(poiSelOk(it[2],t0))m.push(gi+"."+ii);}catch(err){}}));
-      if(m.length)part.items[el.type[0]+el.id]={a:+lat.toFixed(5),o:+lon.toFixed(5),t:tg,m};}
-    part.done.push(t.k);if(part.done.length%3===0||i===tiles.length)await put("meta",part);}
+      if(m.length)part.items[el.type[0]+el.id]={a:+lat.toFixed(5),o:+lon.toFixed(5),t:tg,m};}};
+  const load=async t=>{/* ein Gebiet; bei Fehler zweimal wiederholen, dann vierteln (bis 0,25°) */
+    const q=b=>`[out:json][timeout:180][bbox:${b.s},${b.w},${b.s+b.t},${b.w+b.t}];(${POI_STMT});out center tags qt;`;
+    for(let a=0;a<2;a++){try{handle(await ovSeq(q(t),200000));return true;}catch(err){await sleep(5000);}}
+    if(t.t<=0.25)return false;const h=t.t/2;
+    for(const [dy,dx] of [[0,0],[h,0],[0,h],[h,h]]){const sub={s:t.s+dy,w:t.w+dx,t:h};if(!hit(sub.s,sub.w,h))continue;if(!(await load(sub)))return false;}
+    return true;};
+  const worker=async()=>{while(queue.length&&!errTile){const t=queue.shift();
+      if(await load(t)){part.done.push(t.k);saving=saving.then(()=>put("meta",part));show();}else{errTile=t;}}};
+  await Promise.all([worker(),worker()]);await saving;
+  if(errTile||doneN()<total){await put("meta",part);
+    openPanel(`<h2>Laden unterbrochen</h2><p>${doneN()} von ${total} Gebieten geladen (${Object.keys(part.items).length.toLocaleString("de-CH")} Orte). Die OpenStreetMap-Server sind gerade überlastet.</p>
+      <p class="muted">Bereits geladene Gebiete bleiben gespeichert – «Weiter laden» setzt dort fort, wo es aufgehört hat. Am besten später nochmals, z. B. am Abend.</p>
+      <div class="actions"><button class="btn" id="pdRe">Weiter laden</button><button class="btn sec" id="pdNo">Später</button></div>`);
+    $("#pdRe").onclick=()=>poiDownload(cc);$("#pdNo").onclick=poiOffDialog;return;}
   const list=Object.values(part.items);
   poiOff=poiOff.filter(p=>p.cc!==cc);poiOff.push({cc,loaded:Date.now(),n:list.length,items:list});await savePoiOff();try{await del("meta","poipart_"+cc);}catch(err){}
-  progress(title,tiles.length,tiles.length,`Fertig: ${list.length.toLocaleString("de-CH")} Orte gespeichert`);
+  progress(title,total,total,`Fertig: ${list.length.toLocaleString("de-CH")} Orte gespeichert`);
   drawOsm();setTimeout(poiOffDialog,1500);}
 async function poiOffDialog(){await loadPoiOff();
   const cand=[...new Set([osmCC(),...points.map(p=>p.country)].filter(Boolean))].filter(c=>!poiOff.some(p=>p.cc===c));
@@ -2445,7 +2481,6 @@ async function readyDialog(){openPanel(`<h2>Bereit für unterwegs?</h2><p class=
     localStorage.setItem("rb_fix_osm1","1");if(n){await loadPoints();setTimeout(()=>toast(`${n} OsmAnd-Orte wieder ohne Reise`,5000),2500);}}}catch(e){}
   /* Kategorie «Tierbeobachtung» entfernt: bestehende Punkte werden zu «Sehenswürdigkeit» */
   try{let n=0;for(const p of await getAll("points"))if(!p.deleted&&p.cat==="wildlife"){p.cat="sight";p.updated=Date.now();await put("points",p);n++;}if(n){await loadPoints();setTimeout(()=>toast(`${n} Punkte «Tierbeobachtung» sind jetzt «Sehenswürdigkeit»`,5000),2500);}}catch(e){}
-  {const n=+ls("rb_fabhelp")||0;if(n<5&&!ADM){ls("rb_fabhelp",String(n+1));document.body.classList.add("fabhelp");setTimeout(()=>document.body.classList.remove("fabhelp"),9000);}}
   trashPurgeOld().catch(()=>{});
   await loadFlags();wakeAcquire();if(surfOn&&!ADM)surfLayer.addTo(map);loadPoiOff().then(drawOsm);await loadOffPacks();drawOffAreas();
   showHeaderTrip();setTimeout(handleShare,600);setTimeout(async()=>{if(!countryData){await ensureCountries();}else{await assignCountries();}},1500);
