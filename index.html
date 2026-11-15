@@ -91,7 +91,7 @@ body.adm #app{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,30%)
 body.adm header{grid-column:1/3}
 body.adm.nomap #app{grid-template-columns:minmax(0,1fr) 0}body.adm.nomap #map{visibility:hidden;border:0}
 body.adm #map{grid-column:2;grid-row:2;border-left:1px solid var(--line)}
-body.adm #map>.fab,body.adm .placebar,body.adm .hint{display:none !important}
+body.adm #map>.fab,body.adm #placebar,body.adm .hint{display:none !important}
 body.adm #locBtn{display:flex !important}
 .hadm{font-size:12px;font-weight:600;background:var(--accent2);color:#fff;border-radius:6px;padding:2px 7px;vertical-align:3px;margin-left:4px}
 .hbtn.hwide{width:auto;border-radius:20px;padding:0 12px;gap:6px;font:inherit;font-size:14px;font-weight:600}.hbtn.hwide svg{opacity:1 !important}
@@ -127,6 +127,12 @@ body.adm #locBtn{display:flex !important}
 .astars button{border:0;background:none;padding:0 1px;font-size:16px;color:#d6cfbf;cursor:pointer}.astars button.on{color:#e0a100}
 .aph div{display:flex;align-items:center;gap:4px}.aph img{width:34px;height:34px;object-fit:cover;border-radius:5px;background:#eee}.aph span{font-size:12px;color:var(--muted)}
 .aact button{border:0;background:none;color:var(--accent);padding:5px;border-radius:6px;cursor:pointer;display:inline-flex}.aact button:hover{background:#e9eee6}.aact svg{opacity:1 !important}
+.mrow.wrap small{white-space:normal}
+.oact button{width:32px;justify-content:center;padding:7px 0 !important}
+.oact{flex:none;display:flex;gap:2px}.oact button{border:0;background:none;color:var(--accent);padding:7px;border-radius:8px;cursor:pointer;display:inline-flex}.oact button:hover{background:#e9eee6}.oact svg{opacity:1 !important}
+.ocalc{margin-top:14px;padding:10px 12px;border-radius:10px;background:#e9eee6;font-size:14px}.ocalc.bad{background:#fde7e7;color:#a33}
+#offframe{position:absolute;left:8%;right:8%;top:70px;bottom:150px;z-index:640;border:3px dashed var(--accent2);border-radius:6px;pointer-events:none;display:none;box-shadow:0 0 0 2000px rgba(0,0,0,.12)}
+#offPill{position:absolute;left:50%;transform:translateX(-50%);top:12px;z-index:650;display:none;border:0;background:var(--accent);color:#fff;font:inherit;font-size:13px;font-weight:600;padding:7px 14px;border-radius:18px;box-shadow:0 2px 8px rgba(0,0,0,.3);cursor:pointer}
 .btn{border:0;border-radius:8px;padding:10px 14px;font:inherit;font-weight:600;background:var(--accent);color:#fff}
 .btn.sec{background:#fff;color:var(--ink);border:1px solid var(--line)}
 .btn.warn{background:#a33}
@@ -287,6 +293,10 @@ const MI={
   search:`<circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/>`,
   edit:`<path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4"/>`,
   table:`<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9.5h18M3 15h18M9.5 9.5V20"/>`,
+  trash:`<path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13M10 11v6M14 11v6"/>`,
+  star:`<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>`,
+  eye:`<path d="M2.5 12C4 9 7.5 6 12 6s8 3 9.5 6c-1.5 3-5 6-9.5 6s-8-3-9.5-6z"/><circle cx="12" cy="12" r="3"/>`,
+  eyeoff:`<path d="M3 3l18 18M10.6 6.1A9.6 9.6 0 0 1 12 6c4.5 0 8 3 9.5 6-.5 1-1.3 2.2-2.4 3.2M6.6 7.6C4.7 8.8 3.3 10.4 2.5 12c1.5 3 5 6 9.5 6 1.5 0 2.9-.3 4.2-.9M9.9 10a3 3 0 0 0 4.2 4.2"/>`,
   refresh:`<path d="M20 12a8 8 0 1 1-2.3-5.7L20 8.5M20 4v4.5h-4.5"/>`
 };
 const storyI=sz=>`<svg viewBox="0 0 24 24" width="${sz}" height="${sz}" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5C10 5 7 4.5 3.5 5v13c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5zM12 6.5v13"/></svg>`;
@@ -300,10 +310,17 @@ const RATE={
   sight:[],
   camp:[["sanitaer","Sanitär"],["platz","Stellplatz"],["preis","Kosten/Nutzen"],["resto","Restaurant"],["wasser","Am Wasser","ja"]]
 };
-const fmtD=d=>d?new Date(String(d).length===10?d+"T12:00:00":d).toLocaleDateString("de-CH"):"";
-const fmtDT=t=>t?new Date(t).toLocaleString("de-CH",{dateStyle:"short",timeStyle:"short"}):"";
+/* Einheitliches Datumsformat überall: 06.04.2025 bzw. 15.11.2026 07:18 */
+const z2=n=>String(n).padStart(2,"0");
+const dmy=x=>`${z2(x.getDate())}.${z2(x.getMonth()+1)}.${x.getFullYear()}`;
+const fmtD=d=>{if(!d)return "";const x=new Date(String(d).length===10?d+"T12:00:00":d);return isNaN(x)?"":dmy(x);};
+const fmtDT=t=>{if(!t)return "";const x=new Date(t);return isNaN(x)?"":`${dmy(x)} ${z2(x.getHours())}:${z2(x.getMinutes())}`;};
 function ptTitle(p){if(p.title)return p.title;const c=CATS[p.cat]||CATS.other;
   return c.n+(p.region?", "+p.region.split(/[,(]/)[0].trim():"")+" "+fmtD(p.visited||p.created);}
+const STAY=["wild","camp"];
+const nights=(a,b)=>a&&b?Math.round((new Date(b+"T12:00:00")-new Date(a+"T12:00:00"))/86400000):0;
+function visTxt(p){if(!p.visited)return "";const n=STAY.includes(p.cat)?nights(p.visited,p.visitedTo):0;
+  return n>0?`${fmtD(p.visited)} – ${fmtD(p.visitedTo)} (${n} ${n==1?"Nacht":"Nächte"})`:fmtD(p.visited);}
 const isOn=v=>!!v&&(v.b!==undefined?v.b:v.s>0);
 const starTxt=n=>n?"★".repeat(n)+"☆".repeat(5-n):"";
 function starsWidget(name,val){return `<span class="stars" data-name="${name}" data-v="${val||0}">${[1,2,3,4,5].map(i=>`<button type="button" data-i="${i}" class="${i<=(val||0)?"on":""}">★</button>`).join("")}</span>`;}
@@ -315,7 +332,7 @@ const ADM=(()=>{try{if(new URLSearchParams(location.search).has("admin")){sessio
   return sessionStorage.getItem("rb_admin")==="1"&&matchMedia("(min-width:900px)").matches;}catch(e){return false;}})();
 if(ADM)document.body.classList.add("adm");
 const GROUP="IbexMap";
-const VERSION="v2.1";
+const VERSION="v2.2";
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
 const MA_SECTORS=[
  {n:"A Norden",zeit:"5.–10. April",klima:"Frühling, grün; 15–22 °C, im Rif Regen möglich, Nächte kühl",info:"Tanger Med, Chefchaouen, Fès, Meknès – ankommen, Städte, einkaufen. Eher Campings.",box:[[33.8,-5.9,35.95,-1.0]]},
@@ -354,6 +371,9 @@ const MIG_TRIP="t-marokko-2027";
 const tripOf=id=>trips.find(t=>t.id===id);
 const curTripObj=()=>tripOf(curTrip)||trips[0];
 const tripName=id=>(tripOf(id)||{}).name||"";
+/* Ausgeblendete Reisen (z. B. alte Reisen): Punkte erscheinen nur, wenn die Reise ausdrücklich im Filter gewählt ist */
+const tripHidden=id=>{const t=tripOf(id);return !!(t&&t.hidden);};
+const hidI=`<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-2px;opacity:.7"><path d="M3 3l18 18M10.6 6.1A9.6 9.6 0 0 1 12 6c5 0 8.5 4 9.5 6-.4.9-1.3 2.2-2.6 3.4M6.6 7.6C4.6 9 3.2 10.9 2.5 12c1 2 4.5 6 9.5 6 1.6 0 3-.4 4.3-1M9.9 10a3 3 0 0 0 4.2 4.2"/></svg>`;
 function bindSections(){const t=curTripObj();if(t){curTrip=t.id;t.sections=t.sections||[];sections=t.sections;}else sections=[];}
 async function saveTrips(){await put("meta",{id:"trips",list:trips,deleted:delTrips});try{localStorage.setItem("rb_trip",curTrip);}catch(e){}}
 async function loadMeta(){
@@ -378,7 +398,7 @@ function mergeTrips(remote,remoteDel){let ch=false;
     const l=tripOf(d.id);if(l&&(l.updated||0)<=d.updated&&!points.some(p=>p.trip===d.id&&!p.deleted)){trips=trips.filter(x=>x.id!==d.id);ch=true;}}
   for(const r of remote||[]){const l=tripOf(r.id);const dd=delTrips.find(x=>x.id===r.id);if(dd&&dd.updated>=(r.updated||0))continue;
     if(!l){trips.push(r);ch=true;}
-    else if((r.updated||0)>(l.updated||0)){l.name=r.name;l.sections=r.sections||[];l.updated=r.updated;ch=true;}}
+    else if((r.updated||0)>(l.updated||0)){l.name=r.name;l.sections=r.sections||[];l.hidden=!!r.hidden;l.updated=r.updated;ch=true;}}
   if(!trips.length)trips=[{id:MIG_TRIP,name:"Marokko 2027",sections:MA_SECTORS.map(x=>x.n),updated:1}];
   if(!tripOf(curTrip))curTrip=trips[0].id;bindSections();return ch;}
 async function setCurTrip(id){if(!tripOf(id))return;curTrip=id;bindSections();await saveTrips();showHeaderTrip();drawPoints();}
@@ -454,7 +474,7 @@ const saveMapScope=()=>{try{localStorage.setItem("rb_mtrip",mapTrip);localStorag
 let hiddenStat=[];try{hiddenStat=JSON.parse(localStorage.getItem("rb_hidstat")||"[]");}catch(e){}
 function drawPoints(){layer.clearLayers();
   $("#filtBtn").classList.toggle("active",hiddenCats.length>0||hiddenStat.length>0||osmShow.length>0||!!mapTrip||!!mapCountry);
-  const vis=ADM?points.filter(p=>admShown.has(p.id)):points.filter(p=>!hiddenCats.includes(p.cat in CATS?p.cat:"other")&&!hiddenStat.includes(p.status||"idee")&&(!mapTrip||p.trip===mapTrip)&&(!mapCountry||p.country===mapCountry));
+  const vis=ADM?points.filter(p=>admShown.has(p.id)):points.filter(p=>!hiddenCats.includes(p.cat in CATS?p.cat:"other")&&!hiddenStat.includes(p.status||"idee")&&(!mapTrip||p.trip===mapTrip)&&(mapTrip===p.trip||!tripHidden(p.trip))&&(!mapCountry||p.country===mapCountry));
   const z=map.getZoom(),single=p=>L.marker([p.lat,p.lon],{icon:pinIcon(p)}).addTo(layer).on("click",()=>{if(ADM){const tr=admFocus(p.id,false);if(tr)tr.scrollIntoView({block:"center",behavior:"smooth"});}showDetail(p.id);});
   if(z>=CLUSTER_MAXZOOM||!clusterOn){vis.forEach(single);return;}
   /* Gruppieren nach Kategorie: nahe Punkte gleicher Kategorie (Raster 64 px) werden zu einer Blase mit Anzahl */
@@ -855,7 +875,7 @@ function showMapFilter(){
   const cnt=k=>points.filter(p=>(p.cat in CATS?p.cat:"other")===k).length;
   const cList=[...new Set(points.map(p=>p.country).filter(Boolean))].sort((a,b)=>countryName(a).localeCompare(countryName(b)));
   openPanel(`<h2>Auf der Karte anzeigen</h2>
-    <h3>Reise</h3><div class="chips"><button class="chip ${!mapTrip?"on":""}" data-mt="">Alle Reisen</button>${trips.map(t=>`<button class="chip ${mapTrip===t.id?"on":""}" data-mt="${t.id}">🧳 ${esc(t.name)} (${points.filter(p=>p.trip===t.id).length})</button>`).join("")}</div>
+    <h3>Reise</h3><div class="chips"><button class="chip ${!mapTrip?"on":""}" data-mt="">Alle Reisen${trips.some(t=>t.hidden)?" (ohne ausgeblendete)":""}</button>${trips.map(t=>`<button class="chip ${mapTrip===t.id?"on":""}" data-mt="${t.id}">${esc(t.name)}${t.hidden?" "+hidI:""} (${points.filter(p=>p.trip===t.id).length})</button>`).join("")}</div>
     <h3>Land</h3><div class="chips"><button class="chip ${!mapCountry?"on":""}" data-mc="">Alle Länder</button>${cList.map(c=>`<button class="chip ${mapCountry===c?"on":""}" data-mc="${c}">${esc(countryName(c))} (${points.filter(p=>p.country===c).length})</button>`).join("")}</div>
     <h3>Eigene Punkte</h3>
     <div class="chips">${Object.entries(CATS).map(([k,v])=>`<button class="chip ${hiddenCats.includes(k)?"":"on"}" data-k="${k}">${icoBadge(k,v.c,20)}${v.n} (${cnt(k)})</button>`).join("")}</div>
@@ -865,7 +885,7 @@ function showMapFilter(){
     <p class="muted">Antippen blendet ein oder aus – z. B. «Besucht» ausschalten, um nur noch offene Ziele zu sehen.</p>
     <h3>Orte aus OpenStreetMap (wie OsmAnd)</h3>
     <div class="chips">${Object.entries(OSM).map(([k,v])=>`<button class="chip ${osmShow.includes(k)?"on":""}" data-o="${k}">${icoBadge(k,v.c,20)}${v.n} (${osmData.items.filter(x=>x.ty===k).length})</button>`).join("")}</div>
-    <p class="muted">${osmData.items.length?`${osmData.items.length} Orte gespeichert (${esc(osmData.scope)}, Stand ${new Date(osmData.loaded).toLocaleDateString("de-CH")}) – funktioniert offline. Sichtbar ab Zoomstufe ${OSM_MINZOOM}, damit die Karte übersichtlich bleibt.`:"Noch keine Orte gespeichert. Einmal mit Internet laden, danach offline."}</p>
+    <p class="muted">${osmData.items.length?`${osmData.items.length} Orte gespeichert (${esc(osmData.scope)}, Stand ${fmtD(osmData.loaded)}) – funktioniert offline. Sichtbar ab Zoomstufe ${OSM_MINZOOM}, damit die Karte übersichtlich bleibt.`:"Noch keine Orte gespeichert. Einmal mit Internet laden, danach offline."}</p>
     <div class="actions">${osmCC()?`<button class="btn sec" id="oMA">Ganzes Land laden: ${esc(countryName(osmCC()))}</button>`:""}<button class="btn sec" id="oView">Kartenausschnitt laden</button></div>
     <h3>Eigene Punkte</h3>
     <div class="actions"><button class="btn sec" id="mfAll">Alle</button><button class="btn sec" id="mfSupply">Nur Versorgung (Einkauf, Tankstelle, Werkstatt, Wasser)</button><button class="btn sec" id="mfNight">Nur Übernachten</button><button class="btn" id="mfClose">Fertig</button></div>`);
@@ -898,8 +918,8 @@ async function showDetail(id){const p=points.find(x=>x.id===id);if(!p)return;con
     <div class="meta">
       <div class="mrow">${icoBadge(p.cat in CATS?p.cat:"other",c.c,24)}<span><b>${esc(c.n)}</b>${p.cat==="water"&&p.water==="trink"?" (Trinkwasser)":p.cat==="water"&&p.water==="brauch"?" (Brauchwasser)":""} · ${p.status==="besucht"?`<span class="lchk">✓</span>`:""}${esc(STATUS[p.status]||"")}</span></div>
       ${p.section?`<div class="mrow">${mi("sec")}<span>${esc(p.section)}</span></div>`:""}
-      <div class="mrow">${mi("cal")}<span>Erfasst ${esc(fmtDT(p.created))}${p.visited?` · besucht ${esc(fmtD(p.visited))}`:""}</span></div>
-      ${p.trip&&tripName(p.trip)?`<div class="mrow">${mi("bag")}<span>${esc(tripName(p.trip))}</span></div>`:""}
+      <div class="mrow">${mi("cal")}<span>Erfasst ${esc(fmtDT(p.created))}${p.visited?` · besucht ${esc(visTxt(p))}`:""}</span></div>
+      ${p.trip&&tripName(p.trip)?`<div class="mrow">${mi("route")}<span>${esc(tripName(p.trip))}</span></div>`:""}
       <div class="mrow">${mi("globe")}<span>${esc(countryName(p.country)||"Land unbekannt")}${p.region?" · "+esc(p.region):""}</span></div>
       ${me?`<div class="mrow">${mi("ruler")}<span>${distKm(me,p).toFixed(1)} km Luftlinie</span></div>`:""}
       ${p.cat==="water"?`<div class="mrow">${icoBadge("water","#0288d1",24)}<span><b>${esc(WATERQ[p.water||"unklar"])}</b></span></div>`:""}
@@ -934,7 +954,8 @@ async function editPoint(p,isNew=false){
    <label>Kategorie</label><div class="catgrid" id="fCatGrid">${Object.entries(CATS).map(([k,v])=>`<button type="button" data-cat="${k}" class="${p.cat===k?"on":""}">${icoBadge(k,v.c,34)}<span>${esc(v.n)}</span></button>`).join("")}</div>
    <select id="fCat" style="display:none">${catOpts}</select>
    <label>Status</label><select id="fStatus">${stOpts}</select>
-   <div id="fVisWrap" style="display:${p.status==="besucht"?"block":"none"}"><label>Besucht am</label><input id="fVisited" type="date" value="${esc(p.visited||new Date().toISOString().slice(0,10))}"></div>
+   <div id="fVisWrap" style="display:${p.status==="besucht"?"block":"none"}"><div class="row"><div><label id="fVisLbl">Besucht am</label><input id="fVisited" type="date" value="${esc(p.visited||new Date().toISOString().slice(0,10))}"></div>
+     <div id="fToWrap"><label>Bis</label><input id="fVisTo" type="date" value="${esc(p.visitedTo||"")}"></div></div><div class="muted" id="fNights" style="margin-top:4px"></div></div>
    <div class="row"><div><label>Reise</label><select id="fTrip">${trips.map(t=>`<option value="${t.id}" ${(p.trip||curTrip)===t.id?"selected":""}>${esc(t.name)}</option>`).join("")}<option value="">– keine Reise –</option></select></div>
    <div><label>Abschnitt</label><select id="fSection">${secOpts(p.trip||curTrip,p.section)}</select></div></div>
    <input id="fSectionNew" placeholder="Name des neuen Abschnitts" style="display:none;margin-top:6px">
@@ -972,6 +993,10 @@ async function editPoint(p,isNew=false){
     $("#fCat").value=b.dataset.cat;$("#fCat").dispatchEvent(new Event("change"));});
   $("#fCat").onchange=()=>{readRate();renderRate();$("#fWaterWrap").style.display=$("#fCat").value==="water"?"block":"none";};
   $("#fStatus").addEventListener("change",e=>{$("#fVisWrap").style.display=e.target.value==="besucht"?"block":"none";});
+  const updStay=()=>{const st=STAY.includes($("#fCat").value);$("#fVisLbl").textContent=st?"Von":"Besucht am";$("#fToWrap").style.display=st?"":"none";
+    const v=$("#fVisited").value,t=$("#fVisTo").value;$("#fVisTo").min=v||"";const n=st?nights(v,t):0;
+    $("#fNights").textContent=!st?"":t&&n<0?"«Bis» liegt vor «Von»":n>0?`${n} ${n==1?"Nacht":"Nächte"}`:"«Bis» leer lassen bei nur einer Nacht";};
+  $("#fVisited").addEventListener("change",updStay);$("#fVisTo").addEventListener("change",updStay);$("#fCat").addEventListener("change",updStay);updStay();
   $("#fStory").onchange=e=>{$("#fStoryText").style.display=e.target.checked?"block":"none";};
   $("#fTrip").onchange=e=>{$("#fSection").innerHTML=secOpts(e.target.value,"");$("#fSectionNew").style.display="none";};
   $("#fSection").onchange=e=>{$("#fSectionNew").style.display=e.target.value==="__new"?"block":"none";if(e.target.value==="__new")$("#fSectionNew").focus();};
@@ -1002,6 +1027,7 @@ async function editPoint(p,isNew=false){
     Object.assign(p,{title:$("#fTitle").value.trim(),cat:$("#fCat").value,status:$("#fStatus").value,section:sec,region:regionOf(lat,lon)||p.region||"",
       desc:$("#fDesc").value,note:$("#fNote").value,source:$("#fSource").value.trim(),lat,lon,photos:draftPhotos,updated:Date.now()});
     if(p.status==="besucht")p.visited=$("#fVisited").value||p.visited||new Date().toISOString().slice(0,10);
+    {const t=$("#fVisTo").value;if(p.status==="besucht"&&STAY.includes(p.cat)&&t&&nights(p.visited,t)>0)p.visitedTo=t;else delete p.visitedTo;}
     await put("points",p);try{navigator.storage?.persist?.();}catch(e){}
     await loadPoints();toast("Gespeichert");showDetail(p.id);};
   const d=$("#fDel");if(d)d.onclick=()=>confirmBox(`«${esc(ptTitle(p))}» wirklich löschen?`,async()=>{for(const id of p.photos||[])await del("photos",id);await put("points",{id:p.id,deleted:true,title:p.title,updated:Date.now()});await loadPoints();closePanel();toast("Gelöscht");});
@@ -1046,7 +1072,7 @@ map.on("contextmenu",e=>{if(placing)return;const ll=e.latlng;
   const pop=L.popup({closeButton:false,offset:[0,-4]}).setLatLng(ll).setContent(`<div class="ctxbtns"><button class="btn" id="cxFlag">🚩 Fahne setzen</button><button class="btn sec" id="cxPoint">＋ Punkt setzen</button></div>`).openOn(map);
   setTimeout(()=>{$("#cxFlag").onclick=()=>{map.closePopup();startPlace(ll,"flag");};$("#cxPoint").onclick=()=>{map.closePopup();startPlace(ll,"point");};},30);});
 $("#navHere").onclick=()=>{
-  const go=pos=>{const d=new Date();const t=`Stellplatz ${d.toLocaleDateString("de-CH")} ${d.toLocaleTimeString("de-CH",{hour:"2-digit",minute:"2-digit"})}`;
+  const go=pos=>{const d=new Date();const t=`Stellplatz ${fmtDT(d)}`;
     editPoint(newPoint(+pos.lat.toFixed(6),+pos.lon.toFixed(6),{title:t,cat:"wild",status:"besucht",visited:d.toISOString().slice(0,10)}),true);};
   startGPS();
   if(me&&me.acc<200)return go(me);
@@ -1071,7 +1097,7 @@ async function showList(){
     ${lfAny()?`<div class="chips"><button class="chip" id="lfReset" style="border-color:var(--accent2);color:var(--accent2)">✕ Alle Filter zurücksetzen</button></div>`:""}
     <div class="lfh">Kategorie</div><div class="chips">${Object.entries(CATS).map(([k,v])=>chip("cat",k,esc(v.n),icoBadge(k,v.c,20))).join("")}</div>
     <div class="lfh">Status</div><div class="chips">${Object.entries(STATUS).map(([k,v])=>chip("st",k,esc(v))).join("")}</div>
-    <div class="lfh">Reise</div><div class="chips">${trips.map(t=>chip("trip",t.id,`${esc(t.name)} (${cnt(p=>p.trip===t.id)})`,mi("bag",15))).join("")}${chip("trip","__none",`ohne Reise (${cnt(p=>!p.trip)})`,mi("bag",15))}</div>
+    <div class="lfh">Reise</div><div class="chips">${trips.map(t=>chip("trip",t.id,`${esc(t.name)} (${cnt(p=>p.trip===t.id)})${t.hidden?" "+hidI:""}`)).join("")}${chip("trip","__none",`ohne Reise (${cnt(p=>!p.trip)})`)}</div>
     ${countries.length?`<div class="lfh">Land</div><div class="chips">${countries.map(c=>chip("cc",c,`${esc(countryName(c))} (${cnt(p=>p.country===c)})`,mi("globe",15))).join("")}</div>`:""}
     ${secs.length?`<div class="lfh">Abschnitt</div><div class="chips">${secs.map(x=>chip("sec",x,esc(x))).join("")}</div>`:""}
     <div class="lfh">Sortierung</div><div class="chips">${[["dist","Nächste zuerst"],["new","Neueste zuerst"],["old","Älteste zuerst"],["stars","Beste Bewertung"]].map(([k,t])=>`<button class="chip ${lSort===k?"on":""}" data-so="${k}">${t}</button>`).join("")}</div><div id="lItems"></div>`);
@@ -1086,7 +1112,7 @@ let lSort="dist";try{lSort=localStorage.getItem("rb_lsort")||"dist";}catch(e){}
 async function renderItems(){
   const q=fText.toLowerCase();
   const inS=(S,v)=>!S.size||S.has(v);
-  let list=points.filter(p=>(!LF.trip.size||LF.trip.has(p.trip||"__none"))&&inS(LF.cc,p.country)&&inS(LF.cat,p.cat in CATS?p.cat:"other")&&inS(LF.st,p.status||"idee")&&inS(LF.sec,p.section)&&(!q||(ptTitle(p)+" "+p.desc+" "+p.section+" "+(p.region||"")+" "+countryName(p.country)+" "+tripName(p.trip)+" "+p.note).toLowerCase().includes(q)));
+  let list=points.filter(p=>(!LF.trip.size||LF.trip.has(p.trip||"__none"))&&(LF.trip.has(p.trip)||!tripHidden(p.trip))&&inS(LF.cc,p.country)&&inS(LF.cat,p.cat in CATS?p.cat:"other")&&inS(LF.st,p.status||"idee")&&inS(LF.sec,p.section)&&(!q||(ptTitle(p)+" "+p.desc+" "+p.section+" "+(p.region||"")+" "+countryName(p.country)+" "+tripName(p.trip)+" "+p.note).toLowerCase().includes(q)));
   const dkey=p=>p.visited?new Date(p.visited+"T12:00:00").getTime():(p.created||0);
   if(lSort==="dist"&&me)list=list.map(p=>({p,d:distKm(me,p)})).sort((a,b)=>a.d-b.d).map(x=>x.p);
   else if(lSort==="new")list.sort((a,b)=>dkey(b)-dkey(a));
@@ -1123,7 +1149,7 @@ $("#navMenu").onclick=async()=>{
      +row("mGpx","nav","GPX für OsmAnd",`Alle Punkte in einer Gruppe «${GROUP}»`)
      +(matchMedia("(min-width:900px)").matches&&!ADM?row("mAdm","table","Verwaltung (Tabelle)","Alle Punkte am PC sortieren, filtern und bearbeiten"):""))}
    ${grp("Karte",
-     row("mOff","mapdl","Karte offline speichern","Gebiete vorab laden, im WLAN")
+     row("mOff","mapdl","Offline-Karten","Gespeicherte Gebiete und neue herunterladen")
      +row("mCountries","globe","Ländergrenzen",countryData?`${countryData.length} Länder geladen · neu laden`:"Noch nicht geladen – jetzt laden")
      +row("mReg","map","Regionen Marokko",regionData?`${(regionData.prov||[]).length} Provinzen geladen · neu laden`:"Provinzen und Regionen laden")
      +(regionData?row("mRegAll","pin","Region für alle Punkte ermitteln",""):""))}
@@ -1373,25 +1399,29 @@ async function importGPX(text){const doc=new DOMParser().parseFromString(text,"a
 /* ---------- Reisen verwalten ---------- */
 function manageTrips(){
   const cnt=id=>points.filter(p=>p.trip===id).length;
+  const ph=`<span style="width:32px;flex:none"></span>`;
+  const btn=(o,id,ic,t)=>`<button data-${o}="${id}" title="${t}">${mi(ic,18)}</button>`;
   openPanel(`<h2>Reisen</h2>
-   <div id="tList">${trips.map(t=>`<div class="item" style="cursor:default"><div style="flex:1"><div class="t">${t.id===curTrip?"★ ":""}🧳 ${esc(t.name)}</div>
-     <div class="s">${cnt(t.id)} Punkte · ${t.sections.length} Abschnitte${t.id===curTrip?" · aktuelle Reise":""}</div>
-     <div class="chips" style="margin-top:6px">${t.id!==curTrip?`<button class="chip" data-cur="${t.id}">Als aktuelle Reise</button>`:""}<button class="chip" data-show="${t.id}">Auf Karte zeigen</button><button class="chip" data-ren="${t.id}">Umbenennen</button>${cnt(t.id)||trips.length<2?"":`<button class="chip" data-del="${t.id}">✕ Löschen</button>`}</div></div></div>`).join("")}</div>
-   <h3>Neue Reise</h3>
-   <input id="tNew" placeholder="z. B. Spanien 2027, Korsika 2028">
-   <label>Abschnitte</label><select id="tTpl"><option value="">Leer – Abschnitte selbst anlegen</option><option value="ma">Vorlage Marokko (10 Sektoren A–J)</option><option value="copy">Abschnitte der aktuellen Reise übernehmen</option></select>
-   <div class="actions"><button class="btn" id="tAdd">Anlegen und als aktuelle Reise wählen</button><button class="btn sec" id="tBack">Zurück</button></div>
-   <p class="muted">Bestehende Punkte bleiben bei ihrer Reise. Einen Punkt verschiebst du im Formular über «Reise». Eine Reise lässt sich nur löschen, wenn keine Punkte mehr dazugehören.</p>`);
+   <div class="mgrp" id="tList">${trips.map(t=>{const cur=t.id===curTrip,n=cnt(t.id);
+     return `<div class="mrow wrap" style="cursor:default${t.hidden?";opacity:.6":""}"><span class="mtx"><b>${cur?`<span style="color:var(--accent2)">★</span> `:""}${esc(t.name)}</b><small>${n} Punkte · ${t.sections.length} Abschnitte${cur?" · aktuelle Reise":""}${t.hidden?" · ausgeblendet":""}</small></span>
+     <span class="oact">${btn("show",t.id,"pin","Auf der Karte zeigen")}${cur?ph:btn("cur",t.id,"star","Als aktuelle Reise wählen")}${cur?ph:btn("hide",t.id,t.hidden?"eye":"eyeoff",t.hidden?"Wieder einblenden":"Ausblenden (nur sichtbar, wenn im Filter gewählt)")}${btn("ren",t.id,"edit","Umbenennen")}${n||trips.length<2?ph:btn("del",t.id,"trash","Löschen")}</span></div>`;}).join("")}</div>
+   <p class="muted" style="margin-top:8px">${mi("pin",13)} auf Karte zeigen · ${mi("star",13)} aktuelle Reise · ${mi("eyeoff",13)} ausblenden · ${mi("edit",13)} umbenennen · ${mi("trash",13)} löschen (nur ohne Punkte)</p>
+   <div class="mgh">Neue Reise</div>
+   <div class="mgrp" style="padding:10px 12px"><div class="row"><input id="tNew" placeholder="z. B. Spanien 2027" style="flex:1"><select id="tTpl" style="flex:1"><option value="">Ohne Abschnitte</option><option value="ma">Vorlage Marokko (A–J)</option><option value="copy">Abschnitte der aktuellen Reise</option></select></div>
+   <div class="actions" style="margin-top:10px"><button class="btn" id="tAdd">Anlegen und als aktuelle Reise wählen</button></div></div>
+   <p class="muted" style="margin-top:10px">Bestehende Punkte bleiben bei ihrer Reise; einen Punkt verschiebst du im Formular über «Reise». Ausgeblendete Reisen (z. B. alte Reisen) erscheinen auf Karte, Liste und Verwaltung nur, wenn du sie im Filter ausdrücklich wählst.</p>`);
   const P=$("#panel");
-  $("#tBack").onclick=()=>$("#navMenu").onclick();
   $("#tAdd").onclick=async()=>{const name=$("#tNew").value.trim();if(!name)return toast("Bitte einen Namen eingeben");
     const tpl=$("#tTpl").value;const t={id:"t-"+uid(),name,sections:tpl==="ma"?MA_SECTORS.map(x=>x.n):tpl==="copy"?[...sections]:[],updated:Date.now()};
     trips.push(t);await setCurTrip(t.id);toast(`Reise «${name}» angelegt`);manageTrips();};
-  P.querySelectorAll("[data-cur]").forEach(b=>b.onclick=async()=>{await setCurTrip(b.dataset.cur);toast("Aktuelle Reise: "+tripName(curTrip));manageTrips();});
+  P.querySelectorAll("[data-hide]").forEach(b=>b.onclick=async()=>{const t=tripOf(b.dataset.hide);t.hidden=!t.hidden;t.updated=Date.now();await saveTrips();drawPoints();
+    toast(t.hidden?`«${t.name}» ausgeblendet`:`«${t.name}» wieder eingeblendet`,3000);manageTrips();});
+  P.querySelectorAll("[data-cur]").forEach(b=>b.onclick=async()=>{const t0=tripOf(b.dataset.cur);if(t0&&t0.hidden){t0.hidden=false;t0.updated=Date.now();}await setCurTrip(b.dataset.cur);toast("Aktuelle Reise: "+tripName(curTrip));manageTrips();});
   P.querySelectorAll("[data-show]").forEach(b=>b.onclick=()=>{mapTrip=b.dataset.show;saveMapScope();drawPoints();closePanel();
     const pts=points.filter(p=>p.trip===mapTrip);if(pts.length)map.fitBounds(L.latLngBounds(pts.map(p=>[p.lat,p.lon])),{padding:[30,30]});});
-  P.querySelectorAll("[data-ren]").forEach(b=>b.onclick=()=>{const t=tripOf(b.dataset.ren);const row=b.closest(".item");
-    row.innerHTML=`<div style="flex:1;display:flex;gap:6px"><input value="${esc(t.name)}" style="flex:1"><button class="btn">OK</button></div>`;
+  P.querySelectorAll("[data-ren]").forEach(b=>b.onclick=()=>{const t=tripOf(b.dataset.ren);const row=b.closest(".mrow");
+    row.innerHTML=`<div style="flex:1;display:flex;gap:6px"><input value="${esc(t.name)}" style="flex:1"><button class="btn">OK</button><button class="btn sec" data-x>✕</button></div>`;
+    row.querySelector("input").focus();row.querySelector("[data-x]").onclick=manageTrips;
     row.querySelector("button").onclick=async()=>{const v=row.querySelector("input").value.trim();if(!v)return;t.name=v;t.updated=Date.now();await saveTrips();showHeaderTrip();manageTrips();};});
   P.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{const t=tripOf(b.dataset.del);confirmBox(`Reise «${esc(t.name)}» löschen?`,async()=>{
     trips=trips.filter(x=>x.id!==t.id);delTrips.push({id:t.id,updated:Date.now()});if(curTrip===t.id)curTrip=trips[0].id;if(mapTrip===t.id){mapTrip="";saveMapScope();}bindSections();await saveTrips();showHeaderTrip();manageTrips();});});}
@@ -1408,7 +1438,7 @@ async function wakeRelease(){try{if(wakeLock)await wakeLock.release();}catch(e){
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")wakeAcquire();});
 ["pointerdown","keydown"].forEach(ev=>document.addEventListener(ev,()=>{if(!wakeLock)wakeAcquire();},{passive:true}));
 const gdClient=()=>ls("rb_gclient");
-const lastSync=()=>{const t=+ls("rb_lastsync");return t?new Date(t).toLocaleString("de-CH",{dateStyle:"short",timeStyle:"short"}):"noch nie";};
+const lastSync=()=>{const t=+ls("rb_lastsync");return t?fmtDT(t):"noch nie";};
 function showSyncBtn(){$("#syncBtn").style.display=gdClient()?"":"none";}
 $("#syncBtn").onclick=()=>syncDrive();
 function loadGIS(){return new Promise((res,rej)=>{if(window.google&&google.accounts&&google.accounts.oauth2)return res();
@@ -1510,41 +1540,125 @@ function offPlan(o){const lay=BASE[o.layer];const maxZ=Math.min(o.zmax,lay.optio
   const km=o.radius,src=o.only==="all"?points:o.only==="fix"?src0.filter(p=>p.status!=="idee"):src0;
   const areas=src.map(p=>{const dy=km/111,dx=km/(111*Math.cos(p.lat*Math.PI/180));return {s:p.lat-dy,n:p.lat+dy,w:p.lon-dx,e:p.lon+dx};});
   tileKeys(areas,9,maxZ).forEach(k=>keys.add(k));return {lay,keys:[...keys],n:src.length};}
+/* ---------- Offline-Karten als Pakete (wie OsmAnd): Übersicht, bewusst herunterladen, einzeln löschen ---------- */
+let offPacks=[];const offLayer=L.layerGroup().addTo(map);let offShow=ls("rb_offshow")==="1";
+async function loadOffPacks(){try{const m=await getOne("meta","offpacks");offPacks=m?m.list||[]:[];}catch(e){offPacks=[];}}
+async function saveOffPacks(){await put("meta",{id:"offpacks",list:offPacks});}
+const layMaxZ=lay=>lay.options.maxZoom||19;
+function packKeys(pk){const lay=BASE[pk.layer];const set=new Set();if(!lay)return set;
+  for(const a of pk.areas)tileKeys([a],a.z1,Math.min(a.z2,layMaxZ(lay))).forEach(k=>set.add(k));return set;}
+function packURLs(pk){const lay=BASE[pk.layer];return [...packKeys(pk)].map(k=>tileURL(lay,k));}
+const ptBox=(p,km)=>{const dy=km/111,dx=km/(111*Math.cos(p.lat*Math.PI/180));return {s:p.lat-dy,n:p.lat+dy,w:p.lon-dx,e:p.lon+dx};};
+const fmtN=n=>Number(n).toLocaleString("de-CH");
+const estMB=(n,layer)=>Math.max(1,Math.round(n*(layer==="Satellit"?0.03:0.02)));
+const OFF_MAX=25000;
+function drawOffAreas(only){offLayer.clearLayers();const list=only?[only]:(offShow?offPacks:[]);
+  list.forEach((pk,i)=>{const col=FLAG_COLORS[(offPacks.indexOf(pk)+1)%FLAG_COLORS.length];
+    pk.areas.filter(a=>a.z2>=9||pk.kind!=="points").forEach(a=>L.rectangle([[a.s,a.w],[a.n,a.e]],{color:col,weight:2,fillOpacity:.06,interactive:false}).addTo(offLayer));});}
+async function offCacheURLs(){try{return new Set((await(await caches.open(OFFLINE)).keys()).map(r=>r.url));}catch(e){return new Set();}}
+/* Übersicht */
 async function offlineDialog(){
-  const o={layer:ls("rb_offL")||(map.hasLayer(BASE["Topo"])?"Topo":"Strassen"),radius:+ls("rb_offR")||10,zmax:+ls("rb_offZ")||14,only:ls("rb_offO")||"trip"};
-  let cnt=0;try{cnt=(await(await caches.open(OFFLINE)).keys()).length;}catch(e){}
-  const draw=()=>{const pl=offPlan(o);const mb=Math.round(pl.keys.length*(o.layer==="Satellit"?0.03:0.02));
-    openPanel(`<h2>Karte offline speichern</h2>
-     <p class="muted">Gespeichert: ${cnt} Kartenbilder. Ganz Marokko wird grob (bis Zoom 8) gespeichert, rund um eure Punkte detailliert.</p>
-     <label>Karte</label><select id="oL">${Object.keys(BASE).map(k=>`<option ${k===o.layer?"selected":""}>${k}</option>`).join("")}</select>
-     <label>Umkreis um jeden Punkt</label><select id="oR">${[5,10,20,30].map(v=>`<option value="${v}" ${v===o.radius?"selected":""}>${v} km</option>`).join("")}</select>
-     <label>Detailstufe</label><select id="oZ">${[[12,"12 – Übersicht"],[13,"13 – Strassen gut lesbar"],[14,"14 – Pisten und Wege (empfohlen)"],[15,"15 – sehr detailliert (viel Speicher)"]].map(([v,t])=>`<option value="${v}" ${v===o.zmax?"selected":""}>${t}</option>`).join("")}</select>
-     <label>Welche Punkte</label><select id="oO"><option value="trip" ${o.only==="trip"?"selected":""}>Aktuelle Reise (${esc(curTripObj()?curTripObj().name:"")})</option><option value="fix" ${o.only==="fix"?"selected":""}>Aktuelle Reise – nur Fixpunkte und besuchte</option><option value="all" ${o.only==="all"?"selected":""}>Alle Punkte aller Reisen</option></select>
-     <p><b>${pl.keys.length.toLocaleString("de-CH")} Kartenbilder</b> für ${pl.n} Punkte, ca. ${mb} MB${pl.keys.length>20000?" – <b>zu viel</b>, bitte Umkreis oder Detailstufe verkleinern (max. 20 000)":""}.</p>
-     <div class="bar" id="oBar" style="display:none"><div></div></div><p class="muted" id="oInfo"></p>
-     <div class="actions"><button class="btn" id="oGo" ${pl.keys.length>20000?"disabled":""}>Herunterladen</button><button class="btn sec" id="oStop" style="display:none">Abbrechen</button>
-     <button class="btn warn" id="oDel">Offline-Karte löschen</button><button class="btn sec" id="oBack">Zurück</button></div>
-     <p class="muted">Am besten zu Hause im WLAN und mit geöffneter App (Bildschirm an). Bereits gespeicherte Bilder werden übersprungen – Abbrechen und später weitermachen geht. Die Kartendienste sind für normale Nutzung gedacht: bitte nur so viel speichern, wie ihr wirklich braucht. Zum Navigieren bleibt OsmAnd mit seinen Offline-Karten zuständig.</p>`);
-    const ch=(id,k,f)=>$(id).onchange=e=>{o[k]=f(e.target.value);ls({layer:"rb_offL",radius:"rb_offR",zmax:"rb_offZ",only:"rb_offO"}[k],String(o[k]));draw();};
-    ch("#oL","layer",String);ch("#oR","radius",Number);ch("#oZ","zmax",Number);ch("#oO","only",String);
-    $("#oBack").onclick=()=>{if(offRun)offRun.stop=true;$("#navMenu").onclick();};
-    $("#oDel").onclick=()=>confirmBox("Alle offline gespeicherten Kartenbilder löschen?",async()=>{await caches.delete(OFFLINE);cnt=0;toast("Offline-Karte gelöscht");draw();});
-    $("#oStop").onclick=()=>{if(offRun)offRun.stop=true;};
-    $("#oGo").onclick=()=>offDownload(pl);};
+  openPanel(`<h2>Offline-Karten</h2><p class="muted">Wird berechnet …</p>`);
+  await loadOffPacks();const have=await offCacheURLs();const used=new Set();
+  const rows=offPacks.map(pk=>{const u=packURLs(pk);let n=0;u.forEach(x=>{used.add(x);if(have.has(x))n++;});return {pk,total:u.length,n};});
+  const loose=[...have].filter(u=>!used.has(u)).length;
+  const kindI={view:"map",section:"sec",points:"pin"};
+  const st=r=>r.n>=r.total?`<span style="color:#2e7d32">vollständig</span>`:`<span style="color:var(--accent2)">${fmtN(r.n)} von ${fmtN(r.total)} – fortsetzen</span>`;
+  openPanel(`<h2>Offline-Karten</h2>
+   <p class="muted" style="margin-top:-6px">${offPacks.length} Gebiet${offPacks.length==1?"":"e"} · ${fmtN(have.size)} Kartenbilder · ca. ${fmtN(Math.round(have.size*0.022))} MB</p>
+   <div class="mgrp"><label class="mrow"><span class="mic">${mi("map",20)}</span><span class="mtx"><b>Gebiete auf der Karte zeigen</b><small>Farbige Rahmen um die gespeicherten Gebiete</small></span><input type="checkbox" class="msw" id="oShow" ${offShow?"checked":""}></label></div>
+   <div class="mgh">Gespeicherte Gebiete</div>
+   <div class="mgrp">${rows.length?rows.map((r,i)=>`<div class="mrow wrap" style="cursor:default"><span class="mic" style="background:${FLAG_COLORS[(i+1)%FLAG_COLORS.length]}22;color:${FLAG_COLORS[(i+1)%FLAG_COLORS.length]}">${mi(kindI[r.pk.kind]||"map",20)}</span>
+     <span class="mtx"><b>${esc(r.pk.name)}</b><small>${esc(r.pk.layer)} · Detail ${r.pk.zmax} · ${fmtD(r.pk.date)} · ${fmtN(r.total)} Bilder · ca. ${estMB(r.total,r.pk.layer)} MB</small><small>${st(r)}</small></span>
+     <span class="oact"><button data-o="show" data-i="${i}" title="Auf der Karte zeigen">${mi("pin",18)}</button><button data-o="load" data-i="${i}" title="${r.n>=r.total?"Aktualisieren (alles neu laden)":"Fortsetzen"}">${mi(r.n>=r.total?"refresh":"download",18)}</button><button data-o="del" data-i="${i}" title="Löschen">${mi("trash",18)}</button></span></div>`).join("")
+     :`<div class="mrow" style="cursor:default"><span class="mtx"><small>Noch keine Gebiete gespeichert.</small></span></div>`}
+     ${loose?`<div class="mrow" style="cursor:default"><span class="mic">${mi("db",20)}</span><span class="mtx"><b>Ohne Gebiet</b><small>${fmtN(loose)} Kartenbilder aus früheren Versionen</small></span><span class="oact"><button data-o="loose" title="Löschen">${mi("trash",18)}</button></span></div>`:""}</div>
+   <div class="mgh">Neues Gebiet herunterladen</div>
+   <div class="mgrp">
+     <button class="mrow wrap" id="oNewView"><span class="mic main2">${mi("map",20)}</span><span class="mtx"><b>Kartenausschnitt wählen</b><small>Karte verschieben und zoomen, dann übernehmen</small></span><span class="mchev">${mi("chev",18)}</span></button>
+     <button class="mrow wrap" id="oNewSec"><span class="mic">${mi("sec",20)}</span><span class="mtx"><b>Abschnitt der Reise</b><small>z. B. «C Wüste» – ganzes Gebiet</small></span><span class="mchev">${mi("chev",18)}</span></button>
+     <button class="mrow wrap" id="oNewPts"><span class="mic">${mi("pin",20)}</span><span class="mtx"><b>Rund um eure Punkte</b><small>Umkreis um jeden Punkt der Reise, dazu eine grobe Übersicht</small></span><span class="mchev">${mi("chev",18)}</span></button>
+   </div>
+   <p class="muted" style="margin-top:14px">Am besten zu Hause im WLAN laden. Bilder, die mehrere Gebiete brauchen, werden nur einmal gespeichert und erst gelöscht, wenn kein Gebiet sie mehr braucht. Die Kartendienste sind für normale Nutzung gedacht – bitte nur laden, was ihr wirklich braucht.</p>`);
+  $("#oShow").onchange=e=>{offShow=e.target.checked;ls("rb_offshow",offShow?"1":"0");drawOffAreas();};
+  $("#oNewView").onclick=offPickView;$("#oNewSec").onclick=()=>offConfig({kind:"section"});$("#oNewPts").onclick=()=>offConfig({kind:"points"});
+  $("#panel").querySelectorAll("[data-o]").forEach(b=>b.onclick=async()=>{const pk=offPacks[+b.dataset.i];const o=b.dataset.o;
+    if(o==="show"){closePanel();drawOffAreas(pk);const bb=L.latLngBounds(pk.areas.flatMap(a=>[[a.s,a.w],[a.n,a.e]]));map.fitBounds(bb,{padding:[30,30]});
+      if(BASE[pk.layer]&&!map.hasLayer(BASE[pk.layer])){Object.values(BASE).forEach(l=>map.removeLayer(l));BASE[pk.layer].addTo(map);}toast(`${pk.name} – ${pk.layer}`,3000);}
+    else if(o==="load"){const r=rows[+b.dataset.i];offRunPack(pk,r.n>=r.total);}
+    else if(o==="del")openPanel(`<h2>«${esc(pk.name)}» löschen?</h2><p>Die Kartenbilder dieses Gebiets werden gelöscht, ausser sie gehören auch zu einem anderen Gebiet.</p>
+       <div class="actions"><button class="btn warn" id="cYes">Löschen</button><button class="btn sec" id="cNo">Abbrechen</button></div>`)||(()=>{$("#cNo").onclick=offlineDialog;
+       $("#cYes").onclick=async()=>{const keep=new Set();offPacks.filter(x=>x!==pk).forEach(x=>packURLs(x).forEach(u=>keep.add(u)));
+         const c=await caches.open(OFFLINE);let n=0;for(const u of packURLs(pk))if(!keep.has(u)&&await c.delete(u))n++;
+         offPacks=offPacks.filter(x=>x!==pk);await saveOffPacks();drawOffAreas();toast(`Gelöscht: ${fmtN(n)} Kartenbilder`,3000);offlineDialog();};})();
+    else if(o==="loose")openPanel(`<h2>Kartenbilder ohne Gebiet löschen?</h2><p>${fmtN(loose)} Kartenbilder aus früheren Versionen, die zu keinem gespeicherten Gebiet gehören.</p>
+       <div class="actions"><button class="btn warn" id="cYes">Löschen</button><button class="btn sec" id="cNo">Abbrechen</button></div>`)||(()=>{$("#cNo").onclick=offlineDialog;
+       $("#cYes").onclick=async()=>{const c=await caches.open(OFFLINE);for(const u of have)if(!used.has(u))await c.delete(u);toast("Gelöscht",2500);offlineDialog();};})();});}
+/* Ausschnitt auf der Karte wählen */
+function offPickView(){closePanel();let bar=$("#offbar");
+  if(!bar){bar=document.createElement("div");bar.id="offbar";bar.className="placebar";
+    bar.innerHTML=`<div class="muted">Karte so verschieben und zoomen, dass das gewünschte Gebiet im Rahmen ist.</div><div class="actions"><button class="btn" id="obOk">✓ Diesen Ausschnitt nehmen</button><button class="btn sec" id="obNo">Abbrechen</button></div>`;
+    $("#map").appendChild(bar);}
+  let fr=$("#offframe");if(!fr){fr=document.createElement("div");fr.id="offframe";$("#map").appendChild(fr);}
+  bar.style.display="block";fr.style.display="block";
+  const end=()=>{bar.style.display="none";fr.style.display="none";};
+  $("#obNo").onclick=()=>{end();offlineDialog();};
+  $("#obOk").onclick=()=>{const mr=$("#map").getBoundingClientRect(),r=fr.getBoundingClientRect();
+    const a=map.containerPointToLatLng([r.left-mr.left,r.top-mr.top]),b=map.containerPointToLatLng([r.right-mr.left,r.bottom-mr.top]);
+    end();offConfig({kind:"view",box:{n:a.lat,w:a.lng,s:b.lat,e:b.lng},z:map.getZoom()});};}
+/* Einstellungen für ein neues Gebiet */
+function offConfig(o){
+  o.layer=o.layer||ls("rb_offL")||(map.hasLayer(BASE["Topo"])?"Topo":map.hasLayer(BASE["Satellit"])?"Satellit":"Strassen");
+  o.zmax=o.zmax||(o.kind==="section"?12:+ls("rb_offZ")||14);o.radius=o.radius||+ls("rb_offR")||10;o.only=o.only||ls("rb_offO")||"trip";
+  if(o.kind==="section"&&!o.sec){const t=curTripObj();o.sec=(MA_SECTORS.find(x=>(t&&t.sections||[]).includes(x.n))||MA_SECTORS[0]).n;}
+  if(o.kind==="section"&&o.pts===undefined)o.pts=true;
+  const build=()=>{const areas=[];let name="";
+    if(o.kind==="view"){const b=o.box;areas.push(Object.assign({},b,{z1:Math.max(5,Math.min(o.z,o.zmax)-6),z2:o.zmax}));
+      name=o.name||("Ausschnitt "+(countryName(countryOf((b.n+b.s)/2,(b.w+b.e)/2))||"")+" "+fmtD(Date.now())).replace(/\s+/g," ");}
+    else if(o.kind==="section"){const s=MA_SECTORS.find(x=>x.n===o.sec);s.box.forEach(b=>areas.push({s:b[0],w:b[1],n:b[2],e:b[3],z1:5,z2:o.zmax}));
+      if(o.pts)points.filter(p=>s.box.some(b=>p.lat>=b[0]&&p.lat<=b[2]&&p.lon>=b[1]&&p.lon<=b[3])).forEach(p=>areas.push(Object.assign(ptBox(p,o.radius),{z1:o.zmax+1,z2:14})));
+      name=o.name||("Abschnitt "+o.sec);}
+    else{const pl=offPlan(o);const src0=o.only==="all"?points:points.filter(p=>p.trip===curTrip);
+      let box=MA_BOX;if(src0.length){const la=src0.map(p=>p.lat),lo=src0.map(p=>p.lon);box={s:Math.min(...la)-1,n:Math.max(...la)+1,w:Math.min(...lo)-1,e:Math.max(...lo)+1};}
+      areas.push(Object.assign({},box,{z1:5,z2:8}));
+      const src=o.only==="all"?points:o.only==="fix"?src0.filter(p=>p.status!=="idee"):src0;src.forEach(p=>areas.push(Object.assign(ptBox(p,o.radius),{z1:9,z2:o.zmax})));
+      name=o.name||(o.only==="all"?"Alle Punkte":"Punkte "+(curTripObj()?curTripObj().name:""))+` (${o.radius} km)`;o._n=src.length;}
+    return {id:o.id||uid(),name,kind:o.kind,layer:o.layer,zmax:o.zmax,areas,date:Date.now()};};
+  const draw=()=>{const pk=build();const n=packKeys(pk).size;
+    openPanel(`<h2>Neues Offline-Gebiet</h2>
+     <label>Name</label><input id="cN" value="${esc(pk.name)}">
+     ${o.kind==="section"?`<label>Abschnitt</label><select id="cS">${MA_SECTORS.map(s=>`<option ${s.n===o.sec?"selected":""}>${esc(s.n)}</option>`).join("")}</select>`:""}
+     ${o.kind==="points"?`<label>Welche Punkte</label><select id="cO"><option value="trip" ${o.only==="trip"?"selected":""}>Aktuelle Reise (${esc(curTripObj()?curTripObj().name:"")})</option><option value="fix" ${o.only==="fix"?"selected":""}>Aktuelle Reise – nur Fixpunkte und besuchte</option><option value="all" ${o.only==="all"?"selected":""}>Alle Punkte</option></select>
+       <label>Umkreis um jeden Punkt</label><select id="cR">${[5,10,20,30].map(v=>`<option value="${v}" ${v===o.radius?"selected":""}>${v} km</option>`).join("")}</select>`:""}
+     <label>Karte</label><select id="cL">${Object.keys(BASE).map(k=>`<option ${k===o.layer?"selected":""}>${k}</option>`).join("")}</select>
+     <label>Detailstufe${o.kind==="section"?" für das ganze Gebiet":""}</label><select id="cZ">${[[10,"10 – grobe Übersicht"],[11,"11 – Übersicht"],[12,"12 – Ortschaften und Hauptstrassen"],[13,"13 – Strassen gut lesbar"],[14,"14 – Pisten und Wege"],[15,"15 – sehr detailliert"]].filter(([v])=>o.kind!=="section"||v<=13).map(([v,t])=>`<option value="${v}" ${v===o.zmax?"selected":""}>${t}</option>`).join("")}</select>
+     ${o.kind==="section"?`<label class="rrow" style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink);margin-top:12px"><input type="checkbox" id="cP" style="width:auto;margin:0" ${o.pts?"checked":""}> Rund um eure Punkte im Abschnitt zusätzlich bis Stufe 14 (${o.radius} km)</label>`:""}
+     <div class="ocalc ${n>OFF_MAX?"bad":""}"><b>${fmtN(n)} Kartenbilder</b> · ca. ${estMB(n,o.layer)} MB${o.kind==="points"?` · ${o._n} Punkte`:""}${n>OFF_MAX?`<br>Zu viel (max. ${fmtN(OFF_MAX)}) – bitte Detailstufe oder Gebiet verkleinern.`:""}</div>
+     <div class="actions"><button class="btn" id="cGo" ${n>OFF_MAX||!n?"disabled":""}>Herunterladen</button><button class="btn sec" id="cBack">Zurück</button>${o.kind==="view"?`<button class="btn sec" id="cRe">Ausschnitt neu wählen</button>`:""}</div>`);
+    const ch=(id,k,f,key)=>{const e=$(id);if(e)e.onchange=()=>{o[k]=f(e.type==="checkbox"?e.checked:e.value);if(key)ls(key,String(o[k]));draw();};};
+    ch("#cS","sec",String);ch("#cO","only",String,"rb_offO");ch("#cR","radius",Number,"rb_offR");ch("#cL","layer",String,"rb_offL");ch("#cZ","zmax",Number,o.kind==="section"?null:"rb_offZ");ch("#cP","pts",Boolean);
+    $("#cN").oninput=e=>{o.name=e.target.value;};
+    $("#cBack").onclick=offlineDialog;const re=$("#cRe");if(re)re.onclick=offPickView;
+    $("#cGo").onclick=async()=>{const p2=build();p2.name=($("#cN").value||p2.name).trim();await loadOffPacks();offPacks.push(p2);await saveOffPacks();drawOffAreas();offRunPack(p2,false);};};
   draw();}
-async function offDownload(pl){if(!navigator.onLine)return toast("Kein Internet",4000);
-  const c=await caches.open(OFFLINE);const have=new Set((await c.keys()).map(r=>r.url));
-  const todo=pl.keys.map(k=>tileURL(pl.lay,k)).filter(u=>!have.has(u));
-  const run=offRun={stop:false};let done=0,fail=0;const total=todo.length;
-  $("#oBar").style.display="";$("#oStop").style.display="";$("#oGo").disabled=true;
-  const upd=()=>{const b=$("#oBar div");if(b)b.style.width=(total?Math.round(done/total*100):100)+"%";const i=$("#oInfo");if(i)i.textContent=`${done} von ${total} neu geladen${fail?`, ${fail} Fehler`:""}${pl.keys.length-total?` (${pl.keys.length-total} schon vorhanden)`:""}`;};
-  upd();let idx=0;
-  const worker=async()=>{while(!run.stop&&idx<todo.length){const u=todo[idx++];
-    try{const r=await fetch(u,{mode:"cors"});if(r.ok)await c.put(u,r);else fail++;}catch(e){fail++;}
-    done++;if(done%10===0||done===total)upd();}};
-  await Promise.all([worker(),worker(),worker(),worker()]);offRun=null;upd();
-  toast(run.stop?"Abgebrochen – später weitermachen möglich":`Fertig: ${done-fail} Kartenbilder gespeichert${fail?", "+fail+" Fehler (nochmals starten)":""}`,6000);
-  const s=$("#oStop");if(s)s.style.display="none";const g=$("#oGo");if(g)g.disabled=false;}
+/* Herunterladen mit Fortschritt (läuft weiter, auch wenn das Fenster zu ist) */
+async function offRunPack(pk,force){if(!navigator.onLine)return toast("Kein Internet",4000);if(offRun)return toast("Es läuft schon ein Download",3000);
+  const c=await caches.open(OFFLINE);const urls=packURLs(pk);const have=force?new Set():await offCacheURLs();
+  const todo=urls.filter(u=>!have.has(u));const run=offRun={stop:false,pk};let done=0,fail=0;const total=todo.length;
+  const pill=$("#offPill")||(()=>{const d=document.createElement("button");d.id="offPill";$("#map").appendChild(d);return d;})();
+  const ui=()=>{const pc=total?Math.round(done/total*100):100;pill.style.display="block";pill.textContent=`⬇ ${pk.name}: ${pc} %`;
+    const b=$("#oPBar");if(b){b.style.width=pc+"%";$("#oPTxt").textContent=`${fmtN(done)} von ${fmtN(total)} (${pc} %)${fail?` · ${fail} Fehler`:""}${urls.length-total?` · ${fmtN(urls.length-total)} waren schon gespeichert`:""}`;}};
+  const showP=()=>{openPanel(`<h2>${esc(pk.name)}</h2><p class="muted">${esc(pk.layer)} · Detail ${pk.zmax}</p><div class="bar" style="height:14px"><div id="oPBar"></div></div><p id="oPTxt" style="font-size:15px"></p>
+    <p class="muted">Läuft weiter, auch wenn du dieses Fenster schliesst (App offen lassen). Oben auf der Karte siehst du den Stand.</p>
+    <div class="actions"><button class="btn sec" id="oPStop">Anhalten</button><button class="btn sec" id="oPHide">Ausblenden</button></div>`);
+    $("#oPStop").onclick=()=>{run.stop=true;};$("#oPHide").onclick=closePanel;ui();};
+  pill.onclick=showP;showP();
+  let idx=0;const worker=async()=>{while(!run.stop&&idx<todo.length){const u=todo[idx++];
+    try{const r=await fetch(u,{mode:"cors",cache:force?"reload":"default"});if(r.ok)await c.put(u,r);else fail++;}catch(e){fail++;}
+    done++;if(done%10===0||done===total)ui();}};
+  await Promise.all([worker(),worker(),worker(),worker()]);offRun=null;pill.style.display="none";
+  const msg=run.stop?`Angehalten – später in der Übersicht fortsetzen`:`Fertig: ${fmtN(done-fail)} Kartenbilder gespeichert${fail?` · ${fail} Fehler (nochmals «Fortsetzen»)`:""}`;
+  toast(msg,6000);if($("#oPBar"))offlineDialog();}
 
 
 /* ---------- Familienseite (verschlüsselt, Variante A) ---------- */
@@ -1659,7 +1773,7 @@ async function checkUpdate(){if(!navigator.onLine)return toast("Kein Internet",3
     else toast(`Aktuell: ${VERSION} ist die neueste Version`,4000);}
   catch(e){toast("Update-Prüfung fehlgeschlagen",4000);}}
 /* ---------- Admin-Ansicht für den PC: filterbare, sortierbare Tabelle aller Punkte ---------- */
-const AF={trip:new Set(),cc:new Set(),cat:new Set(),st:new Set(),sec:new Set(),x:new Set()};let admQ="",admSel=new Set(),admCur="";
+const AF={trip:new Set(),cc:new Set(),cat:new Set(),st:new Set(),sec:new Set(),x:new Set()};let admQ="",admSel=new Set(),admCur="",admLast="";
 let admSort={k:"updated",d:-1};try{const s=JSON.parse(localStorage.getItem("rb_asort")||"null");if(s&&s.k)admSort=s;}catch(e){}
 const admShown=new Set();const admHi=L.layerGroup().addTo(map);
 const ST_ORD={idee:0,fix:1,besucht:2};
@@ -1670,6 +1784,7 @@ const admKey={title:p=>ptTitle(p).toLowerCase(),cat:p=>(CATS[p.cat]||CATS.other)
 function admMatch(p,skip){const q=admQ.trim().toLowerCase();
   if(q&&![ptTitle(p),p.desc,p.note,p.source,p.region,p.section,countryName(p.country),tripName(p.trip),(CATS[p.cat]||CATS.other).n].join(" ").toLowerCase().includes(q))return false;
   const t=(k,v)=>k===skip||!AF[k].size||AF[k].has(v);
+  if(skip!=="trip"&&tripHidden(p.trip)&&!AF.trip.has(p.trip))return false;
   if(!t("trip",p.trip||"")||!t("cc",p.country||"")||!t("cat",p.cat in CATS?p.cat:"other")||!t("st",p.status||"idee")||!t("sec",p.section||""))return false;
   if(skip!=="x"&&AF.x.size){const x=AF.x;
     if(x.has("nophoto")&&(p.photos||[]).length)return false;if(x.has("photo")&&!(p.photos||[]).length)return false;
@@ -1685,7 +1800,7 @@ function admToolbar(){
   const tb=$("#admTools");const open=tb.querySelector(".add.open");const openK=open?open.id.slice(3):"";
   const xs=[["nophoto","ohne Foto"],["photo","mit Foto"],["notitle","ohne Titel"],["story","Storypoints"],["nostars","ohne Bewertung"]];
   tb.innerHTML=`<div class="asearch">${mi("search",17)}<input id="aQ" placeholder="Suchen in Titel, Beschreibung, Notiz, Quelle, Ort …" value="${esc(admQ)}"></div>
-   ${admFilterBtn("trip","Reise",admOpts("trip",p=>p.trip||"",v=>v?esc(tripName(v)||"(gelöschte Reise)"):"<em>ohne Reise</em>"))}
+   ${admFilterBtn("trip","Reise",admOpts("trip",p=>p.trip||"",v=>v?esc(tripName(v)||"(gelöschte Reise)")+(tripHidden(v)?" "+hidI:""):"<em>ohne Reise</em>"))}
    ${admFilterBtn("cc","Land",admOpts("cc",p=>p.country||"",v=>v?esc(countryName(v)):"<em>unbekannt</em>"))}
    ${admFilterBtn("cat","Kategorie",admOpts("cat",p=>p.cat in CATS?p.cat:"other",v=>`${icoBadge(v,CATS[v].c,18)} ${esc(CATS[v].n)}`))}
    ${admFilterBtn("st","Status",admOpts("st",p=>p.status||"idee",v=>esc(STATUS[v]||v)))}
@@ -1719,7 +1834,7 @@ function admRow(p){const c=CATS[p.cat]||CATS.other,t=tripOf(p.trip),secs=t?t.sec
    <td>${RATE[p.cat]?`<span class="astars">${[1,2,3,4,5].map(i=>`<button data-star="${i}" class="${(p.stars||0)>=i?"on":""}">★</button>`).join("")}</span>`:`<span class="muted">–</span>`}</td>
    <td class="ack"><input type="checkbox" data-e="story" ${p.story?"checked":""} title="Storypoint (Familienseite)"></td>
    <td class="aph"><div>${np?`<img data-ph="${p.photos[0]}" alt=""><span>${np}</span>`:`<span class="muted">–</span>`}</div></td>
-   <td class="atxt adate">${p.created?new Date(p.created).toLocaleDateString("de-CH"):""}</td><td class="atxt adate">${fmtDT(p.updated)}</td>
+   <td class="atxt adate">${fmtD(p.created)}</td><td class="atxt adate">${fmtDT(p.updated)}</td>
    <td class="aact"><button data-act="map" title="Auf der Karte zeigen">${mi("pin",17)}</button><button data-act="edit" title="Alles bearbeiten (Beschreibung, Fotos, Bewertung …)">${mi("edit",17)}</button></td></tr>`;}
 let admRT=0;
 function admRender(soft){if(!ADM)return;clearTimeout(admRT);admRT=setTimeout(()=>admRender2(soft),soft?150:0);}
@@ -1782,7 +1897,11 @@ function admInit(){
     if(th){const k=th.dataset.sort;admSort=admSort.k===k?{k,d:-admSort.d}:{k,d:["updated","created","stars","story","photos"].includes(k)?-1:1};ls("rb_asort",JSON.stringify(admSort));admRender(true);return;}
     if(e.target.id==="aAll"){const l=admList();if(e.target.checked)l.forEach(p=>admSel.add(p.id));else l.forEach(p=>admSel.delete(p.id));admRender(true);return;}
     const tr=e.target.closest("tr[data-id]");if(!tr)return;const p=points.find(x=>x.id===tr.dataset.id);if(!p)return;
-    if(e.target.matches("[data-sel]")){e.target.checked?admSel.add(p.id):admSel.delete(p.id);tr.classList.toggle("sel",e.target.checked);admBulk();return;}
+    if(e.target.matches("[data-sel]")){const on=e.target.checked;
+      if(e.shiftKey&&admLast&&admLast!==p.id){const ids=[...T.querySelectorAll("tr[data-id]")].map(r=>r.dataset.id);let i=ids.indexOf(admLast),j=ids.indexOf(p.id);
+        if(i>=0&&j>=0){if(i>j)[i,j]=[j,i];ids.slice(i,j+1).forEach(id=>{on?admSel.add(id):admSel.delete(id);const r=T.querySelector(`tr[data-id="${id}"]`);if(r){r.classList.toggle("sel",on);r.querySelector("[data-sel]").checked=on;}});}}
+      else{on?admSel.add(p.id):admSel.delete(p.id);tr.classList.toggle("sel",on);}
+      admLast=p.id;admBulk();return;}
     const sb=e.target.closest("[data-star]");if(sb){const v=+sb.dataset.star;const nv=(p.stars||0)===v?0:v;tr.querySelectorAll("[data-star]").forEach(b=>b.classList.toggle("on",+b.dataset.star<=nv));admSet(p,"stars",nv);return;}
     const ac=e.target.closest("[data-act]");if(ac){if(ac.dataset.act==="edit"){admFocus(p.id,true);editPoint(p);}else admFocus(p.id,true);return;}
     if(e.target.closest("input,select,button"))return;admFocus(p.id,true);});
@@ -1806,7 +1925,7 @@ function admCSV(){const l=admList();const q=v=>`"${String(v??"").replace(/"/g,'"
   /* Reparatur: OsmAnd-Favoriten gehören zu keiner Reise (wurden beim Abgleich fälschlich «Marokko 2027» zugeordnet) */
   try{if(!localStorage.getItem("rb_fix_osm1")){let n=0;for(const p of await getAll("points"))if(!p.deleted&&p.trip===MIG_TRIP&&/^OsmAnd/.test(p.source||"")){p.trip="";p.updated=Date.now();await put("points",p);n++;}
     localStorage.setItem("rb_fix_osm1","1");if(n){await loadPoints();setTimeout(()=>toast(`${n} OsmAnd-Orte wieder ohne Reise`,5000),2500);}}}catch(e){}
-  await loadFlags();wakeAcquire();
+  await loadFlags();wakeAcquire();await loadOffPacks();drawOffAreas();
   showHeaderTrip();setTimeout(handleShare,600);setTimeout(async()=>{if(!countryData){await ensureCountries();}else{await assignCountries();}},1500);
   if(_gdNew||sessionStorage.getItem("rb_after_login")){try{sessionStorage.removeItem("rb_after_login");}catch(e){}if(gdToken)setTimeout(()=>syncDrive(),400);}
   try{const o=await getOne("meta","osmpoi");if(o)osmData={items:o.items||[],loaded:o.loaded,scope:o.scope||""};}catch(e){}drawOsm();

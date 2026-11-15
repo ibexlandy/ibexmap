@@ -1,4 +1,4 @@
-IbexMap – v2.1 (privates Projekt)
+IbexMap – v2.2 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -187,3 +187,14 @@ NEU IN v2.1
   Neue Datei admin.html – beim Hochladen mitnehmen.
 - Google-Anmeldung beim Abgleich: kein Bestätigungsfenster («… vertrauen?») mehr bei jedem Abgleich. Die Anmeldung gilt eine Stunde (auch nach Schliessen des Tabs), danach erneuert sie sich in der Regel ohne Klick.
 - Kartenwahl oben rechts öffnet sich nur noch per Klick, nicht schon beim Darüberfahren mit der Maus, und schliesst nach der Auswahl.
+
+NEU IN v2.2
+- Offline-Karten wie bei OsmAnd (Menü › Karte › «Offline-Karten»): Übersicht aller gespeicherten Gebiete mit Karte, Detailstufe, Datum, Grösse und Stand;
+  Gebiete auf der Karte als farbige Rahmen zeigen; einzeln fortsetzen, aktualisieren oder löschen.
+  Neu bewusst herunterladen: Kartenausschnitt wählen, Abschnitt der Reise (z. B. «C Wüste») oder rund um eure Punkte – mit Vorschau der Grösse.
+  Download läuft weiter, auch wenn das Fenster zu ist (Stand oben auf der Karte).
+- Datum überall einheitlich: 06.04.2025 bzw. mit Uhrzeit 15.11.2026 07:18.
+- Verwaltung: mit Shift-Klick auf ein zweites Häkchen alle Zeilen dazwischen aus- bzw. abwählen.
+- Camping und Stellplatz: Aufenthalt «Von – Bis» erfassen, Anzahl Nächte wird angezeigt (z. B. «10.04.2027 – 13.04.2027 (3 Nächte)»).
+- Reisen ausblenden (Menü › Reisen verwalten › «Ausblenden»): z. B. alte Reisen – ihre Punkte erscheinen auf Karte, Liste und Verwaltung nur, wenn die Reise im Filter ausdrücklich gewählt ist. Wird mit abgeglichen.
+- «Reisen verwalten» kompakt: eine Zeile pro Reise mit Symbol-Knöpfen (auf Karte zeigen, aktuelle Reise, ausblenden, umbenennen, löschen); Koffer-Symbol entfernt.
