@@ -1,4 +1,4 @@
-IbexMap – v2.13 (privates Projekt)
+IbexMap – v2.14 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -249,3 +249,18 @@ NEU IN v2.12
 NEU IN v2.13
 - Strassenoberfläche wie bei OsmAnd: oben rechts bei der Kartenwahl einschaltbar (ab Zoom 11). Farbige Linien: grün Asphalt/Beton, gelb verdichtet/Feinschotter, orange Schotter/Kies, braun Erde/Gras, rot Sand/Schlamm/Fels, grau gestrichelt = nicht eingetragen; gestrichelt = schlechte Piste (grade 3–5 bzw. schlechte Befahrbarkeit). Linie antippen: Oberfläche, Pistenqualität, Befahrbarkeit, «nur 4×4». Legende unten links (antippen = einklappen).
 - Offline-Karten: Häkchen «Strassenoberfläche mitspeichern» – Strassendaten des Gebiets werden mit gespeichert und funktionieren ohne Internet.
+
+NEU IN v2.14
+- «Versorgung» (früher «Orte aus OpenStreetMap») ins POI-Overlay zusammengeführt: ein einziger Abschnitt im Kartenfilter. Bisherige Auswahl wird übernommen (Einkauf → Lebensmittel/Geschäft, Tankstelle/Werkstatt → Auto und Unterwegs, Wasser → Wasser und Sanitär). «Nur Versorgung» blendet die passenden POI-Gruppen ein.
+- Sicherheit: Webseiten-Links aus OpenStreetMap werden nur noch als echte http(s)-Adressen geöffnet.
+- Schnellstart: App startet sofort aus dem Speicher (auch bei schwachem Netz); neue Versionen werden im Hintergrund geladen. «Update suchen» holt die neue Version sofort.
+- Schneller: Karten-Zwischenspeicher wird nur gelegentlich aufgeräumt; Fotos im Arbeitsspeicher begrenzt.
+- Neu: «Bereit für unterwegs?» (Menü › Reisen): Ampel für Abgleich, Offline-Karten, Strassenoberfläche, POI-Overlay, Ländergrenzen, Regionen, Familienseite, Speicherschutz – mit Knopf zum Erledigen.
+- Neu: Papierkorb (Menü › Daten): gelöschte Punkte 30 Tage wiederherstellbar, auf allen Geräten.
+- Symbole statt Emojis (Knöpfe rechts, Status, Storypoint, Kamera/Galerie, Fahne, Klima).
+- Knöpfe rechts bei den ersten Starts beschriftet («Punkt setzen», «Hier merken», «Liste», «Filter», «Mein Standort»).
+- Fehler behoben: der orange ＋-Knopf (Punkt setzen) war seit v2.1 unsichtbar.
+- Verwaltung: Knopf «＋ Neuer Punkt» und Rechtsklick auf die Karte; «Rückgängig» nach Änderungen an mehreren Punkten.
+- Abgleich-Erinnerung: oranger Punkt am ⟳, wenn Änderungen offen sind oder der letzte Abgleich über einen Tag her ist.
+- Punkt bearbeiten: Quelle und Koordinaten unter «Mehr» eingeklappt.
+- POI-Overlay laden: Land wird in Gebieten à 1° × 1° geladen (kleine Anfragen, jede bis zu 3× versucht). Bei Überlastung «Laden unterbrochen» mit Stand; «Weiter laden» setzt beim letzten Gebiet fort.
