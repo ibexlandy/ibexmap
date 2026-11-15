@@ -72,6 +72,61 @@ nav button.on{color:var(--accent2)}
 label{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px}
 .panel input:not([type=checkbox]):not([type=radio]),.panel select,.panel textarea{width:100%;font:inherit;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:#fff}
 textarea{min-height:110px;resize:vertical}
+.mgh{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:18px 4px 6px}
+.mgrp{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.mrow{display:flex;align-items:center;gap:12px;width:100%;min-height:58px;padding:9px 12px;margin:0;background:none;border:0;border-top:1px solid var(--line);border-radius:0;font:inherit;color:var(--ink);text-align:left;cursor:pointer}
+.mgrp>.mrow:first-child{border-top:0}
+.mrow:active{background:#f1ede4}
+.mic{flex:none;width:36px;height:36px;border-radius:9px;background:#e9eee6;color:var(--accent);display:flex;align-items:center;justify-content:center}
+.mic svg{opacity:1 !important}
+.mtx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.mtx b{font-size:15px;font-weight:600}
+.mtx small{font-size:12.5px;color:var(--muted);line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mchev{flex:none;color:var(--muted);display:flex}
+.mrow.main .mic{background:var(--accent);color:#fff}
+.msw{appearance:none;-webkit-appearance:none;flex:none;width:44px;height:26px;border-radius:13px;background:#cfc9bc;position:relative;margin:0;cursor:pointer;transition:background .15s}
+.msw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:left .15s}
+.msw:checked{background:var(--accent)}.msw:checked::after{left:21px}
+body.adm #app{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,30%);grid-template-rows:auto minmax(0,1fr)}
+body.adm header{grid-column:1/3}
+body.adm.nomap #app{grid-template-columns:minmax(0,1fr) 0}body.adm.nomap #map{visibility:hidden;border:0}
+body.adm #map{grid-column:2;grid-row:2;border-left:1px solid var(--line)}
+body.adm #map>.fab,body.adm .placebar,body.adm .hint{display:none !important}
+body.adm #locBtn{display:flex !important}
+.hadm{font-size:12px;font-weight:600;background:var(--accent2);color:#fff;border-radius:6px;padding:2px 7px;vertical-align:3px;margin-left:4px}
+.hbtn.hwide{width:auto;border-radius:20px;padding:0 12px;gap:6px;font:inherit;font-size:14px;font-weight:600}.hbtn.hwide svg{opacity:1 !important}
+#adm{grid-column:1;grid-row:2;display:flex;flex-direction:column;min-height:0;min-width:0;background:var(--bg)}
+#admTools{flex:none;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line);background:#fff}
+.asearch{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:8px;padding:0 10px;background:#fff;flex:1 1 200px;color:var(--muted)}
+.asearch input{border:0;outline:0;font:inherit;font-size:14px;padding:8px 0;flex:1;min-width:0;background:none}
+.abtn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 11px;font:inherit;font-size:13.5px;color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.abtn:hover{background:#f6f3ec}.abtn.on{border-color:var(--accent);background:#e9eee6;font-weight:600}.abtn b{background:var(--accent);color:#fff;border-radius:9px;padding:0 6px;font-size:11px}
+.abtn.warn{color:#a33;border-color:#e2b9b9}.abtn svg{opacity:1 !important}
+.alink{border:0;background:none;color:var(--accent2);font:inherit;font-size:13px;cursor:pointer;padding:6px 4px;text-decoration:underline}
+.afb{position:relative}
+.add{display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:900;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.18);padding:6px;min-width:230px;max-height:60vh;overflow:auto}
+.add.open{display:block}
+.add label{display:flex;align-items:center;gap:8px;margin:0;padding:6px 8px;border-radius:6px;font-size:14px;color:var(--ink);cursor:pointer}
+.add label:hover{background:#f4f1ea}.add label>span{flex:1;display:flex;align-items:center;gap:6px}.add label i{font-style:normal;color:var(--muted);font-size:12px}
+.acount{margin-left:auto;font-size:13px;color:var(--muted);white-space:nowrap}
+#admBulk{flex:none;display:none;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 12px;background:#fff6ec;border-bottom:1px solid #ecd3b8;font-size:14px}
+#admBulk select{font:inherit;font-size:13.5px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:#fff}
+#admTable{flex:1;overflow:auto;min-height:0}
+#admTable table{border-collapse:separate;border-spacing:0;width:100%;font-size:13.5px;background:#fff}
+#admTable th{position:sticky;top:0;z-index:2;background:#f4f1ea;text-align:left;font-weight:600;font-size:12.5px;color:var(--muted);padding:8px 6px;border-bottom:1px solid var(--line);white-space:nowrap;cursor:pointer;user-select:none}
+#admTable th.on{color:var(--ink)}#admTable th:hover{color:var(--ink)}
+#admTable td{padding:3px 6px;border-bottom:1px solid #eee8dc;vertical-align:middle;white-space:nowrap}
+#admTable tr:hover td{background:#faf8f3}#admTable tr.sel td{background:#fff6ec}#admTable tr.cur td{background:#e9eee6}
+#admTable td select,#admTable td input[data-e="title"]{font:inherit;font-size:13.5px;border:1px solid transparent;background:transparent;border-radius:6px;padding:5px 2px;color:var(--ink);max-width:135px}
+#admTable td select:hover,#admTable td input[data-e="title"]:hover{border-color:var(--line);background:#fff}
+#admTable td select:focus,#admTable td input[data-e="title"]:focus{border-color:var(--accent);background:#fff;outline:0}
+#admTable td.atitle{min-width:240px}#admTable .atitle>div{display:flex;align-items:center;gap:6px}
+#admTable .atitle input{flex:1;min-width:0;max-width:none !important;font-weight:600}
+#admTable .ack{width:30px;text-align:center}#admTable .ack input{width:16px;height:16px;cursor:pointer}
+#admTable .atxt{color:#444;max-width:140px;overflow:hidden;text-overflow:ellipsis}#admTable .atxt small{display:block;color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis}#admTable .adate{color:var(--muted);font-size:12.5px}
+.astars button{border:0;background:none;padding:0 1px;font-size:16px;color:#d6cfbf;cursor:pointer}.astars button.on{color:#e0a100}
+.aph div{display:flex;align-items:center;gap:4px}.aph img{width:34px;height:34px;object-fit:cover;border-radius:5px;background:#eee}.aph span{font-size:12px;color:var(--muted)}
+.aact button{border:0;background:none;color:var(--accent);padding:5px;border-radius:6px;cursor:pointer;display:inline-flex}.aact button:hover{background:#e9eee6}.aact svg{opacity:1 !important}
 .btn{border:0;border-radius:8px;padding:10px 14px;font:inherit;font-weight:600;background:var(--accent);color:#fff}
 .btn.sec{background:#fff;color:var(--ink);border:1px solid var(--line)}
 .btn.warn{background:#a33}
@@ -214,7 +269,25 @@ const MI={
   book:`<path d="M12 6.5C10 5 7 4.5 3.5 5v13c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5zM12 6.5v13"/>`,
   flag:`<path d="M5 21V4M5 4h11l-2.5 4L16 12H5"/>`,
   ruler:`<path d="M4 20 20 4M7 17l-2-2M10 14l-1.5-1.5M13 11l-2-2M16 8l-1.5-1.5"/>`,
-  sec:`<path d="M4 6h16M4 12h10M4 18h13"/>`
+  sec:`<path d="M4 6h16M4 12h10M4 18h13"/>`,
+  chev:`<path d="M9 5l7 7-7 7"/>`,
+  sync:`<path d="M20 11a8 8 0 0 0-14.3-4.9L4 8M4 4v4h4M4 13a8 8 0 0 0 14.3 4.9L20 16M20 20v-4h-4"/>`,
+  cloud:`<path d="M7 18.5h10.5a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.6 9.1 4.7 4.7 0 0 0 7 18.5z"/>`,
+  users:`<circle cx="9" cy="8.5" r="3.2"/><path d="M3 19.5c.6-3.3 3-5 6-5s5.4 1.7 6 5M15.5 5.6a3 3 0 0 1 0 5.8M17.5 14.7c1.9.6 3.1 2.2 3.5 4.8"/>`,
+  lock:`<rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3M12 14.5v2.5"/>`,
+  route:`<circle cx="6" cy="18" r="2.3"/><circle cx="18" cy="6" r="2.3"/><path d="M8.3 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.7"/>`,
+  upload:`<path d="M12 15V4M7.5 8.5 12 4l4.5 4.5M4.5 15v3.5a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V15"/>`,
+  download:`<path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M4.5 15v3.5a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V15"/>`,
+  photo:`<rect x="3" y="5.5" width="18" height="14" rx="2"/><circle cx="12" cy="12.5" r="3.5"/><path d="M8.5 5.5 10 3.5h4l1.5 2"/>`,
+  nav:`<path d="M12 3 19.5 20 12 16l-7.5 4z"/>`,
+  mapdl:`<path d="M9 4.5 3.5 6.5v13L9 17.5l6 2 5.5-2v-6M9 4.5v13M15 10.5v9M18 3v6M15.5 6.5 18 9l2.5-2.5"/>`,
+  map:`<path d="M9 4.5 3.5 6.5v13L9 17.5l6 2 5.5-2v-13L15 6.5zM9 4.5v13M15 6.5v13"/>`,
+  screen:`<rect x="6.5" y="2.5" width="11" height="19" rx="2"/><path d="M10.5 18.5h3M12 6.5v1M9.2 8.6l.7.7M14.8 8.6l-.7.7M12 10a2 2 0 1 0 0 .01"/>`,
+  db:`<ellipse cx="12" cy="5.5" rx="7.5" ry="2.8"/><path d="M4.5 5.5v13c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8v-13M4.5 12c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8"/>`,
+  search:`<circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/>`,
+  edit:`<path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4"/>`,
+  table:`<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9.5h18M3 15h18M9.5 9.5V20"/>`,
+  refresh:`<path d="M20 12a8 8 0 1 1-2.3-5.7L20 8.5M20 4v4.5h-4.5"/>`
 };
 const storyI=sz=>`<svg viewBox="0 0 24 24" width="${sz}" height="${sz}" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5C10 5 7 4.5 3.5 5v13c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5zM12 6.5v13"/></svg>`;
 const mi=(k,sz=17)=>`<svg viewBox="0 0 24 24" width="${sz}" height="${sz}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none;opacity:.75">${MI[k]}</svg>`;
@@ -238,8 +311,11 @@ function bindStars(root){root.querySelectorAll(".stars").forEach(w=>w.querySelec
   const i=+b.dataset.i,v=+w.dataset.v===i?0:i;w.dataset.v=v;w.querySelectorAll("button").forEach(x=>x.classList.toggle("on",+x.dataset.i<=v));}));}
 function rateText(p){const cr=RATE[p.cat];if(!cr)return "";const r=p.rate||{};
   return [p.stars?"Gesamt "+starTxt(p.stars):"",...cr.map(([k,l,ty])=>ty?(isOn(r[k])?`${l}${r[k].t?" – "+r[k].t:""}`:""):r[k]&&(r[k].s||r[k].t)?`${l}: ${starTxt(r[k].s)}${r[k].t?" – "+r[k].t:""}`:"")].filter(Boolean).join("\n");}
+const ADM=(()=>{try{if(new URLSearchParams(location.search).has("admin")){sessionStorage.setItem("rb_admin","1");history.replaceState(null,"",location.pathname+location.hash);}
+  return sessionStorage.getItem("rb_admin")==="1"&&matchMedia("(min-width:900px)").matches;}catch(e){return false;}})();
+if(ADM)document.body.classList.add("adm");
 const GROUP="IbexMap";
-const VERSION="v1.30";
+const VERSION="v2.1";
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
 const MA_SECTORS=[
  {n:"A Norden",zeit:"5.–10. April",klima:"Frühling, grün; 15–22 °C, im Rif Regen möglich, Nächte kühl",info:"Tanger Med, Chefchaouen, Fès, Meknès – ankommen, Städte, einkaufen. Eher Campings.",box:[[33.8,-5.9,35.95,-1.0]]},
@@ -361,7 +437,10 @@ const BASE={
 };
 let baseName="Strassen";try{baseName=localStorage.getItem("rb_base")||"Strassen";}catch(e){}
 (BASE[baseName]||BASE["Strassen"]).addTo(map);
-L.control.layers(BASE,null,{position:"topright"}).addTo(map);
+const layCtl=L.control.layers(BASE,null,{position:"topright"}).addTo(map);
+/* Kartenwahl nur per Klick öffnen (nicht schon beim Darüberfahren mit der Maus); nach Auswahl wieder schliessen */
+try{L.DomEvent.off(layCtl.getContainer(),{mouseenter:layCtl._expandSafely||layCtl.expand,mouseleave:layCtl.collapse},layCtl);}catch(e){}
+map.on("baselayerchange",()=>setTimeout(()=>layCtl.collapse(),150));
 map.on("baselayerchange",e=>{try{localStorage.setItem("rb_base",e.name);}catch(err){}});
 const layer=L.layerGroup().addTo(map);
 let points=[];const thumbs={};
@@ -375,8 +454,8 @@ const saveMapScope=()=>{try{localStorage.setItem("rb_mtrip",mapTrip);localStorag
 let hiddenStat=[];try{hiddenStat=JSON.parse(localStorage.getItem("rb_hidstat")||"[]");}catch(e){}
 function drawPoints(){layer.clearLayers();
   $("#filtBtn").classList.toggle("active",hiddenCats.length>0||hiddenStat.length>0||osmShow.length>0||!!mapTrip||!!mapCountry);
-  const vis=points.filter(p=>!hiddenCats.includes(p.cat in CATS?p.cat:"other")&&!hiddenStat.includes(p.status||"idee")&&(!mapTrip||p.trip===mapTrip)&&(!mapCountry||p.country===mapCountry));
-  const z=map.getZoom(),single=p=>L.marker([p.lat,p.lon],{icon:pinIcon(p)}).addTo(layer).on("click",()=>showDetail(p.id));
+  const vis=ADM?points.filter(p=>admShown.has(p.id)):points.filter(p=>!hiddenCats.includes(p.cat in CATS?p.cat:"other")&&!hiddenStat.includes(p.status||"idee")&&(!mapTrip||p.trip===mapTrip)&&(!mapCountry||p.country===mapCountry));
+  const z=map.getZoom(),single=p=>L.marker([p.lat,p.lon],{icon:pinIcon(p)}).addTo(layer).on("click",()=>{if(ADM){const tr=admFocus(p.id,false);if(tr)tr.scrollIntoView({block:"center",behavior:"smooth"});}showDetail(p.id);});
   if(z>=CLUSTER_MAXZOOM||!clusterOn){vis.forEach(single);return;}
   /* Gruppieren nach Kategorie: nahe Punkte gleicher Kategorie (Raster 64 px) werden zu einer Blase mit Anzahl */
   const cells=new Map();
@@ -393,7 +472,7 @@ function drawPoints(){layer.clearLayers();
 const CLUSTER_MAXZOOM=13;let clusterOn=true;try{clusterOn=localStorage.getItem("rb_cluster")!=="0";}catch(e){}
 map.on("zoomend",()=>drawPoints());
 
-async function loadPoints(){points=(await getAll("points")).filter(p=>!p.deleted);points.sort((a,b)=>(a.title||"").localeCompare(b.title||""));drawPoints();}
+async function loadPoints(){points=(await getAll("points")).filter(p=>!p.deleted);points.sort((a,b)=>(a.title||"").localeCompare(b.title||""));drawPoints();if(ADM&&document.getElementById("adm"))admRender();}
 
 /* ---------- OSM-Orte (wie OsmAnd-POI) ---------- */
 const OSM={
@@ -1023,48 +1102,41 @@ async function renderItems(){
 
 /* ---------- Menü: Export / Import ---------- */
 $("#navMenu").onclick=async()=>{
-  let est="";try{const s=await navigator.storage.estimate();est=`Belegt laut Browser: ${(s.usage/1048576).toFixed(0)} MB`;}catch(e){}
+  let mb="";try{const s=await navigator.storage.estimate();mb=`${(s.usage/1048576).toFixed(0)} MB belegt`;}catch(e){}
+  const fam=famCfg(),nStory=points.filter(p=>p.story&&(!fam.trip||p.trip===fam.trip)).length;
+  const row=(id,ic,t,sub,o={})=>`<button class="mrow${o.main?" main":""}" id="${id}"><span class="mic">${mi(ic,20)}</span><span class="mtx"><b>${t}</b>${sub?`<small>${sub}</small>`:""}</span>${o.right||`<span class="mchev">${mi("chev",18)}</span>`}</button>`;
+  const grp=(h,rows)=>`<div class="mgh">${h}</div><div class="mgrp">${rows}</div>`;
   openPanel(`<h2>Menü</h2>
-   <p class="muted">${points.length} Punkte gespeichert. ${est}</p>
-   <h3>Online-Abgleich (Google Drive)</h3>
-   ${gdClient()?`<p class="muted">Eingerichtet. Letzter Abgleich: ${lastSync()}. Mit ⟳ oben rechts oder hier abgleichen – nur mit Internet.</p>
-   <div class="actions"><button class="btn" id="mSync">Jetzt synchronisieren</button><button class="btn sec" id="mGset">Einstellungen</button></div>`
-   :`<p class="muted">Gleicht PC, Handy und Tablet über dein privates Google Drive ab (versteckter App-Ordner). Einmalig einrichten.</p>
-   <div class="actions"><button class="btn sec" id="mGset">Google Drive einrichten</button></div>`}
-   <h3>Familienseite</h3>
-   <p class="muted">${points.filter(p=>p.story&&(!famCfg().trip||p.trip===famCfg().trip)).length} Storypoints markiert${famCfg().trip?" (Reise "+esc(tripName(famCfg().trip))+")":""}. Verschlüsselt mit eurem Familien-Passwort veröffentlicht – ohne Passwort nicht lesbar.${famCfg().last?" Zuletzt veröffentlicht: "+new Date(famCfg().last).toLocaleString("de-CH",{dateStyle:"short",timeStyle:"short"})+".":""}</p>
-   <div class="actions">${famReady()?`<button class="btn" id="mFamPub">Storypoints veröffentlichen</button>`:""}<button class="btn sec" id="mFamSet">${famReady()?"Einstellungen":"Familienseite einrichten"}</button></div>
-   <h3>Reisen</h3>
-   <p class="muted">Aktuelle Reise: <b>${esc(curTripObj()?curTripObj().name:"–")}</b> – neue Punkte kommen dorthin. Jede Reise hat eigene Abschnitte.</p>
-   <div class="actions"><button class="btn sec" id="mTrips">Reisen verwalten (${trips.length})</button><button class="btn sec" id="mSec">Abschnitte der aktuellen Reise (${sections.length})</button></div>
-   <h3>Sichern und abgleichen</h3>
-   <p class="muted">Das Reisepaket enthält alle Punkte mit Fotos. So bringst du die Daten auf ein anderes Gerät oder machst ein Backup.</p>
-   <div class="actions"><button class="btn" id="mExport">Reisepaket exportieren</button>
-   <button class="btn sec" id="mImport">Importieren (Reisepaket, GPX, OsmAnd .osf, Google-Orte)</button><button class="btn sec" id="mPhotos">Fotos Punkten zuordnen</button></div>
-   <p class="muted">Google-Orte: über Google Takeout «Maps (Meine Orte)» bzw. «Gespeichert» exportieren, dann die .json- oder .csv-Datei hier importieren.</p>
-   <h3>Karte offline</h3>
-   <p class="muted">Kartenbilder rund um eure Punkte vorab speichern (zu Hause im WLAN), damit die Karte in Marokko ohne Netz geht.</p>
-   <div class="actions"><button class="btn sec" id="mOff">Karte offline speichern</button></div>
-   <h3>Für OsmAnd</h3>
-   <p class="muted">Alle Punkte als GPX in einer einzigen Gruppe «${GROUP}».</p>
-   <div class="actions"><button class="btn sec" id="mGpx">GPX exportieren</button></div>
-   <h3>Länder automatisch</h3>
-   <p class="muted">${countryData?`Ländergrenzen geladen (${countryData.length} Länder) – das Land wird jedem Punkt automatisch zugeordnet, auch offline.`:"Noch nicht geladen – passiert automatisch beim nächsten Start mit Internet, oder hier:"}</p>
-   <div class="actions"><button class="btn sec" id="mCountries">${countryData?"Ländergrenzen neu laden":"Ländergrenzen laden"}</button></div>
-   <h3>Regionen Marokko (Provinzen)</h3>
-   <p class="muted">${regionData?`Regionsgrenzen geladen (${(regionData.prov||[]).length} Provinzen, ${(regionData.reg||[]).length} Regionen) – funktioniert offline.`:"Einmalig mit Internet laden (Marokko: Provinzen und Regionen). Danach offline."}</p>
-   <div class="actions"><button class="btn sec" id="mReg">${regionData?"Neu laden":"Regionsgrenzen laden"}</button>${regionData?`<button class="btn sec" id="mRegAll">Region für alle Punkte ermitteln</button>`:""}</div>
-   <h3>Speicher</h3>
-   <p class="muted">${est}</p>
-   <div class="actions"><button class="btn sec" id="mStore">Speicher anzeigen und aufräumen</button></div>
-   <h3>Version</h3>
-   <p class="muted">IbexMap ${VERSION}. Neue Versionen werden beim Öffnen mit Internet automatisch geladen.</p>
-   <div class="actions"><button class="btn sec" id="mUpd">Nach Update suchen</button></div>
-   <hr><p class="muted">Karten: Strassen (Esri), Satellit (Esri), Topo (OpenTopoMap) – oben rechts umschalten. Ohne Internet zeigt die Karte die offline gespeicherten und bereits angeschauten Gebiete.</p>`);
+   <p class="muted" style="margin-top:-6px">${points.length} Punkte · ${mb} · IbexMap ${VERSION}</p>
+   ${grp("Abgleich und Teilen",
+     (gdClient()?row("mSync","sync","Jetzt synchronisieren","Letzter Abgleich: "+lastSync(),{main:1}):"")
+     +row("mGset","cloud",gdClient()?"Google Drive":"Google Drive einrichten",gdClient()?"Einstellungen":"PC, Handy und Tablet abgleichen")
+     +(famReady()?row("mFamPub","users","Storypoints veröffentlichen",`${nStory} markiert${fam.trip?" · "+esc(tripName(fam.trip)):""}`):"")
+     +row("mFamSet","lock",famReady()?"Familienseite":"Familienseite einrichten",famReady()?"Einstellungen":`${nStory} Storypoints markiert · verschlüsselt`))}
+   ${grp("Reisen",
+     row("mTrips","route","Reisen verwalten",`Aktuell: ${esc(curTripObj()?curTripObj().name:"–")} · ${trips.length} Reise${trips.length==1?"":"n"}`)
+     +row("mSec","sec","Abschnitte",`${sections.length} in der aktuellen Reise`))}
+   ${grp("Daten",
+     row("mExport","upload","Reisepaket exportieren","Backup aller Punkte mit Fotos")
+     +row("mImport","download","Importieren","Reisepaket, GPX, OsmAnd .osf, Google-Orte")
+     +row("mPhotos","photo","Fotos Punkten zuordnen","Nach Ort im Foto oder Dateiname")
+     +row("mGpx","nav","GPX für OsmAnd",`Alle Punkte in einer Gruppe «${GROUP}»`)
+     +(matchMedia("(min-width:900px)").matches&&!ADM?row("mAdm","table","Verwaltung (Tabelle)","Alle Punkte am PC sortieren, filtern und bearbeiten"):""))}
+   ${grp("Karte",
+     row("mOff","mapdl","Karte offline speichern","Gebiete vorab laden, im WLAN")
+     +row("mCountries","globe","Ländergrenzen",countryData?`${countryData.length} Länder geladen · neu laden`:"Noch nicht geladen – jetzt laden")
+     +row("mReg","map","Regionen Marokko",regionData?`${(regionData.prov||[]).length} Provinzen geladen · neu laden`:"Provinzen und Regionen laden")
+     +(regionData?row("mRegAll","pin","Region für alle Punkte ermitteln",""):""))}
+   ${grp("Gerät",
+     ("wakeLock" in navigator?`<label class="mrow"><span class="mic">${mi("screen",20)}</span><span class="mtx"><b>Bildschirm eingeschaltet lassen</b><small>Solange IbexMap offen ist</small></span><input type="checkbox" class="msw" id="mWake" ${wakeOn()?"checked":""}></label>`:"")
+     +row("mStore","db","Speicher",mb?mb+" · anzeigen und aufräumen":"Anzeigen und aufräumen")
+     +row("mUpd","refresh","Nach Update suchen","Installiert: "+VERSION))}`);
   $("#mSec").onclick=manageSections;
   $("#mReg").onclick=async()=>{toast("Lade Regionsgrenzen …",8000);try{const d=await downloadRegions();toast(`Geladen: ${d.prov.length} Provinzen, ${d.reg.length} Regionen`);$("#navMenu").onclick();}catch(e){toast("Laden fehlgeschlagen – Internet?",5000);}};
   const ra=$("#mRegAll");if(ra)ra.onclick=async()=>{let n=0;for(const p of points){const r=regionOf(p.lat,p.lon);if(r&&r!==p.region){p.region=r;p.updated=Date.now();await put("points",p);n++;}}await loadPoints();toast(`${n} Punkte aktualisiert`);};
   $("#mUpd").onclick=checkUpdate;
+  const ma=$("#mAdm");if(ma)ma.onclick=()=>{location.href=location.pathname+"?admin";};
+  const mw=$("#mWake");if(mw)mw.onchange=()=>{ls("rb_wake",mw.checked?"1":"0");if(mw.checked){wakeAcquire();toast("Bildschirm bleibt eingeschaltet",2500);}else{wakeRelease();toast("Bildschirm schaltet normal ab",2500);}};
   $("#mStore").onclick=storageDialog;
   $("#mTrips").onclick=manageTrips;
   $("#mCountries").onclick=async()=>{if(!navigator.onLine)return toast("Kein Internet",3000);toast("Lade Ländergrenzen …",60000);
@@ -1072,7 +1144,7 @@ $("#navMenu").onclick=async()=>{
   $("#mFamSet").onclick=famSettings;const fp=$("#mFamPub");if(fp)fp.onclick=famPublish;
   $("#mGset").onclick=gdSettings;const ms=$("#mSync");if(ms)ms.onclick=syncDrive;$("#mOff").onclick=offlineDialog;
   $("#mPhotos").onclick=photoDialog;
-  $("#mExport").onclick=exportPackage;$("#mGpx").onclick=exportGPX;$("#mImport").onclick=()=>pickWait($("#fileImport"),"Datei importieren","Reisepaket, GPX, OsmAnd-.osf oder Google-Orte auswählen.");
+  $("#mExport").onclick=exportPackage;$("#mGpx").onclick=exportGPX;$("#mImport").onclick=()=>pickWait($("#fileImport"),"Datei importieren","Reisepaket, GPX, OsmAnd-.osf oder Google-Orte auswählen. Google-Orte vorher über Google Takeout «Maps (Meine Orte)» bzw. «Gespeichert» als .json oder .csv exportieren.");
 };
 function manageSections(){
   const used=x=>points.filter(p=>p.trip===curTrip&&p.section===x).length;
@@ -1328,6 +1400,13 @@ $("#tripName").onclick=manageTrips;
 const GD_SCOPE="https://www.googleapis.com/auth/drive.appdata",GD_DATA="reisebuch_daten.json";
 let gdToken=null,gdExp=0,syncing=false;
 const ls=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k)||"";if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v);}catch(e){return "";}};
+/* Bildschirm wach halten, solange IbexMap offen und sichtbar ist (Screen Wake Lock API) */
+let wakeLock=null;const wakeOn=()=>ls("rb_wake")!=="0";
+async function wakeAcquire(){if(!wakeOn()||!("wakeLock" in navigator)||document.visibilityState!=="visible"||wakeLock)return;
+  try{wakeLock=await navigator.wakeLock.request("screen");wakeLock.addEventListener("release",()=>{wakeLock=null;});}catch(e){wakeLock=null;}}
+async function wakeRelease(){try{if(wakeLock)await wakeLock.release();}catch(e){}wakeLock=null;}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")wakeAcquire();});
+["pointerdown","keydown"].forEach(ev=>document.addEventListener(ev,()=>{if(!wakeLock)wakeAcquire();},{passive:true}));
 const gdClient=()=>ls("rb_gclient");
 const lastSync=()=>{const t=+ls("rb_lastsync");return t?new Date(t).toLocaleString("de-CH",{dateStyle:"short",timeStyle:"short"}):"noch nie";};
 function showSyncBtn(){$("#syncBtn").style.display=gdClient()?"":"none";}
@@ -1336,7 +1415,7 @@ function loadGIS(){return new Promise((res,rej)=>{if(window.google&&google.accou
   const e=document.createElement("script");e.src="https://accounts.google.com/gsi/client";e.onload=res;e.onerror=()=>rej(new Error("Google-Anmeldung nicht ladbar"));document.head.appendChild(e);});}
 /* Anmeldung per Weiterleitung auf die Google-Seite (zuverlässiger als Popup; dort kann jedes Konto gewählt werden) */
 const GD_REDIRECT=()=>location.origin+location.pathname;
-function gdRestore(){try{const t=JSON.parse(sessionStorage.getItem("rb_gtok")||"null");if(t&&Date.now()<t.exp-60000){gdToken=t.tok;gdExp=t.exp;}}catch(e){}}
+function gdRestore(){try{const t=JSON.parse(localStorage.getItem("rb_gtok")||"null");if(t&&Date.now()<t.exp-60000){gdToken=t.tok;gdExp=t.exp;}}catch(e){}}
 function gdFromRedirect(){if(!/access_token=|error=/.test(location.hash))return false;
   const q=new URLSearchParams(location.hash.slice(1));history.replaceState(null,"",location.pathname+location.search);
   if(q.get("state")!=="ibexmap"){return false;}
@@ -1345,19 +1424,20 @@ function gdFromRedirect(){if(!/access_token=|error=/.test(location.hash))return 
     sessionStorage.removeItem("rb_retry");setTimeout(()=>toast("Google-Anmeldung abgebrochen oder blockiert: "+q.get("error"),8000),500);return false;}
   try{sessionStorage.removeItem("rb_retry");}catch(e){}
   gdToken=q.get("access_token");gdExp=Date.now()+(+q.get("expires_in")||3600)*1000;ls("rb_gconn","1");
-  try{sessionStorage.setItem("rb_gtok",JSON.stringify({tok:gdToken,exp:gdExp}));}catch(e){}return true;}
+  try{localStorage.setItem("rb_gtok",JSON.stringify({tok:gdToken,exp:gdExp}));}catch(e){}return true;}
 async function gdAuth(force){if(!force&&gdToken&&Date.now()<gdExp-60000)return gdToken;
   const u=new URL("https://accounts.google.com/o/oauth2/v2/auth");
   u.search=new URLSearchParams({client_id:gdClient(),redirect_uri:GD_REDIRECT(),response_type:"token",scope:GD_SCOPE,
-    include_granted_scopes:"true",state:"ibexmap",prompt:ls("rb_gconn")&&!force?"none":"select_account consent",...(ls("rb_gmail")?{login_hint:ls("rb_gmail")}:{})}).toString();
+    include_granted_scopes:"true",state:"ibexmap",prompt:ls("rb_gconn")&&!force?"none":"select_account",...(ls("rb_gmail")?{login_hint:ls("rb_gmail")}:{})}).toString();
   toast("Weiter zur Google-Anmeldung …",4000);
   try{sessionStorage.setItem("rb_after_login","sync");}catch(e){}
   location.href=u.toString();
   return new Promise(()=>{});}
 async function gd(path,opt={}){const t=await gdAuth();
   const r=await fetch("https://www.googleapis.com/"+path,Object.assign({},opt,{headers:Object.assign({Authorization:"Bearer "+t},opt.headers||{})}));
-  if(r.status===401){gdToken=null;try{sessionStorage.removeItem("rb_gtok");}catch(e){}throw new Error("Anmeldung abgelaufen – nochmals ⟳ tippen");}
+  if(r.status===401){gdToken=null;try{localStorage.removeItem("rb_gtok");}catch(e){}throw new Error("Anmeldung abgelaufen – nochmals ⟳ tippen");}
   if(!r.ok)throw new Error("Google Drive antwortet mit Fehler "+r.status);return r;}
+async function gdRememberMail(){if(ls("rb_gmail"))return;try{const r=await(await gd("drive/v3/about?fields=user(emailAddress)")).json();const m=r&&r.user&&r.user.emailAddress;if(m)ls("rb_gmail",m);}catch(e){}}
 async function gdList(){let out=[],pt="";do{const r=await(await gd(`drive/v3/files?spaces=appDataFolder&pageSize=1000&fields=nextPageToken,files(id,name)${pt?"&pageToken="+encodeURIComponent(pt):""}`)).json();
   out=out.concat(r.files||[]);pt=r.nextPageToken||"";}while(pt);return out;}
 async function gdUpload(name,blob,id){const fd=new FormData();
@@ -1367,7 +1447,7 @@ async function syncDrive(){if(syncing)return;
   if(!gdClient())return gdSettings();
   if(!navigator.onLine)return toast("Kein Internet – später synchronisieren",4000);
   syncing=true;$("#syncBtn").classList.add("busy");toast("Synchronisiere …",120000);
-  try{const files=await gdList();const byName=Object.fromEntries(files.map(f=>[f.name,f]));
+  try{await gdRememberMail();const files=await gdList();const byName=Object.fromEntries(files.map(f=>[f.name,f]));
     let remote={points:[],trips:[]};
     if(byName[GD_DATA])remote=await(await gd(`drive/v3/files/${byName[GD_DATA].id}?alt=media`)).json();
     const local=Object.fromEntries((await getAll("points")).map(p=>[p.id,p]));let nIn=0;
@@ -1409,9 +1489,9 @@ function gdSettings(){
     if(mail!==ls("rb_gmail")){ls("rb_gmail",mail||null);ls("rb_gconn",null);gdToken=null;}if(!/\.apps\.googleusercontent\.com$/.test(v))return toast("Das sieht nicht nach einer Client-ID aus (endet auf .apps.googleusercontent.com)",5000);
     if(v!==gdClient()){ls("rb_gclient",v);ls("rb_gconn",null);gdToken=null;}showSyncBtn();closePanel();syncDrive();};
   const sw=$("#gSwitch");if(sw)sw.onclick=()=>{try{if(gdToken)fetch("https://oauth2.googleapis.com/revoke?token="+encodeURIComponent(gdToken),{method:"POST"}).catch(()=>{});}catch(e){}
-    gdToken=null;try{sessionStorage.removeItem("rb_gtok");}catch(e){}ls("rb_gconn",null);ls("rb_gmail",$("#gMail").value.trim()||null);closePanel();gdAuth(true);};
+    gdToken=null;try{localStorage.removeItem("rb_gtok");}catch(e){}ls("rb_gconn",null);ls("rb_gmail",$("#gMail").value.trim()||null);closePanel();gdAuth(true);};
   const o=$("#gOff");if(o)o.onclick=()=>{try{if(gdToken)fetch("https://oauth2.googleapis.com/revoke?token="+encodeURIComponent(gdToken),{method:"POST"}).catch(()=>{});}catch(e){}
-    gdToken=null;try{sessionStorage.removeItem("rb_gtok");}catch(e){}ls("rb_gclient",null);ls("rb_gconn",null);showSyncBtn();toast("Google Drive getrennt – Daten auf dem Gerät bleiben");$("#navMenu").onclick();};}
+    gdToken=null;try{localStorage.removeItem("rb_gtok");}catch(e){}ls("rb_gclient",null);ls("rb_gconn",null);showSyncBtn();toast("Google Drive getrennt – Daten auf dem Gerät bleiben");$("#navMenu").onclick();};}
 
 /* ---------- Karte offline ---------- */
 const OFFLINE="reisebuch-offline",MA_BOX={s:27.6,w:-13.3,n:35.95,e:-1.0};
@@ -1578,22 +1658,160 @@ async function checkUpdate(){if(!navigator.onLine)return toast("Kein Internet",3
     if(m&&m[1]!==VERSION){toast(`Neue Version ${m[1]} – wird geladen …`,3000);setTimeout(()=>location.reload(),800);}
     else toast(`Aktuell: ${VERSION} ist die neueste Version`,4000);}
   catch(e){toast("Update-Prüfung fehlgeschlagen",4000);}}
+/* ---------- Admin-Ansicht für den PC: filterbare, sortierbare Tabelle aller Punkte ---------- */
+const AF={trip:new Set(),cc:new Set(),cat:new Set(),st:new Set(),sec:new Set(),x:new Set()};let admQ="",admSel=new Set(),admCur="";
+let admSort={k:"updated",d:-1};try{const s=JSON.parse(localStorage.getItem("rb_asort")||"null");if(s&&s.k)admSort=s;}catch(e){}
+const admShown=new Set();const admHi=L.layerGroup().addTo(map);
+const ST_ORD={idee:0,fix:1,besucht:2};
+const ADM_COLS=[["title","Titel"],["cat","Kategorie"],["st","Status"],["trip","Reise"],["sec","Abschnitt"],["cc","Land / Region"],["stars","Sterne"],["story","Story"],["photos","Fotos"],["created","Erfasst"],["updated","Geändert"]];
+const admKey={title:p=>ptTitle(p).toLowerCase(),cat:p=>(CATS[p.cat]||CATS.other).n,st:p=>ST_ORD[p.status||"idee"]??0,trip:p=>tripName(p.trip).toLowerCase()||"~",
+  sec:p=>(p.section||"~").toLowerCase(),cc:p=>countryName(p.country).toLowerCase()||"~",region:p=>(p.region||"~").toLowerCase(),stars:p=>p.stars||0,story:p=>p.story?1:0,
+  photos:p=>(p.photos||[]).length,created:p=>p.created||0,updated:p=>p.updated||0};
+function admMatch(p,skip){const q=admQ.trim().toLowerCase();
+  if(q&&![ptTitle(p),p.desc,p.note,p.source,p.region,p.section,countryName(p.country),tripName(p.trip),(CATS[p.cat]||CATS.other).n].join(" ").toLowerCase().includes(q))return false;
+  const t=(k,v)=>k===skip||!AF[k].size||AF[k].has(v);
+  if(!t("trip",p.trip||"")||!t("cc",p.country||"")||!t("cat",p.cat in CATS?p.cat:"other")||!t("st",p.status||"idee")||!t("sec",p.section||""))return false;
+  if(skip!=="x"&&AF.x.size){const x=AF.x;
+    if(x.has("nophoto")&&(p.photos||[]).length)return false;if(x.has("photo")&&!(p.photos||[]).length)return false;
+    if(x.has("notitle")&&p.title)return false;if(x.has("story")&&!p.story)return false;if(x.has("nostars")&&(!RATE[p.cat]||p.stars))return false;}
+  return true;}
+function admFilterBtn(k,label,opts){const n=AF[k].size;
+  return `<div class="afb"><button class="abtn${n?" on":""}" data-dd="${k}">${label}${n?` <b>${n}</b>`:""} ▾</button><div class="add" id="dd_${k}">${opts.length?opts.map(([v,l,c])=>`<label><input type="checkbox" data-f="${k}" value="${esc(v)}" ${AF[k].has(v)?"checked":""}><span>${l}</span><i>${c}</i></label>`).join(""):`<div class="muted" style="padding:6px 8px">keine</div>`}
+   ${n?`<button class="alink" data-clr="${k}">Auswahl aufheben</button>`:""}</div></div>`;}
+function admOpts(k,valOf,labOf){const m=new Map();points.filter(p=>admMatch(p,k)).forEach(p=>{const v=valOf(p);m.set(v,(m.get(v)||0)+1);});
+  AF[k].forEach(v=>{if(!m.has(v))m.set(v,0);});
+  return [...m.entries()].map(([v,c])=>[v,labOf(v),c]).sort((a,b)=>String(a[1]).localeCompare(String(b[1]),"de"));}
+function admToolbar(){
+  const tb=$("#admTools");const open=tb.querySelector(".add.open");const openK=open?open.id.slice(3):"";
+  const xs=[["nophoto","ohne Foto"],["photo","mit Foto"],["notitle","ohne Titel"],["story","Storypoints"],["nostars","ohne Bewertung"]];
+  tb.innerHTML=`<div class="asearch">${mi("search",17)}<input id="aQ" placeholder="Suchen in Titel, Beschreibung, Notiz, Quelle, Ort …" value="${esc(admQ)}"></div>
+   ${admFilterBtn("trip","Reise",admOpts("trip",p=>p.trip||"",v=>v?esc(tripName(v)||"(gelöschte Reise)"):"<em>ohne Reise</em>"))}
+   ${admFilterBtn("cc","Land",admOpts("cc",p=>p.country||"",v=>v?esc(countryName(v)):"<em>unbekannt</em>"))}
+   ${admFilterBtn("cat","Kategorie",admOpts("cat",p=>p.cat in CATS?p.cat:"other",v=>`${icoBadge(v,CATS[v].c,18)} ${esc(CATS[v].n)}`))}
+   ${admFilterBtn("st","Status",admOpts("st",p=>p.status||"idee",v=>esc(STATUS[v]||v)))}
+   ${admFilterBtn("sec","Abschnitt",admOpts("sec",p=>p.section||"",v=>v?esc(v):"<em>ohne Abschnitt</em>"))}
+   ${admFilterBtn("x","Weitere",xs.map(([v,l])=>[v,l,points.filter(p=>admMatch(p,"x")&&(()=>{const s=AF.x;AF.x=new Set([v]);const r=admMatch(p);AF.x=s;return r;})()).length]))}
+   ${Object.values(AF).some(s=>s.size)||admQ?`<button class="alink" id="aReset">Alle Filter zurücksetzen</button>`:""}
+   <span class="acount" id="aCount"></span>
+   <button class="abtn${document.body.classList.contains("nomap")?"":" on"}" id="aMap" title="Karte rechts ein-/ausblenden">${mi("map",16)} Karte</button>
+   <button class="abtn" id="aCsv" title="Gefilterte Liste als CSV (für Google Tabellen)">${mi("download",16)} CSV</button>`;
+  if(openK){const d=$("#dd_"+openK);if(d)d.classList.add("open");}
+  const q=$("#aQ");q.oninput=()=>{admQ=q.value;admRender(true);};
+  tb.querySelectorAll("[data-dd]").forEach(b=>b.onclick=e=>{e.stopPropagation();const d=$("#dd_"+b.dataset.dd),was=d.classList.contains("open");
+    tb.querySelectorAll(".add.open").forEach(x=>x.classList.remove("open"));if(!was)d.classList.add("open");});
+  tb.querySelectorAll(".add").forEach(d=>d.onclick=e=>e.stopPropagation());
+  tb.querySelectorAll("input[data-f]").forEach(i=>i.onchange=()=>{const s=AF[i.dataset.f];i.checked?s.add(i.value):s.delete(i.value);admRender();});
+  tb.querySelectorAll("[data-clr]").forEach(b=>b.onclick=()=>{AF[b.dataset.clr].clear();admRender();});
+  const r=$("#aReset");if(r)r.onclick=()=>{Object.values(AF).forEach(s=>s.clear());admQ="";admRender();};
+  $("#aCsv").onclick=admCSV;
+  $("#aMap").onclick=()=>{const off=document.body.classList.toggle("nomap");ls("rb_anomap",off?"1":"0");$("#aMap").classList.toggle("on",!off);if(!off)setTimeout(()=>map.invalidateSize(),50);};}
+function admList(){const k=admKey[admSort.k]||admKey.updated,d=admSort.d;
+  return points.filter(p=>admMatch(p)).sort((a,b)=>{const x=k(a),y=k(b);return (x<y?-1:x>y?1:0)*d||ptTitle(a).localeCompare(ptTitle(b),"de");});}
+function admRow(p){const c=CATS[p.cat]||CATS.other,t=tripOf(p.trip),secs=t?t.sections:[];const np=(p.photos||[]).length;
+  return `<tr data-id="${p.id}" class="${admSel.has(p.id)?"sel":""}${admCur===p.id?" cur":""}">
+   <td class="ack"><input type="checkbox" data-sel ${admSel.has(p.id)?"checked":""}></td>
+   <td class="atitle"><div>${icoBadge(p.cat in CATS?p.cat:"other",c.c,24)}<input data-e="title" value="${esc(p.title||"")}" placeholder="${esc(ptTitle(Object.assign({},p,{title:""})))}">${p.status==="besucht"?`<span class="lchk" title="besucht">✓</span>`:""}</div></td>
+   <td><select data-e="cat">${Object.entries(CATS).map(([k,v])=>`<option value="${k}" ${p.cat===k?"selected":""}>${esc(v.n)}</option>`).join("")}</select></td>
+   <td><select data-e="status">${Object.entries(STATUS).map(([k,v])=>`<option value="${k}" ${(p.status||"idee")===k?"selected":""}>${v}</option>`).join("")}</select></td>
+   <td><select data-e="trip"><option value="">– keine –</option>${trips.map(x=>`<option value="${x.id}" ${p.trip===x.id?"selected":""}>${esc(x.name)}</option>`).join("")}</select></td>
+   <td><select data-e="section" ${t?"":"disabled"}><option value="">–</option>${secs.map(x=>`<option ${p.section===x?"selected":""}>${esc(x)}</option>`).join("")}${p.section&&!secs.includes(p.section)?`<option selected>${esc(p.section)}</option>`:""}</select></td>
+   <td class="atxt" title="${esc(p.region||"")}">${esc(countryName(p.country))||`<span class="muted">–</span>`}${p.region?`<small>${esc(p.region.split(/[,(]/)[0])}</small>`:""}</td>
+   <td>${RATE[p.cat]?`<span class="astars">${[1,2,3,4,5].map(i=>`<button data-star="${i}" class="${(p.stars||0)>=i?"on":""}">★</button>`).join("")}</span>`:`<span class="muted">–</span>`}</td>
+   <td class="ack"><input type="checkbox" data-e="story" ${p.story?"checked":""} title="Storypoint (Familienseite)"></td>
+   <td class="aph"><div>${np?`<img data-ph="${p.photos[0]}" alt=""><span>${np}</span>`:`<span class="muted">–</span>`}</div></td>
+   <td class="atxt adate">${p.created?new Date(p.created).toLocaleDateString("de-CH"):""}</td><td class="atxt adate">${fmtDT(p.updated)}</td>
+   <td class="aact"><button data-act="map" title="Auf der Karte zeigen">${mi("pin",17)}</button><button data-act="edit" title="Alles bearbeiten (Beschreibung, Fotos, Bewertung …)">${mi("edit",17)}</button></td></tr>`;}
+let admRT=0;
+function admRender(soft){if(!ADM)return;clearTimeout(admRT);admRT=setTimeout(()=>admRender2(soft),soft?150:0);}
+async function admRender2(soft){
+  if(!soft)admToolbar();
+  const list=admList();admShown.clear();list.forEach(p=>admShown.add(p.id));
+  for(const id of [...admSel])if(!points.some(p=>p.id===id))admSel.delete(id);
+  $("#aCount").textContent=`${list.length} von ${points.length} Punkten`;
+  const allSel=list.length&&list.every(p=>admSel.has(p.id));
+  $("#admTable").innerHTML=`<table><thead><tr><th class="ack"><input type="checkbox" id="aAll" ${allSel?"checked":""} title="Alle angezeigten auswählen"></th>${ADM_COLS.map(([k,l])=>`<th data-sort="${k}" class="${admSort.k===k?"on":""}">${l}${admSort.k===k?(admSort.d>0?" ▲":" ▼"):""}</th>`).join("")}<th></th></tr></thead>
+    <tbody>${list.slice(0,3000).map(admRow).join("")}</tbody></table>${list.length?"":`<p class="muted" style="padding:20px">Keine Punkte gefunden.</p>`}`;
+  admBulk();drawPoints();
+  for(const img of $("#admTable").querySelectorAll("img[data-ph]")){const u=await photoURL(img.dataset.ph);if(u)img.src=u;}}
+function admBulk(){const n=admSel.size,b=$("#admBulk");b.style.display=n?"flex":"none";if(!n)return;
+  b.innerHTML=`<b>${n} ausgewählt</b>
+   <select id="bTrip"><option value="?">Reise setzen …</option><option value="">– keine Reise –</option>${trips.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join("")}</select>
+   <select id="bCat"><option value="?">Kategorie setzen …</option>${Object.entries(CATS).map(([k,v])=>`<option value="${k}">${esc(v.n)}</option>`).join("")}</select>
+   <select id="bSt"><option value="?">Status setzen …</option>${Object.entries(STATUS).map(([k,v])=>`<option value="${k}">${v}</option>`).join("")}</select>
+   <button class="abtn" id="bStoryOn">Storypoint an</button><button class="abtn" id="bStoryOff">Storypoint aus</button>
+   <button class="abtn" id="bMap">${mi("pin",16)} Auf Karte</button><button class="abtn warn" id="bDel">Löschen</button><button class="alink" id="bNone">Auswahl aufheben</button>`;
+  const sel=()=>points.filter(p=>admSel.has(p.id));
+  const bulk=async(fn,msg)=>{let k=0;for(const p of sel()){fn(p);p.updated=Date.now();await put("points",p);k++;}await loadPoints();toast(`${k} Punkte ${msg}`,3000);};
+  $("#bTrip").onchange=e=>{const v=e.target.value;if(v==="?")return;bulk(p=>{p.trip=v;const t=tripOf(v);if(!t||!t.sections.includes(p.section))p.section=(t&&sectorOf(p.lat,p.lon)&&v===curTrip)?sectorOf(p.lat,p.lon):"";},"zugeordnet");};
+  $("#bCat").onchange=e=>{const v=e.target.value;if(v!=="?")bulk(p=>{p.cat=v;},"geändert");};
+  $("#bSt").onchange=e=>{const v=e.target.value;if(v!=="?")bulk(p=>{p.status=v;if(v==="besucht"&&!p.visited)p.visited=new Date().toISOString().slice(0,10);},"geändert");};
+  $("#bStoryOn").onclick=()=>bulk(p=>{p.story=true;},"als Storypoint markiert");
+  $("#bStoryOff").onclick=()=>bulk(p=>{p.story=false;},"geändert");
+  $("#bMap").onclick=()=>{const l=sel();if(!l.length)return;const bb=L.latLngBounds(l.map(p=>[p.lat,p.lon]));map.fitBounds(bb,{padding:[40,40],maxZoom:14});};
+  $("#bNone").onclick=()=>{admSel.clear();admRender(true);};
+  $("#bDel").onclick=()=>{openPanel(`<h2>${n} Punkte löschen?</h2><p>Die Punkte werden mit ihren Fotos gelöscht – nach dem Abgleich auf allen Geräten. Das lässt sich nicht rückgängig machen.</p>
+     <div class="actions"><button class="btn warn" id="cYes">Ja, ${n} Punkte löschen</button><button class="btn sec" id="cNo">Abbrechen</button></div>`);
+    $("#cNo").onclick=closePanel;$("#cYes").onclick=async()=>{
+    for(const p of sel()){for(const id of p.photos||[])await del("photos",id);await put("points",{id:p.id,deleted:true,title:p.title,updated:Date.now()});}
+    admSel.clear();closePanel();await loadPoints();toast(`${n} Punkte gelöscht`,3000);};};}
+function admFocus(id,pan){admCur=id;const p=points.find(x=>x.id===id);
+  $("#admTable").querySelectorAll("tr.cur").forEach(r=>r.classList.remove("cur"));const tr=$("#admTable").querySelector(`tr[data-id="${id}"]`);if(tr)tr.classList.add("cur");
+  admHi.clearLayers();if(!p)return;L.circleMarker([p.lat,p.lon],{radius:22,color:"#c8742c",weight:4,fill:false,interactive:false}).addTo(admHi);
+  if(pan)map.setView([p.lat,p.lon],Math.max(map.getZoom(),13));
+  return tr;}
+async function admSet(p,f,v){
+  if(f==="trip"){p.trip=v;const t=tripOf(v);if(!t||!t.sections.includes(p.section))p.section="";}
+  else if(f==="status"){p.status=v;if(v==="besucht"&&!p.visited)p.visited=new Date().toISOString().slice(0,10);}
+  else p[f]=v;
+  p.updated=Date.now();await put("points",p);
+  const tr=$("#admTable").querySelector(`tr[data-id="${p.id}"]`);
+  if(tr&&["cat","trip","status"].includes(f)){const n=document.createElement("tbody");n.innerHTML=admRow(p);const nr=n.firstElementChild;tr.replaceWith(nr);
+    const img=nr.querySelector("img[data-ph]");if(img)photoURL(img.dataset.ph).then(u=>{if(u)img.src=u;});}
+  else if(tr){const d=tr.querySelectorAll(".adate");if(d[1])d[1].textContent=fmtDT(p.updated);}
+  drawPoints();toast("Gespeichert",1200);}
+function admInit(){
+  document.body.classList.add("adm");if(ls("rb_anomap")==="1")document.body.classList.add("nomap");
+  const a=document.createElement("div");a.id="adm";a.innerHTML=`<div id="admTools"></div><div id="admBulk"></div><div id="admTable"></div>`;
+  $("#app").insertBefore(a,$("#map"));
+  const h=document.createElement("button");h.className="hbtn hwide";h.id="admExit";h.title="Zur normalen Ansicht";h.innerHTML=`${mi("map",19)}<span>Zur App</span>`;
+  $("header").insertBefore(h,$("#syncBtn"));h.onclick=()=>{try{sessionStorage.removeItem("rb_admin");}catch(e){}location.href=location.pathname;};
+  $(".hname").insertAdjacentHTML("beforeend",` <span class="hadm">Verwaltung</span>`);
+  document.addEventListener("click",()=>document.querySelectorAll("#admTools .add.open").forEach(x=>x.classList.remove("open")));
+  const T=$("#admTable");
+  T.addEventListener("click",e=>{const th=e.target.closest("th[data-sort]");
+    if(th){const k=th.dataset.sort;admSort=admSort.k===k?{k,d:-admSort.d}:{k,d:["updated","created","stars","story","photos"].includes(k)?-1:1};ls("rb_asort",JSON.stringify(admSort));admRender(true);return;}
+    if(e.target.id==="aAll"){const l=admList();if(e.target.checked)l.forEach(p=>admSel.add(p.id));else l.forEach(p=>admSel.delete(p.id));admRender(true);return;}
+    const tr=e.target.closest("tr[data-id]");if(!tr)return;const p=points.find(x=>x.id===tr.dataset.id);if(!p)return;
+    if(e.target.matches("[data-sel]")){e.target.checked?admSel.add(p.id):admSel.delete(p.id);tr.classList.toggle("sel",e.target.checked);admBulk();return;}
+    const sb=e.target.closest("[data-star]");if(sb){const v=+sb.dataset.star;const nv=(p.stars||0)===v?0:v;tr.querySelectorAll("[data-star]").forEach(b=>b.classList.toggle("on",+b.dataset.star<=nv));admSet(p,"stars",nv);return;}
+    const ac=e.target.closest("[data-act]");if(ac){if(ac.dataset.act==="edit"){admFocus(p.id,true);editPoint(p);}else admFocus(p.id,true);return;}
+    if(e.target.closest("input,select,button"))return;admFocus(p.id,true);});
+  T.addEventListener("change",e=>{const el=e.target.closest("[data-e]");if(!el)return;const tr=el.closest("tr");const p=points.find(x=>x.id===tr.dataset.id);if(!p)return;
+    const f=el.dataset.e;admSet(p,f,el.type==="checkbox"?el.checked:f==="title"?el.value.trim():el.value);});
+  T.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.matches('input[data-e="title"]'))e.target.blur();});
+  T.addEventListener("dblclick",e=>{const tr=e.target.closest("tr[data-id]");if(!tr||e.target.closest("input,select,button"))return;const p=points.find(x=>x.id===tr.dataset.id);if(p){admFocus(p.id,true);editPoint(p);}});
+  setTimeout(()=>map.invalidateSize(),50);admRender();}
+function admCSV(){const l=admList();const q=v=>`"${String(v??"").replace(/"/g,'""')}"`;
+  const rows=[["Titel","Kategorie","Status","Reise","Abschnitt","Land","Region","Sterne","Storypoint","Fotos","Breite","Länge","Beschreibung","Notiz","Quelle","Erfasst","Geändert"]]
+   .concat(l.map(p=>[ptTitle(p),(CATS[p.cat]||CATS.other).n,STATUS[p.status||"idee"],tripName(p.trip),p.section||"",countryName(p.country),p.region||"",p.stars||"",p.story?"ja":"",(p.photos||[]).length,p.lat,p.lon,p.desc||"",p.note||"",p.source||"",fmtDT(p.created),fmtDT(p.updated)]));
+  download(`IbexMap_Punkte_${stamp()}.csv`,new Blob(["\ufeff"+rows.map(r=>r.map(q).join(",")).join("\r\n")],{type:"text/csv"}));}
 /* ---------- Start ---------- */
 (async()=>{
   try{db=await openDB();}catch(e){toast("Speicher nicht verfügbar – Daten werden nicht gesichert",6000);return;}
   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
   showSyncBtn();gdRestore();const _gdNew=gdFromRedirect();
   await loadMeta();
+  if(ADM)admInit();
   await loadPoints();
   /* Reparatur: OsmAnd-Favoriten gehören zu keiner Reise (wurden beim Abgleich fälschlich «Marokko 2027» zugeordnet) */
   try{if(!localStorage.getItem("rb_fix_osm1")){let n=0;for(const p of await getAll("points"))if(!p.deleted&&p.trip===MIG_TRIP&&/^OsmAnd/.test(p.source||"")){p.trip="";p.updated=Date.now();await put("points",p);n++;}
     localStorage.setItem("rb_fix_osm1","1");if(n){await loadPoints();setTimeout(()=>toast(`${n} OsmAnd-Orte wieder ohne Reise`,5000),2500);}}}catch(e){}
-  await loadFlags();
+  await loadFlags();wakeAcquire();
   showHeaderTrip();setTimeout(handleShare,600);setTimeout(async()=>{if(!countryData){await ensureCountries();}else{await assignCountries();}},1500);
   if(_gdNew||sessionStorage.getItem("rb_after_login")){try{sessionStorage.removeItem("rb_after_login");}catch(e){}if(gdToken)setTimeout(()=>syncDrive(),400);}
   try{const o=await getOne("meta","osmpoi");if(o)osmData={items:o.items||[],loaded:o.loaded,scope:o.scope||""};}catch(e){}drawOsm();
   if(points.length){const b=L.latLngBounds(points.map(p=>[p.lat,p.lon]));map.fitBounds(b,{padding:[30,30]});}
-  startGPS();
+  if(!ADM)startGPS();
   $("#ver").textContent=VERSION;
   if("serviceWorker" in navigator&&location.protocol==="https:"){
     const hadCtrl=!!navigator.serviceWorker.controller;let reloaded=false;

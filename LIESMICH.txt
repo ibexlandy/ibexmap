@@ -1,4 +1,4 @@
-IbexMap – v1.30 (privates Projekt)
+IbexMap – v2.1 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -176,3 +176,14 @@ NEU IN v1.30
 - Fehler behoben: Fotos wurden bei jedem Abgleich erneut hochgeladen (ein anderes Gerät hat sie im Google Drive gelöscht). Fotos eines Punkts werden jetzt zwischen den Geräten zusammengeführt; entfernt wird ein Foto nur noch, wenn es ausdrücklich gelöscht wurde.
   Wichtig: zuerst alle Geräte auf v1.30 bringen, dann auf dem Tablet abgleichen.
 - Abgleich zählt beim Hochladen nur die wirklich hochgeladenen Fotos.
+
+NEU IN v2.1
+- Bildschirm bleibt eingeschaltet, solange IbexMap offen ist (im Menü unter «Gerät» abschaltbar).
+- Menü neu und aufgeräumt: gleich grosse Zeilen mit Symbol, Titel und Status, gruppiert (Abgleich und Teilen, Reisen, Daten, Karte, Gerät).
+- Neu: Verwaltung für den PC (Tabelle) – https://ibexlandy.github.io/ibexmap/admin.html oder Menü › Daten › «Verwaltung (Tabelle)».
+  Alle Punkte sortieren (Klick auf Spaltenkopf), filtern (Suche, Reise, Land, Kategorie, Status, Abschnitt, ohne Foto/Titel …),
+  direkt in der Tabelle ändern (Titel, Kategorie, Status, Reise, Abschnitt, Sterne, Storypoint), mehrere auf einmal ändern oder löschen,
+  Karte rechts mit den gefilterten Punkten, ✎ bzw. Doppelklick öffnet die volle Bearbeitung, CSV-Export für Google Tabellen.
+  Neue Datei admin.html – beim Hochladen mitnehmen.
+- Google-Anmeldung beim Abgleich: kein Bestätigungsfenster («… vertrauen?») mehr bei jedem Abgleich. Die Anmeldung gilt eine Stunde (auch nach Schliessen des Tabs), danach erneuert sie sich in der Regel ohne Klick.
+- Kartenwahl oben rechts öffnet sich nur noch per Klick, nicht schon beim Darüberfahren mit der Maus, und schliesst nach der Auswahl.
