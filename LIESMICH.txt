@@ -1,4 +1,4 @@
-IbexMap – v2.7 (privates Projekt)
+IbexMap – v2.8 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -219,3 +219,6 @@ NEU IN v2.7
 - App-Logo: Schrift «IBEX MAP» in der Bildmitte.
 - Familienseite neu gestaltet (ähnlich Polarsteps): Kopf mit Reisedaten und Zahlen (Tage, km, Länder, Orte), Zeitleiste mit «Tag 1, Tag 2 …», Distanz zwischen den Orten, grosse Fotos, Fotos im Vollbild zum Durchblättern, Route auf der Karte mit Foto-Punkten, Karte folgt beim Scrollen. Nach dem Update in IbexMap einmal «Storypoints veröffentlichen».
 - Verwaltung: Karte rechts zeigt beim Anklicken eines Punkts eine Übersicht (Region) statt Strassenebene.
+
+NEU IN v2.8
+- Reisen überall nach Jahr sortiert, neueste zuoberst (Jahr aus dem Namen, z. B. «Toskana 2026»; gleiches Jahr alphabetisch).

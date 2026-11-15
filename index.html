@@ -350,7 +350,7 @@ const ADM=(()=>{try{if(new URLSearchParams(location.search).has("admin")){sessio
   return sessionStorage.getItem("rb_admin")==="1"&&matchMedia("(min-width:900px)").matches;}catch(e){return false;}})();
 if(ADM)document.body.classList.add("adm");
 const GROUP="IbexMap";
-const VERSION="v2.7";
+const VERSION="v2.8";
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
 const MA_SECTORS=[
  {n:"A Norden",zeit:"5.–10. April",klima:"Frühling, grün; 15–22 °C, im Rif Regen möglich, Nächte kühl",info:"Tanger Med, Chefchaouen, Fès, Meknès – ankommen, Städte, einkaufen. Eher Campings.",box:[[33.8,-5.9,35.95,-1.0]]},
@@ -389,6 +389,9 @@ const MIG_TRIP="t-marokko-2027";
 const tripOf=id=>trips.find(t=>t.id===id);
 const curTripObj=()=>tripOf(curTrip)||trips[0];
 const tripName=id=>(tripOf(id)||{}).name||"";
+/* Reisen für Listen: neueste zuerst (Jahr aus dem Namen, z. B. «Toskana 2026»), gleiches Jahr alphabetisch, ohne Jahr am Schluss */
+const tripYear=t=>{const m=String(t.name||"").match(/(?:19|20)\d\d/g);return m?+m[m.length-1]:0;};
+const tripsSorted=()=>[...trips].sort((a,b)=>tripYear(b)-tripYear(a)||String(a.name).localeCompare(String(b.name),"de"));
 /* Ausgeblendete Reisen (z. B. alte Reisen): Punkte erscheinen nur, wenn die Reise ausdrücklich im Filter gewählt ist */
 const tripHidden=id=>{const t=tripOf(id);return !!(t&&t.hidden);};
 const hidI=`<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-2px;opacity:.7"><path d="M3 3l18 18M10.6 6.1A9.6 9.6 0 0 1 12 6c5 0 8.5 4 9.5 6-.4.9-1.3 2.2-2.6 3.4M6.6 7.6C4.6 9 3.2 10.9 2.5 12c1 2 4.5 6 9.5 6 1.6 0 3-.4 4.3-1M9.9 10a3 3 0 0 0 4.2 4.2"/></svg>`;
@@ -893,7 +896,7 @@ function showMapFilter(){
   const cnt=k=>points.filter(p=>(p.cat in CATS?p.cat:"other")===k).length;
   const cList=[...new Set(points.map(p=>p.country).filter(Boolean))].sort((a,b)=>countryName(a).localeCompare(countryName(b)));
   openPanel(`<h2>Auf der Karte anzeigen</h2>
-    <h3>Reise</h3><div class="chips"><button class="chip ${!mapTrip?"on":""}" data-mt="">Alle Reisen${trips.some(t=>t.hidden)?" (ohne ausgeblendete)":""}</button>${trips.map(t=>`<button class="chip ${mapTrip===t.id?"on":""}" data-mt="${t.id}">${esc(t.name)}${t.hidden?" "+hidI:""} (${points.filter(p=>p.trip===t.id).length})</button>`).join("")}</div>
+    <h3>Reise</h3><div class="chips"><button class="chip ${!mapTrip?"on":""}" data-mt="">Alle Reisen${trips.some(t=>t.hidden)?" (ohne ausgeblendete)":""}</button>${tripsSorted().map(t=>`<button class="chip ${mapTrip===t.id?"on":""}" data-mt="${t.id}">${esc(t.name)}${t.hidden?" "+hidI:""} (${points.filter(p=>p.trip===t.id).length})</button>`).join("")}</div>
     <h3>Land</h3><div class="chips"><button class="chip ${!mapCountry?"on":""}" data-mc="">Alle Länder</button>${cList.map(c=>`<button class="chip ${mapCountry===c?"on":""}" data-mc="${c}">${esc(countryName(c))} (${points.filter(p=>p.country===c).length})</button>`).join("")}</div>
     <h3>Eigene Punkte</h3>
     <div class="chips">${Object.entries(CATS).map(([k,v])=>`<button class="chip ${hiddenCats.includes(k)?"":"on"}" data-k="${k}">${icoBadge(k,v.c,20)}${v.n} (${cnt(k)})</button>`).join("")}</div>
@@ -974,7 +977,7 @@ async function editPoint(p,isNew=false){
    <label>Status</label><select id="fStatus">${stOpts}</select>
    <div id="fVisWrap" style="display:${p.status==="besucht"?"block":"none"}"><div class="row"><div><label id="fVisLbl">Besucht am</label><input id="fVisited" type="date" value="${esc(p.visited||new Date().toISOString().slice(0,10))}"></div>
      <div id="fToWrap"><label>Bis</label><input id="fVisTo" type="date" value="${esc(p.visitedTo||"")}"></div></div><div class="muted" id="fNights" style="margin-top:4px"></div></div>
-   <div class="row"><div><label>Reise</label><select id="fTrip">${trips.map(t=>`<option value="${t.id}" ${(p.trip||curTrip)===t.id?"selected":""}>${esc(t.name)}</option>`).join("")}<option value="">– keine Reise –</option></select></div>
+   <div class="row"><div><label>Reise</label><select id="fTrip">${tripsSorted().map(t=>`<option value="${t.id}" ${(p.trip||curTrip)===t.id?"selected":""}>${esc(t.name)}</option>`).join("")}<option value="">– keine Reise –</option></select></div>
    <div><label>Abschnitt</label><select id="fSection">${secOpts(p.trip||curTrip,p.section)}</select></div></div>
    <input id="fSectionNew" placeholder="Name des neuen Abschnitts" style="display:none;margin-top:6px">
    <label>Land / Region (automatisch)</label><div class="muted">${esc(countryName(p.country||countryOf(p.lat,p.lon))||(countryData?"–":"Ländergrenzen noch nicht geladen"))}</div><div class="muted" id="fRegion">${esc(p.region||regionOf(p.lat,p.lon)||(regionData?"ausserhalb der Regionsdaten":"Regionsgrenzen noch nicht geladen (Menü)"))}</div>
@@ -1115,7 +1118,7 @@ async function showList(){
     ${lfAny()?`<div class="chips"><button class="chip" id="lfReset" style="border-color:var(--accent2);color:var(--accent2)">✕ Alle Filter zurücksetzen</button></div>`:""}
     <div class="lfh">Kategorie</div><div class="chips">${Object.entries(CATS).map(([k,v])=>chip("cat",k,esc(v.n),icoBadge(k,v.c,20))).join("")}</div>
     <div class="lfh">Status</div><div class="chips">${Object.entries(STATUS).map(([k,v])=>chip("st",k,esc(v))).join("")}</div>
-    <div class="lfh">Reise</div><div class="chips">${trips.map(t=>chip("trip",t.id,`${esc(t.name)} (${cnt(p=>p.trip===t.id)})${t.hidden?" "+hidI:""}`)).join("")}${chip("trip","__none",`ohne Reise (${cnt(p=>!p.trip)})`)}</div>
+    <div class="lfh">Reise</div><div class="chips">${tripsSorted().map(t=>chip("trip",t.id,`${esc(t.name)} (${cnt(p=>p.trip===t.id)})${t.hidden?" "+hidI:""}`)).join("")}${chip("trip","__none",`ohne Reise (${cnt(p=>!p.trip)})`)}</div>
     ${countries.length?`<div class="lfh">Land</div><div class="chips">${countries.map(c=>chip("cc",c,`${esc(countryName(c))} (${cnt(p=>p.country===c)})`,mi("globe",15))).join("")}</div>`:""}
     ${secs.length?`<div class="lfh">Abschnitt</div><div class="chips">${secs.map(x=>chip("sec",x,esc(x))).join("")}</div>`:""}
     <div class="lfh">Sortierung</div><div class="chips">${[["dist","Nächste zuerst"],["new","Neueste zuerst"],["old","Älteste zuerst"],["stars","Beste Bewertung"]].map(([k,t])=>`<button class="chip ${lSort===k?"on":""}" data-so="${k}">${t}</button>`).join("")}</div><div id="lItems"></div>`);
@@ -1420,7 +1423,7 @@ function manageTrips(){
   const ph=`<span style="width:32px;flex:none"></span>`;
   const btn=(o,id,ic,t)=>`<button data-${o}="${id}" title="${t}">${mi(ic,18)}</button>`;
   openPanel(`<h2>Reisen</h2>
-   <div class="mgrp" id="tList">${trips.map(t=>{const cur=t.id===curTrip,n=cnt(t.id);
+   <div class="mgrp" id="tList">${tripsSorted().map(t=>{const cur=t.id===curTrip,n=cnt(t.id);
      return `<div class="mrow wrap" style="cursor:default${t.hidden?";opacity:.6":""}"><span class="mtx"><b>${cur?`<span style="color:var(--accent2)">★</span> `:""}${esc(t.name)}</b><small>${n} Punkte · ${t.sections.length} Abschnitte${cur?" · aktuelle Reise":""}${t.hidden?" · ausgeblendet":""}</small></span>
      <span class="oact">${btn("show",t.id,"pin","Auf der Karte zeigen")}${cur?ph:btn("cur",t.id,"star","Als aktuelle Reise wählen")}${cur?ph:btn("hide",t.id,t.hidden?"eyeoff":"eye",t.hidden?"Ausgeblendet – antippen zum Einblenden":"Sichtbar – antippen zum Ausblenden (dann nur sichtbar, wenn im Filter gewählt)")}${btn("ren",t.id,"edit","Umbenennen")}${n||trips.length<2?ph:btn("del",t.id,"trash","Löschen")}</span></div>`;}).join("")}</div>
    <p class="muted" style="margin-top:8px">${mi("pin",13)} auf Karte zeigen · ${mi("star",13)} aktuelle Reise · ${mi("eye",13)} sichtbar / ${mi("eyeoff",13)} ausgeblendet · ${mi("edit",13)} umbenennen · ${mi("trash",13)} löschen (nur ohne Punkte)</p>
@@ -1740,7 +1743,7 @@ function famPw(){const a="abcdefghjkmnpqrstuvwxyz",d="23456789",w=[];const r=n=>
 function famSettings(){const c=famCfg();const owner=c.owner||location.hostname.split(".")[0]||"";
   openPanel(`<h2>Familienseite einrichten</h2>
    <p class="muted">Eine eigene Seite für die Familie, z. B. <b>${esc(famURL({owner,repo:c.repo||"familie"}))}</b>. Dort liegen nur die markierten Storypoints – verschlüsselt. Die Familie braucht Link und Passwort.</p>
-   <label>Reise</label><select id="fmTrip">${trips.map(t=>`<option value="${t.id}" ${(c.trip||curTrip)===t.id?"selected":""}>${esc(t.name)}</option>`).join("")}</select>
+   <label>Reise</label><select id="fmTrip">${tripsSorted().map(t=>`<option value="${t.id}" ${(c.trip||curTrip)===t.id?"selected":""}>${esc(t.name)}</option>`).join("")}</select>
    <label>Titel der Seite</label><input id="fmTitle" value="${esc(c.title||(tripOf(c.trip||curTrip)||{}).name||"Unsere Reise")}">
    <div class="row"><div><label>GitHub-Konto</label><input id="fmOwner" value="${esc(owner)}"></div><div><label>Repository</label><input id="fmRepo" value="${esc(c.repo||"")}" placeholder="z. B. familie"></div></div>
    <label>GitHub-Zugangsschlüssel (Fine-grained token)</label><input id="fmToken" type="password" value="${esc(c.token||"")}" placeholder="github_pat_…" autocomplete="off">
@@ -1815,11 +1818,12 @@ function admFilterBtn(k,label,opts){const n=AF[k].size;
 function admOpts(k,valOf,labOf){const m=new Map();points.filter(p=>admMatch(p,k)).forEach(p=>{const v=valOf(p);m.set(v,(m.get(v)||0)+1);});
   AF[k].forEach(v=>{if(!m.has(v))m.set(v,0);});
   return [...m.entries()].map(([v,c])=>[v,labOf(v),c]).sort((a,b)=>String(a[1]).localeCompare(String(b[1]),"de"));}
+const admOptsTrip=o=>{const ord=tripsSorted().map(t=>t.id);const ix=v=>v===""?9999:ord.indexOf(v)<0?9998:ord.indexOf(v);return o.sort((a,b)=>ix(a[0])-ix(b[0]));};
 function admToolbar(){
   const tb=$("#admTools");const open=tb.querySelector(".add.open");const openK=open?open.id.slice(3):"";
   const xs=[["nophoto","ohne Foto"],["photo","mit Foto"],["notitle","ohne Titel"],["story","Storypoints"],["nostars","ohne Bewertung"]];
   tb.innerHTML=`<div class="asearch">${mi("search",17)}<input id="aQ" placeholder="Suchen in Titel, Beschreibung, Notiz, Quelle, Ort …" value="${esc(admQ)}"></div>
-   ${admFilterBtn("trip","Reise",admOpts("trip",p=>p.trip||"",v=>v?esc(tripName(v)||"(gelöschte Reise)")+(tripHidden(v)?" "+hidI:""):"<em>ohne Reise</em>"))}
+   ${admFilterBtn("trip","Reise",admOptsTrip(admOpts("trip",p=>p.trip||"",v=>v?esc(tripName(v)||"(gelöschte Reise)")+(tripHidden(v)?" "+hidI:""):"<em>ohne Reise</em>")))}
    ${admFilterBtn("cc","Land",admOpts("cc",p=>p.country||"",v=>v?esc(countryName(v)):"<em>unbekannt</em>"))}
    ${admFilterBtn("cat","Kategorie",admOpts("cat",p=>p.cat in CATS?p.cat:"other",v=>`${icoBadge(v,CATS[v].c,18)} ${esc(CATS[v].n)}`))}
    ${admFilterBtn("st","Status",admOpts("st",p=>p.status||"idee",v=>esc(STATUS[v]||v)))}
@@ -1847,7 +1851,7 @@ function admRow(p){const c=CATS[p.cat]||CATS.other,t=tripOf(p.trip),secs=t?t.sec
    <td class="atitle"><div>${icoBadge(p.cat in CATS?p.cat:"other",c.c,24)}<input data-e="title" value="${esc(p.title||"")}" placeholder="${esc(ptTitle(Object.assign({},p,{title:""})))}">${p.status==="besucht"?`<span class="lchk" title="besucht">✓</span>`:""}</div></td>
    <td><select data-e="cat">${Object.entries(CATS).map(([k,v])=>`<option value="${k}" ${p.cat===k?"selected":""}>${esc(v.n)}</option>`).join("")}</select></td>
    <td><select data-e="status">${Object.entries(STATUS).map(([k,v])=>`<option value="${k}" ${(p.status||"idee")===k?"selected":""}>${v}</option>`).join("")}</select></td>
-   <td><select data-e="trip"><option value="">– keine –</option>${trips.map(x=>`<option value="${x.id}" ${p.trip===x.id?"selected":""}>${esc(x.name)}</option>`).join("")}</select></td>
+   <td><select data-e="trip"><option value="">– keine –</option>${tripsSorted().map(x=>`<option value="${x.id}" ${p.trip===x.id?"selected":""}>${esc(x.name)}</option>`).join("")}</select></td>
    <td><select data-e="section" ${t?"":"disabled"}><option value="">–</option>${secs.map(x=>`<option ${p.section===x?"selected":""}>${esc(x)}</option>`).join("")}${p.section&&!secs.includes(p.section)?`<option selected>${esc(p.section)}</option>`:""}</select></td>
    <td class="atxt" title="${esc(p.region||"")}">${esc(countryName(p.country))||`<span class="muted">–</span>`}${p.region?`<small>${esc(p.region.split(/[,(]/)[0])}</small>`:""}</td>
    <td>${RATE[p.cat]?`<span class="astars">${[1,2,3,4,5].map(i=>`<button data-star="${i}" class="${(p.stars||0)>=i?"on":""}">★</button>`).join("")}</span>`:`<span class="muted">–</span>`}</td>
@@ -1869,7 +1873,7 @@ async function admRender2(soft){
   for(const img of $("#admTable").querySelectorAll("img[data-ph]")){const u=await photoURL(img.dataset.ph);if(u)img.src=u;}}
 function admBulk(){const n=admSel.size,b=$("#admBulk");b.style.display=n?"flex":"none";if(!n)return;
   b.innerHTML=`<b>${n} ausgewählt</b>
-   <select id="bTrip"><option value="?">Reise setzen …</option><option value="">– keine Reise –</option>${trips.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join("")}</select>
+   <select id="bTrip"><option value="?">Reise setzen …</option><option value="">– keine Reise –</option>${tripsSorted().map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join("")}</select>
    <select id="bCat"><option value="?">Kategorie setzen …</option>${Object.entries(CATS).map(([k,v])=>`<option value="${k}">${esc(v.n)}</option>`).join("")}</select>
    <select id="bSt"><option value="?">Status setzen …</option>${Object.entries(STATUS).map(([k,v])=>`<option value="${k}">${v}</option>`).join("")}</select>
    <button class="abtn" id="bStoryOn">Storypoint an</button><button class="abtn" id="bStoryOff">Storypoint aus</button>
