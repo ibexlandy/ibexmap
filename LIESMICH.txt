@@ -1,4 +1,4 @@
-IbexMap – v2.11 (privates Projekt)
+IbexMap – v2.12 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -236,3 +236,12 @@ NEU IN v2.10
 
 NEU IN v2.11
 - «Fotos Punkten zuordnen» auf einer grossen, eigenen Seite: Fotos als grosse Kacheln mit Zielpunkt und Distanz, Häkchen zum Zuordnen, Einstellungen oben.
+
+NEU IN v2.12
+- Kategorie «Tierbeobachtung» entfernt; bestehende Punkte werden automatisch zu «Sehenswürdigkeit».
+- Kategorie heisst nur noch «Wasser» (statt «Wasser / Trinkwasser»).
+- Menü: «Abgleich mit Google Drive» und «Storypoints» mit deutlichem Aktionsknopf («Jetzt abgleichen» / «Veröffentlichen») statt Pfeil. Veröffentlichen zeigt Fortschritt und am Ende ein Fenster mit «Familienseite öffnen» und «Link + Passwort kopieren».
+- Kartenfilter sichtbar: Zahl der aktiven Filter am Filterknopf und Hinweis oben auf der Karte («Gefiltert: …»), antippen = Filter ändern, ✕ = alle Filter aufheben.
+- Menü überprüft: Zeilen mit Pfeil › öffnen ein Fenster; Zeilen, die sofort etwas tun, haben einen Aktionsknopf (Exportieren, Laden, Ermitteln, Update suchen, Öffnen …).
+- Suche nach Kategorien: pro Gruppe neu «Alles aus …» (z. B. alles aus «Camping und Übernachten» auf einmal), Treffer mit deutscher Art. Umgebungssuche fragt mehrere OpenStreetMap-Server gleichzeitig (schneller, seltener «antwortet nicht»), merkt sich Ergebnisse kurz; bei Störung Knopf «Nochmals versuchen».
+- Neu: «POI-Overlay und Suche (offline)» (Menü › Karte): alle Such-Kategorien eines Landes einmal laden (wie OsmAnd). Danach ohne Internet: im Kartenfilter «POI-Overlay» gruppenweise auf der Karte einblenden, antippen zeigt Details (Öffnungszeiten, Telefon, Navigieren, als eigenen Punkt übernehmen); die Suche findet diese Orte offline nach Kategorie und nach Name.
