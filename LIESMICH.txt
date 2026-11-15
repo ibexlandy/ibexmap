@@ -1,4 +1,4 @@
-IbexMap – v2.2 (privates Projekt)
+IbexMap – v2.3 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -198,3 +198,7 @@ NEU IN v2.2
 - Camping und Stellplatz: Aufenthalt «Von – Bis» erfassen, Anzahl Nächte wird angezeigt (z. B. «10.04.2027 – 13.04.2027 (3 Nächte)»).
 - Reisen ausblenden (Menü › Reisen verwalten › «Ausblenden»): z. B. alte Reisen – ihre Punkte erscheinen auf Karte, Liste und Verwaltung nur, wenn die Reise im Filter ausdrücklich gewählt ist. Wird mit abgeglichen.
 - «Reisen verwalten» kompakt: eine Zeile pro Reise mit Symbol-Knöpfen (auf Karte zeigen, aktuelle Reise, ausblenden, umbenennen, löschen); Koffer-Symbol entfernt.
+
+NEU IN v2.3
+- Reisen verwalten: Auge zeigt den Zustand (offenes Auge = sichtbar, durchgestrichen = ausgeblendet); antippen wechselt.
+- Neues App-Logo (Steinbock-Hörner, Höhenlinien, «IBEX MAP») für App-Symbol, Kopfzeile und Browser-Tab.
