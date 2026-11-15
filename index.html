@@ -151,6 +151,9 @@ body.adm #locBtn{display:flex !important}
 .ocalc{margin-top:14px;padding:10px 12px;border-radius:10px;background:#e9eee6;font-size:14px}.ocalc.bad{background:#fde7e7;color:#a33}
 #offframe{position:absolute;left:8%;right:8%;top:70px;bottom:150px;z-index:640;border:3px dashed var(--accent2);border-radius:6px;pointer-events:none;display:none;box-shadow:0 0 0 2000px rgba(0,0,0,.12)}
 #offPill{position:absolute;left:50%;transform:translateX(-50%);top:12px;z-index:650;display:none;border:0;background:var(--accent);color:#fff;font:inherit;font-size:13px;font-weight:600;padding:7px 14px;border-radius:18px;box-shadow:0 2px 8px rgba(0,0,0,.3);cursor:pointer}
+.pth{width:64px;height:64px;flex:none;border-radius:8px;background:#e3e9e1 center/cover;cursor:zoom-in;display:flex;align-items:center;justify-content:center;color:#888}
+.panel select.pnew{width:auto;max-width:175px;flex:none;font-size:13px;padding:6px 6px}.panel select.pnew.on{border-color:var(--accent2);background:#fff6ec;font-weight:600}
+.pbig{position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,.9);display:flex;align-items:center;justify-content:center;cursor:zoom-out}.pbig img{max-width:96vw;max-height:94vh;border-radius:6px}
 .btn{border:0;border-radius:8px;padding:10px 14px;font:inherit;font-weight:600;background:var(--accent);color:#fff}
 .btn.sec{background:#fff;color:var(--ink);border:1px solid var(--line)}
 .btn.warn{background:#a33}
@@ -350,7 +353,7 @@ const ADM=(()=>{try{if(new URLSearchParams(location.search).has("admin")){sessio
   return sessionStorage.getItem("rb_admin")==="1"&&matchMedia("(min-width:900px)").matches;}catch(e){return false;}})();
 if(ADM)document.body.classList.add("adm");
 const GROUP="IbexMap";
-const VERSION="v2.8";
+const VERSION="v2.9";
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
 const MA_SECTORS=[
  {n:"A Norden",zeit:"5.–10. April",klima:"Frühling, grün; 15–22 °C, im Rif Regen möglich, Nächte kühl",info:"Tanger Med, Chefchaouen, Fès, Meknès – ankommen, Städte, einkaufen. Eher Campings.",box:[[33.8,-5.9,35.95,-1.0]]},
@@ -490,12 +493,13 @@ function pinIcon(p){const c=CATS[p.cat]||CATS.other;
   return L.divIcon({className:"",iconSize:[30,30],iconAnchor:[15,30],popupAnchor:[0,-28],
     html:`<div class="pinw"><div class="pin ${p.status==="besucht"?"visited":""}" style="background:${c.c}"><span>${svgI(p.cat in CATS?p.cat:"other",16)}</span></div>${p.status==="besucht"?`<span class="vchk">✓</span>`:""}${p.story?`<span class="vstory">${storyI(9)}</span>`:""}</div>`});}
 let hiddenCats=[];try{hiddenCats=JSON.parse(localStorage.getItem("rb_hidden")||"[]");}catch(e){}
-let mapTrip="",mapCountry="";try{mapTrip=localStorage.getItem("rb_mtrip")||"";mapCountry=localStorage.getItem("rb_mcountry")||"";}catch(e){}
-const saveMapScope=()=>{try{localStorage.setItem("rb_mtrip",mapTrip);localStorage.setItem("rb_mcountry",mapCountry);}catch(e){}};
+/* Kartenfilter Reise und Land: Mehrfachauswahl (leer = alle) */
+let mapTrip=[],mapCountry=[];{const rd=k=>{try{const v=localStorage.getItem(k)||"";if(!v)return [];if(v[0]==="[")return JSON.parse(v);return [v];}catch(e){return [];}};mapTrip=rd("rb_mtrip");mapCountry=rd("rb_mcountry");}
+const saveMapScope=()=>{try{localStorage.setItem("rb_mtrip",JSON.stringify(mapTrip));localStorage.setItem("rb_mcountry",JSON.stringify(mapCountry));}catch(e){}};
 let hiddenStat=[];try{hiddenStat=JSON.parse(localStorage.getItem("rb_hidstat")||"[]");}catch(e){}
 function drawPoints(){layer.clearLayers();
-  $("#filtBtn").classList.toggle("active",hiddenCats.length>0||hiddenStat.length>0||osmShow.length>0||!!mapTrip||!!mapCountry);
-  const vis=ADM?points.filter(p=>admShown.has(p.id)):points.filter(p=>!hiddenCats.includes(p.cat in CATS?p.cat:"other")&&!hiddenStat.includes(p.status||"idee")&&(!mapTrip||p.trip===mapTrip)&&(mapTrip===p.trip||!tripHidden(p.trip))&&(!mapCountry||p.country===mapCountry));
+  $("#filtBtn").classList.toggle("active",hiddenCats.length>0||hiddenStat.length>0||osmShow.length>0||mapTrip.length>0||mapCountry.length>0);
+  const vis=ADM?points.filter(p=>admShown.has(p.id)):points.filter(p=>!hiddenCats.includes(p.cat in CATS?p.cat:"other")&&!hiddenStat.includes(p.status||"idee")&&(!mapTrip.length||mapTrip.includes(p.trip))&&(mapTrip.includes(p.trip)||!tripHidden(p.trip))&&(!mapCountry.length||mapCountry.includes(p.country)));
   const z=map.getZoom(),single=p=>L.marker([p.lat,p.lon],{icon:pinIcon(p)}).addTo(layer).on("click",()=>{if(ADM){const tr=admFocus(p.id,false);if(tr)tr.scrollIntoView({block:"center",behavior:"smooth"});}showDetail(p.id);});
   if(z>=CLUSTER_MAXZOOM||!clusterOn){vis.forEach(single);return;}
   /* Gruppieren nach Kategorie: nahe Punkte gleicher Kategorie (Raster 64 px) werden zu einer Blase mit Anzahl */
@@ -559,7 +563,7 @@ async function osmLoad(scope,label){
 function osmCC(){const c=map.getCenter();return countryOf(c.lat,c.lng);}
 function saveOsmShow(){try{localStorage.setItem("rb_osm",JSON.stringify(osmShow));}catch(e){}}
 function drawOsm(){osmLayer.clearLayers();
-  $("#filtBtn").classList.toggle("active",hiddenCats.length>0||hiddenStat.length>0||osmShow.length>0||!!mapTrip||!!mapCountry);
+  $("#filtBtn").classList.toggle("active",hiddenCats.length>0||hiddenStat.length>0||osmShow.length>0||mapTrip.length>0||mapCountry.length>0);
   if(!osmShow.length||!osmData.items.length||map.getZoom()<OSM_MINZOOM)return;
   const b=map.getBounds().pad(.2);
   osmData.items.forEach(x=>{if(!osmShow.includes(x.ty)||!b.contains([x.lat,x.lon]))return;const c=OSM[x.ty];
@@ -896,8 +900,8 @@ function showMapFilter(){
   const cnt=k=>points.filter(p=>(p.cat in CATS?p.cat:"other")===k).length;
   const cList=[...new Set(points.map(p=>p.country).filter(Boolean))].sort((a,b)=>countryName(a).localeCompare(countryName(b)));
   openPanel(`<h2>Auf der Karte anzeigen</h2>
-    <h3>Reise</h3><div class="chips"><button class="chip ${!mapTrip?"on":""}" data-mt="">Alle Reisen${trips.some(t=>t.hidden)?" (ohne ausgeblendete)":""}</button>${tripsSorted().map(t=>`<button class="chip ${mapTrip===t.id?"on":""}" data-mt="${t.id}">${esc(t.name)}${t.hidden?" "+hidI:""} (${points.filter(p=>p.trip===t.id).length})</button>`).join("")}</div>
-    <h3>Land</h3><div class="chips"><button class="chip ${!mapCountry?"on":""}" data-mc="">Alle Länder</button>${cList.map(c=>`<button class="chip ${mapCountry===c?"on":""}" data-mc="${c}">${esc(countryName(c))} (${points.filter(p=>p.country===c).length})</button>`).join("")}</div>
+    <h3>Reise <span class="muted" style="font-weight:400">· mehrere wählbar</span></h3><div class="chips"><button class="chip ${!mapTrip.length?"on":""}" data-mt="">Alle Reisen${trips.some(t=>t.hidden)?" (ohne ausgeblendete)":""}</button>${tripsSorted().map(t=>`<button class="chip ${mapTrip.includes(t.id)?"on":""}" data-mt="${t.id}">${esc(t.name)}${t.hidden?" "+hidI:""} (${points.filter(p=>p.trip===t.id).length})</button>`).join("")}</div>
+    <h3>Land <span class="muted" style="font-weight:400">· mehrere wählbar</span></h3><div class="chips"><button class="chip ${!mapCountry.length?"on":""}" data-mc="">Alle Länder</button>${cList.map(c=>`<button class="chip ${mapCountry.includes(c)?"on":""}" data-mc="${c}">${esc(countryName(c))} (${points.filter(p=>p.country===c&&(!mapTrip.length||mapTrip.includes(p.trip))).length})</button>`).join("")}</div>
     <h3>Eigene Punkte</h3>
     <div class="chips">${Object.entries(CATS).map(([k,v])=>`<button class="chip ${hiddenCats.includes(k)?"":"on"}" data-k="${k}">${icoBadge(k,v.c,20)}${v.n} (${cnt(k)})</button>`).join("")}</div>
     <div class="chips"><button class="chip ${clusterOn?"on":""}" id="mfClu">◉ Nahe Punkte gruppieren (bis Zoom ${CLUSTER_MAXZOOM-1})</button></div>
@@ -913,12 +917,13 @@ function showMapFilter(){
   const save=()=>{try{localStorage.setItem("rb_hidden",JSON.stringify(hiddenCats));}catch(e){}drawPoints();showMapFilter();};
   $("#panel").querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{const k=b.dataset.k;hiddenCats=hiddenCats.includes(k)?hiddenCats.filter(x=>x!==k):[...hiddenCats,k];save();});
   const only=keep=>{hiddenCats=Object.keys(CATS).filter(k=>!keep.includes(k));save();};
-  $("#mfAll").onclick=()=>{hiddenCats=[];hiddenStat=[];mapTrip="";mapCountry="";saveMapScope();try{localStorage.setItem("rb_hidstat","[]");}catch(e){}save();};
+  $("#mfAll").onclick=()=>{hiddenCats=[];hiddenStat=[];mapTrip=[];mapCountry=[];saveMapScope();try{localStorage.setItem("rb_hidstat","[]");}catch(e){}save();};
   $("#mfSupply").onclick=()=>{osmShow=Object.keys(OSM);saveOsmShow();drawOsm();only(["shop","fuel","service","water"]);};
   $("#mfNight").onclick=()=>only(["wild","camp"]);
   $("#mfClose").onclick=closePanel;
-  $("#panel").querySelectorAll("[data-mt]").forEach(b=>b.onclick=()=>{mapTrip=b.dataset.mt;saveMapScope();drawPoints();showMapFilter();});
-  $("#panel").querySelectorAll("[data-mc]").forEach(b=>b.onclick=()=>{mapCountry=b.dataset.mc;saveMapScope();drawPoints();showMapFilter();});
+  const tg=(A,v)=>{if(!v)return [];return A.includes(v)?A.filter(x=>x!==v):[...A,v];};const keep=()=>{const sc=$("#panel").scrollTop;showMapFilter();$("#panel").scrollTop=sc;};
+  $("#panel").querySelectorAll("[data-mt]").forEach(b=>b.onclick=()=>{mapTrip=tg(mapTrip,b.dataset.mt);saveMapScope();drawPoints();keep();});
+  $("#panel").querySelectorAll("[data-mc]").forEach(b=>b.onclick=()=>{mapCountry=tg(mapCountry,b.dataset.mc);saveMapScope();drawPoints();keep();});
   $("#mfClu").onclick=()=>{clusterOn=!clusterOn;try{localStorage.setItem("rb_cluster",clusterOn?"1":"0");}catch(e){}drawPoints();showMapFilter();};
   $("#panel").querySelectorAll("[data-st]").forEach(b=>b.onclick=()=>{const k=b.dataset.st;hiddenStat=hiddenStat.includes(k)?hiddenStat.filter(x=>x!==k):[...hiddenStat,k];
     try{localStorage.setItem("rb_hidstat",JSON.stringify(hiddenStat));}catch(e){}drawPoints();showMapFilter();});
@@ -1345,29 +1350,62 @@ $("#photoAssign").onchange=async e=>{const fl=[...e.target.files];e.target.value
   if(osf)return importOsf(osf,true);assignPhotos(fl.filter(f=>/^image\//.test(f.type)||/\.jpe?g$/i.test(f.name)));};
 async function assignPhotos(files){if(!files.length)return toast("Keine Fotos gefunden");
   progress("Fotos zuordnen",0,files.length,"Aufnahmeorte werden gelesen …");
-  const live=points.filter(p=>!p.deleted);const R=0.3;
-  const rows=[];let k=0;for(const f of files){k++;progress("Fotos zuordnen",k,files.length,"Aufnahmeorte werden gelesen …");
-    const near=ll=>{let b=null;if(ll)for(const p of live){const d=distKm({lat:ll[0],lon:ll[1]},p);if(!b||d<b.d)b={p,d};}return b;};
-    let ll=nameGPS(f.name),how="OsmAnd-Dateiname",best=near(ll);
-    if(!best||best.d>R){try{const b=f.lazy?await f.lazy():f;const ex=await exifGPS(b);if(ex){ll=ex;how="Foto-Standort";best=near(ll);}}catch(e){}}
-    rows.push({f,ll,how,best:best&&best.d<=R?best:null,near:best});}
-  const ok=rows.filter(r=>r.best);
-  openPanel(`<h2>Fotos zuordnen</h2>
-   <p>${ok.length} von ${rows.length} Fotos haben einen Punkt im Umkreis von 300 m.</p>
-   ${rows.map((r,i)=>`<div class="item" style="cursor:default"><div style="flex:1"><div class="t">${esc(r.f.name)}</div><div class="s">${r.best?`→ <b>${esc(ptTitle(r.best.p))}</b> (${Math.round(r.best.d*1000)} m)`:r.ll?`kein Punkt in 300 m${r.near?` – nächster: ${esc(ptTitle(r.near.p))} (${kmTxt(r.near.d)})`:""}`:"kein Aufnahmeort im Foto"}</div></div>
-     ${!r.best&&r.ll?`<label class="muted" style="display:flex;gap:6px;align-items:center"><input type="checkbox" data-new="${i}" style="width:auto;margin:0">neuer Stellplatz</label>`:""}</div>`).join("")}
-   <div class="actions"><button class="btn" id="paGo">${ok.length} Fotos zuordnen</button><button class="btn sec" id="paNo">Abbrechen</button></div>
-   <p class="muted">Fotos werden verkleinert (1280 px) gespeichert. Ohne Aufnahmeort kannst du ein Foto im Punkt selbst über «Foto hinzufügen» anhängen.</p>`);
-  $("#paNo").onclick=closePanel;
-  const newSel=()=>[...$("#panel").querySelectorAll("[data-new]")].filter(c=>c.checked).map(c=>+c.dataset.new);
-  $("#panel").querySelectorAll("[data-new]").forEach(c=>c.onchange=()=>{$("#paGo").textContent=`${ok.length+newSel().length} Fotos zuordnen`;});
-  $("#paGo").onclick=async()=>{const mk=newSel();let n=0,i=0;const touched=new Map();
-    for(const [idx,r] of rows.entries()){let p=r.best&&r.best.p;
-      if(!p&&mk.includes(idx)){p=newPoint(+r.ll[0].toFixed(6),+r.ll[1].toFixed(6),{cat:"wild",status:"besucht",trip:"",section:"",visited:new Date(r.f.lastModified||Date.now()).toISOString().slice(0,10)});}
-      if(!p)continue;i++;progress("Fotos speichern",i,ok.length+mk.length,`→ ${ptTitle(p)}`);
-      try{const src=r.f.lazy?await r.f.lazy():r.f;const b=await resize(src);const id=uid();await put("photos",{id,blob:b});p.photos=p.photos||[];p.photos.push(id);p.updated=Date.now();touched.set(p.id,p);n++;}catch(err){}}
-    for(const p of touched.values())await put("points",p);
-    await loadPoints();openPanel(`<h2>Fertig</h2><p style="font-size:16px">✓ ${n} Fotos zugeordnet${touched.size?` (${touched.size} Punkte)`:""}.</p><p class="muted">Mit ⟳ oben rechts auf die anderen Geräte abgleichen.</p><div class="actions"><button class="btn" id="pfOk">OK</button></div>`);$("#pfOk").onclick=closePanel;};}
+  const live=points.filter(p=>!p.deleted);
+  const near=ll=>{let b=null;if(ll)for(const p of live){const d=distKm({lat:ll[0],lon:ll[1]},p);if(!b||d<b.d)b={p,d};}return b;};
+  const rows=[];let k=0;for(const f of files){k++;if(k%5===0||k===files.length)progress("Fotos zuordnen",k,files.length,"Aufnahmeorte werden gelesen …");
+    let ll=nameGPS(f.name),how="OsmAnd-Dateiname";
+    if(!ll){try{const b=f.lazy?await f.lazy():f;const ex=await exifGPS(b);if(ex){ll=ex;how="Foto-Standort";}}catch(e){}}
+    rows.push({f,ll,how,near:near(ll),on:null,mk:false});}
+  /* Einstellungen (werden gemerkt) */
+  const o={r:+ls("rb_paR")||0.3,empty:ls("rb_paE")!=="0",max:+(ls("rb_paM")||3)};
+  const plan=()=>{/* Zuordnung berechnen: nächster Punkt im Umkreis, nur Punkte ohne Foto (optional), höchstens n Fotos pro Punkt */
+    const per=new Map();
+    rows.forEach(r=>{r.tgt=null;r.why="";if(!r.near||r.near.d>o.r)return;const p=r.near.p;
+      if(o.empty&&(p.photos||[]).length){r.why="Punkt hat schon Fotos";return;}r.tgt=p;});
+    [...rows].filter(r=>r.tgt).sort((a,b)=>a.near.d-b.near.d).forEach(r=>{const p=r.tgt,have=(p.photos||[]).length,n=per.get(p.id)||0;
+      if(o.max&&have+n>=o.max){r.over=true;}else{r.over=false;per.set(p.id,n+1);}});
+    rows.forEach(r=>{if(r.on===null||r._auto){r.on=!!r.tgt&&!r.over;r._auto=true;}});};
+  const draw=()=>{plan();const sc=isPanelOpen()?$("#panel").scrollTop:0;
+    const cnt=()=>rows.filter(r=>(r.tgt&&r.on)||(!r.tgt&&r.mk)).length;
+    const nGps=rows.filter(r=>r.ll).length;
+    openPanel(`<h2>Fotos zuordnen</h2>
+     <div class="mgrp" style="padding:10px 12px">
+       <div class="row"><div><label style="margin-top:0">Umkreis</label><select id="paR">${[[0.1,"100 m"],[0.3,"300 m"],[1,"1 km"],[3,"3 km"]].map(([v,t])=>`<option value="${v}" ${v===o.r?"selected":""}>${t}</option>`).join("")}</select></div>
+       <div><label style="margin-top:0">Höchstens pro Punkt</label><select id="paM">${[[1,"1 Foto"],[3,"3 Fotos"],[5,"5 Fotos"],[0,"alle"]].map(([v,t])=>`<option value="${v}" ${v===o.max?"selected":""}>${t}</option>`).join("")}</select></div></div>
+       <label style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink);margin-top:10px"><input type="checkbox" id="paE" style="width:auto;margin:0" ${o.empty?"checked":""}> Nur Punkten ohne Foto zuordnen</label></div>
+     <p style="margin:10px 0 4px">${rows.filter(r=>r.tgt).length} von ${rows.length} Fotos passen zu einem Punkt · ${nGps} mit Aufnahmeort.</p>
+     ${rows.map((r,i)=>`<div class="item" style="cursor:default;align-items:center"><div class="pth" data-th="${i}" title="Antippen = gross"></div>
+       <div style="flex:1;min-width:0"><div class="t" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.f.name)}</div>
+       <div class="s">${r.tgt?`→ <b>${esc(ptTitle(r.tgt))}</b> (${Math.round(r.near.d*1000)} m)${r.over?` · <span style="color:var(--accent2)">schon ${o.max} Fotos</span>`:""}`
+         :r.ll?(r.near?`${r.why?`<b>${esc(ptTitle(r.near.p))}</b> (${kmTxt(r.near.d)}) – ${r.why}`:`kein Punkt im Umkreis – nächster: ${esc(ptTitle(r.near.p))} (${kmTxt(r.near.d)})`}`:"kein Punkt vorhanden"):"kein Aufnahmeort im Foto"}</div></div>
+       ${r.tgt?`<input type="checkbox" data-on="${i}" ${r.on?"checked":""} style="width:22px;height:22px;flex:none" title="zuordnen">`
+         :r.ll&&!r.why?`<select data-new="${i}" class="pnew" title="Neuen Punkt an diesem Ort anlegen"><option value="">nicht anlegen</option>${["wild","camp","sight",...Object.keys(CATS).filter(k=>!["wild","camp","sight"].includes(k))].map(k=>`<option value="${k}" ${r.mk===k?"selected":""}>+ ${esc(CATS[k].n)}</option>`).join("")}</select>`:""}</div>`).join("")}
+     <div class="actions"><button class="btn" id="paGo">${cnt()} Fotos zuordnen</button><button class="btn sec" id="paNo">Abbrechen</button></div>
+     <p class="muted">Häkchen rechts = dieses Foto zuordnen. Fotos werden verkleinert (1280 px) gespeichert. Fotos ohne Punkt in der Nähe: rechts «+ Stellplatz», «+ Camping», «+ Sehenswürdigkeit» … wählen, um dort einen neuen Punkt anzulegen. Ohne Aufnahmeort kannst du ein Foto im Punkt selbst über «Foto hinzufügen» anhängen.</p>`);
+    $("#panel").scrollTop=sc;
+    const upd=()=>{$("#paGo").textContent=`${cnt()} Fotos zuordnen`;};
+    $("#paNo").onclick=closePanel;
+    $("#paR").onchange=e=>{o.r=+e.target.value;ls("rb_paR",String(o.r));rows.forEach(r=>r._auto=true);draw();};
+    $("#paM").onchange=e=>{o.max=+e.target.value;ls("rb_paM",String(o.max));rows.forEach(r=>r._auto=true);draw();};
+    $("#paE").onchange=e=>{o.empty=e.target.checked;ls("rb_paE",o.empty?"1":"0");rows.forEach(r=>r._auto=true);draw();};
+    $("#panel").querySelectorAll("[data-on]").forEach(c=>c.onchange=()=>{const r=rows[+c.dataset.on];r.on=c.checked;r._auto=false;upd();});
+    $("#panel").querySelectorAll("[data-new]").forEach(c=>c.onchange=()=>{rows[+c.dataset.new].mk=c.value||false;c.classList.toggle("on",!!c.value);upd();});
+    /* Vorschaubilder erst laden, wenn sie sichtbar werden (spart Speicher bei vielen Fotos) */
+    const io=new IntersectionObserver(async es=>{for(const e of es){if(!e.isIntersecting)continue;const el=e.target;io.unobserve(el);const r=rows[+el.dataset.th];
+        try{if(!r.thumb){const src=r.f.lazy?await r.f.lazy():r.f;
+            const bm=await createImageBitmap(src,{resizeWidth:160,resizeQuality:"medium"});const c=document.createElement("canvas");c.width=bm.width;c.height=bm.height;c.getContext("2d").drawImage(bm,0,0);bm.close();r.thumb=c.toDataURL("image/jpeg",.7);}
+          el.style.backgroundImage=`url(${r.thumb})`;
+          el.onclick=async()=>{const src=r.f.lazy?await r.f.lazy():r.f;const u=URL.createObjectURL(src);const w=document.createElement("div");w.className="pbig";w.innerHTML=`<img src="${u}">`;w.onclick=()=>{URL.revokeObjectURL(u);w.remove();};document.body.appendChild(w);};}
+        catch(err){el.textContent="?";}}},{root:$("#panel"),rootMargin:"300px"});
+    $("#panel").querySelectorAll("[data-th]").forEach(el=>io.observe(el));
+    $("#paGo").onclick=async()=>{const todo=rows.filter(r=>(r.tgt&&r.on)||(!r.tgt&&r.mk));let n=0,i=0;const touched=new Map();
+      for(const r of todo){let p=r.tgt&&r.on?r.tgt:null;
+        if(!p){p=newPoint(+r.ll[0].toFixed(6),+r.ll[1].toFixed(6),{cat:r.mk||"wild",status:"besucht",trip:"",section:"",visited:new Date(r.f.lastModified||Date.now()).toISOString().slice(0,10)});}
+        i++;progress("Fotos speichern",i,todo.length,`→ ${ptTitle(p)}`);
+        try{const src=r.f.lazy?await r.f.lazy():r.f;const b=await resize(src);const id=uid();await put("photos",{id,blob:b});p.photos=p.photos||[];p.photos.push(id);p.updated=Date.now();touched.set(p.id,p);n++;}catch(err){}}
+      for(const p of touched.values())await put("points",p);
+      await loadPoints();openPanel(`<h2>Fertig</h2><p style="font-size:16px">✓ ${n} Fotos zugeordnet${touched.size?` (${touched.size} Punkte)`:""}.</p><p class="muted">Mit ⟳ oben rechts auf die anderen Geräte abgleichen.</p><div class="actions"><button class="btn" id="pfOk">OK</button></div>`);$("#pfOk").onclick=closePanel;};};
+  draw();}
 /* ---------- OsmAnd-Favoriten übernehmen (ohne Reise) ---------- */
 const FAV_MAP={"möglicher stellplatz":["wild","idee"],"freier stellplatz":["wild","besucht"],"campingplätze":["camp","besucht"],"trinkwasser":["water","besucht"]};
 function guessPoiCat(t){t=(t||"").toLowerCase();
@@ -1438,14 +1476,14 @@ function manageTrips(){
   P.querySelectorAll("[data-hide]").forEach(b=>b.onclick=async()=>{const t=tripOf(b.dataset.hide);t.hidden=!t.hidden;t.updated=Date.now();await saveTrips();drawPoints();
     toast(t.hidden?`«${t.name}» ausgeblendet`:`«${t.name}» wieder eingeblendet`,3000);manageTrips();});
   P.querySelectorAll("[data-cur]").forEach(b=>b.onclick=async()=>{const t0=tripOf(b.dataset.cur);if(t0&&t0.hidden){t0.hidden=false;t0.updated=Date.now();}await setCurTrip(b.dataset.cur);toast("Aktuelle Reise: "+tripName(curTrip));manageTrips();});
-  P.querySelectorAll("[data-show]").forEach(b=>b.onclick=()=>{mapTrip=b.dataset.show;saveMapScope();drawPoints();closePanel();
-    const pts=points.filter(p=>p.trip===mapTrip);if(pts.length)map.fitBounds(L.latLngBounds(pts.map(p=>[p.lat,p.lon])),{padding:[30,30]});});
+  P.querySelectorAll("[data-show]").forEach(b=>b.onclick=()=>{mapTrip=[b.dataset.show];mapCountry=[];saveMapScope();drawPoints();closePanel();
+    const pts=points.filter(p=>p.trip===b.dataset.show);if(pts.length)map.fitBounds(L.latLngBounds(pts.map(p=>[p.lat,p.lon])),{padding:[30,30]});});
   P.querySelectorAll("[data-ren]").forEach(b=>b.onclick=()=>{const t=tripOf(b.dataset.ren);const row=b.closest(".mrow");
     row.innerHTML=`<div style="flex:1;display:flex;gap:6px"><input value="${esc(t.name)}" style="flex:1"><button class="btn">OK</button><button class="btn sec" data-x>✕</button></div>`;
     row.querySelector("input").focus();row.querySelector("[data-x]").onclick=manageTrips;
     row.querySelector("button").onclick=async()=>{const v=row.querySelector("input").value.trim();if(!v)return;t.name=v;t.updated=Date.now();await saveTrips();showHeaderTrip();manageTrips();};});
   P.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{const t=tripOf(b.dataset.del);confirmBox(`Reise «${esc(t.name)}» löschen?`,async()=>{
-    trips=trips.filter(x=>x.id!==t.id);delTrips.push({id:t.id,updated:Date.now()});if(curTrip===t.id)curTrip=trips[0].id;if(mapTrip===t.id){mapTrip="";saveMapScope();}bindSections();await saveTrips();showHeaderTrip();manageTrips();});});}
+    trips=trips.filter(x=>x.id!==t.id);delTrips.push({id:t.id,updated:Date.now()});if(curTrip===t.id)curTrip=trips[0].id;if(mapTrip.includes(t.id)){mapTrip=mapTrip.filter(x=>x!==t.id);saveMapScope();}bindSections();await saveTrips();showHeaderTrip();manageTrips();});});}
 $("#tripName").onclick=manageTrips;
 /* ---------- Google-Drive-Abgleich ---------- */
 const GD_SCOPE="https://www.googleapis.com/auth/drive.appdata",GD_DATA="reisebuch_daten.json";

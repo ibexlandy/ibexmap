@@ -1,4 +1,4 @@
-IbexMap – v2.8 (privates Projekt)
+IbexMap – v2.9 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -222,3 +222,9 @@ NEU IN v2.7
 
 NEU IN v2.8
 - Reisen überall nach Jahr sortiert, neueste zuoberst (Jahr aus dem Namen, z. B. «Toskana 2026»; gleiches Jahr alphabetisch).
+
+NEU IN v2.9
+- Kartenfilter: mehrere Reisen und mehrere Länder gleichzeitig wählbar (antippen = dazu/weg, «Alle …» setzt zurück). Länder-Zahlen beziehen sich auf die gewählten Reisen.
+- «Fotos Punkten zuordnen»: Vorschaubild zu jedem Foto, antippen zeigt es gross.
+- «Fotos Punkten zuordnen»: Umkreis wählbar (100 m / 300 m / 1 km / 3 km), «Nur Punkten ohne Foto zuordnen», höchstens 1/3/5/alle Fotos pro Punkt, jedes Foto einzeln an-/abwählbar. Einstellungen werden gemerkt.
+- «Fotos Punkten zuordnen»: für Fotos ohne Punkt in der Nähe frei wählbar, was angelegt wird (+ Stellplatz, + Camping, + Sehenswürdigkeit, … oder nicht anlegen).
