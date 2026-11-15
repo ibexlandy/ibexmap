@@ -1,5 +1,5 @@
-const APP="reisebuch-app-v2.3",TILES="reisebuch-tiles-v3",OFFLINE="reisebuch-offline",MAXTILES=3000;
-const SHELL=["./","index.html","manifest.webmanifest","icon-192.png","icon-512.png","icon-maskable-512.png","favicon.png",
+const APP="reisebuch-app-v2.4",TILES="reisebuch-tiles-v3",OFFLINE="reisebuch-offline",MAXTILES=3000;
+const SHELL=["./","index.html","topo.svg","manifest.webmanifest","icon-192.png","icon-512.png","icon-maskable-512.png","favicon.png",
 "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css",
 "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(APP).then(c=>Promise.all(SHELL.map(u=>fetch(u,{cache:"no-store"}).then(r=>{if(r.ok)return c.put(u,r);})))).then(()=>self.skipWaiting()));});

@@ -1,4 +1,4 @@
-IbexMap – v2.3 (privates Projekt)
+IbexMap – v2.4 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -202,3 +202,6 @@ NEU IN v2.2
 NEU IN v2.3
 - Reisen verwalten: Auge zeigt den Zustand (offenes Auge = sichtbar, durchgestrichen = ausgeblendet); antippen wechselt.
 - Neues App-Logo (Steinbock-Hörner, Höhenlinien, «IBEX MAP») für App-Symbol, Kopfzeile und Browser-Tab.
+
+NEU IN v2.4
+- Fenster (Punkt, Menü, Listen …) mit grünem Hintergrund und Höhenlinien wie im Logo. Neue Datei topo.svg – beim Hochladen mitnehmen.
