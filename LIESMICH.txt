@@ -1,4 +1,4 @@
-IbexMap – v2.12 (privates Projekt)
+IbexMap – v2.13 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -245,3 +245,7 @@ NEU IN v2.12
 - Menü überprüft: Zeilen mit Pfeil › öffnen ein Fenster; Zeilen, die sofort etwas tun, haben einen Aktionsknopf (Exportieren, Laden, Ermitteln, Update suchen, Öffnen …).
 - Suche nach Kategorien: pro Gruppe neu «Alles aus …» (z. B. alles aus «Camping und Übernachten» auf einmal), Treffer mit deutscher Art. Umgebungssuche fragt mehrere OpenStreetMap-Server gleichzeitig (schneller, seltener «antwortet nicht»), merkt sich Ergebnisse kurz; bei Störung Knopf «Nochmals versuchen».
 - Neu: «POI-Overlay und Suche (offline)» (Menü › Karte): alle Such-Kategorien eines Landes einmal laden (wie OsmAnd). Danach ohne Internet: im Kartenfilter «POI-Overlay» gruppenweise auf der Karte einblenden, antippen zeigt Details (Öffnungszeiten, Telefon, Navigieren, als eigenen Punkt übernehmen); die Suche findet diese Orte offline nach Kategorie und nach Name.
+
+NEU IN v2.13
+- Strassenoberfläche wie bei OsmAnd: oben rechts bei der Kartenwahl einschaltbar (ab Zoom 11). Farbige Linien: grün Asphalt/Beton, gelb verdichtet/Feinschotter, orange Schotter/Kies, braun Erde/Gras, rot Sand/Schlamm/Fels, grau gestrichelt = nicht eingetragen; gestrichelt = schlechte Piste (grade 3–5 bzw. schlechte Befahrbarkeit). Linie antippen: Oberfläche, Pistenqualität, Befahrbarkeit, «nur 4×4». Legende unten links (antippen = einklappen).
+- Offline-Karten: Häkchen «Strassenoberfläche mitspeichern» – Strassendaten des Gebiets werden mit gespeichert und funktionieren ohne Internet.

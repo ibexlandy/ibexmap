@@ -194,6 +194,11 @@ body.adm #locBtn{display:flex !important}
 #filtPill .ft{background:var(--accent2);color:#fff;font-size:13px;font-weight:600;padding:7px 12px;border-radius:18px 0 0 18px;box-shadow:0 2px 8px rgba(0,0,0,.3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;display:flex;align-items:center;gap:6px;max-width:100%}
 #filtPill .ft svg{opacity:1 !important;flex:none}#filtPill .fx{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}#filtPill .ft{min-width:0}
 #filtPill button{border:0;background:#a85a1c;color:#fff;font-size:14px;padding:0 12px;border-radius:0 18px 18px 0;box-shadow:0 2px 8px rgba(0,0,0,.3);cursor:pointer}
+#surfLeg{position:absolute;left:10px;bottom:calc(24px + var(--sb));z-index:600;background:rgba(255,255,255,.95);border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.25);padding:8px 10px;font-size:12px;display:none;cursor:pointer;max-width:230px}
+#surfLeg .lg div{display:flex;align-items:center;gap:6px;margin-top:3px}#surfLeg i{display:inline-block;width:22px;height:4px;border-radius:2px;flex:none}
+#surfLeg.min .lg{display:none}#surfLeg.min .lt{display:inline-block;transform:rotate(-90deg)}
+#surfHint{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(24px + var(--sb));z-index:600;background:rgba(19,32,15,.85);color:#fff;font-size:12.5px;padding:6px 12px;border-radius:14px;display:none;pointer-events:none;max-width:70%;text-align:center}
+@media (max-width:899px){#surfHint{bottom:auto;top:60px}}
 .btn{border:0;border-radius:8px;padding:10px 14px;font:inherit;font-weight:600;background:var(--accent);color:#fff}
 .btn.sec{background:#fff;color:var(--ink);border:1px solid var(--line)}
 .btn.warn{background:#a33}
@@ -251,6 +256,10 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 .leaflet-touch .leaflet-control-layers-toggle{width:46px;height:46px;background-size:24px}
 .leaflet-control-layers-expanded{padding:6px!important;min-width:190px}
 .leaflet-control-layers-base label{margin:0;display:block;border-radius:8px}
+.leaflet-control-layers-overlays label{margin:0;display:block;border-radius:8px}
+.leaflet-control-layers-overlays label>span{display:flex;align-items:center;gap:10px;padding:9px 10px;font-size:15px;color:var(--ink);cursor:pointer}
+.leaflet-control-layers-overlays label:has(input:checked)>span{background:#fff3e6;font-weight:600;border-radius:8px}
+.leaflet-control-layers input[type=checkbox]{width:18px;height:18px;margin:0;flex:none;accent-color:var(--accent2)}
 .leaflet-control-layers-base label>span{display:flex;align-items:center;gap:10px;padding:9px 10px;font-size:15px;color:var(--ink);cursor:pointer}
 .leaflet-control-layers-base label:has(input:checked)>span{background:#eef3ee;font-weight:600;border-radius:8px}
 .leaflet-control-layers input[type=radio]{width:18px;height:18px;margin:0;flex:none;accent-color:var(--accent)}
@@ -393,7 +402,7 @@ const ADM=(()=>{try{if(new URLSearchParams(location.search).has("admin")){sessio
   return sessionStorage.getItem("rb_admin")==="1"&&matchMedia("(min-width:900px)").matches;}catch(e){return false;}})();
 if(ADM)document.body.classList.add("adm");
 const GROUP="IbexMap";
-const VERSION="v2.12";
+const VERSION="v2.13";
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
 const MA_SECTORS=[
  {n:"A Norden",zeit:"5.–10. April",klima:"Frühling, grün; 15–22 °C, im Rif Regen möglich, Nächte kühl",info:"Tanger Med, Chefchaouen, Fès, Meknès – ankommen, Städte, einkaufen. Eher Campings.",box:[[33.8,-5.9,35.95,-1.0]]},
@@ -1847,7 +1856,7 @@ async function offlineDialog(){
    <div class="mgrp"><label class="mrow"><span class="mic">${mi("map",20)}</span><span class="mtx"><b>Gebiete auf der Karte zeigen</b><small>Farbige Rahmen um die gespeicherten Gebiete</small></span><input type="checkbox" class="msw" id="oShow" ${offShow?"checked":""}></label></div>
    <div class="mgh">Gespeicherte Gebiete</div>
    <div class="mgrp">${rows.length?rows.map((r,i)=>`<div class="mrow wrap" style="cursor:default"><span class="mic" style="background:${FLAG_COLORS[(i+1)%FLAG_COLORS.length]}22;color:${FLAG_COLORS[(i+1)%FLAG_COLORS.length]}">${mi(kindI[r.pk.kind]||"map",20)}</span>
-     <span class="mtx"><b>${esc(r.pk.name)}</b><small>${esc(r.pk.layer)} · Detail ${r.pk.zmax} · ${fmtD(r.pk.date)} · ${fmtN(r.total)} Bilder · ca. ${estMB(r.total,r.pk.layer)} MB</small><small>${st(r)}</small></span>
+     <span class="mtx"><b>${esc(r.pk.name)}</b><small>${esc(r.pk.layer)} · Detail ${r.pk.zmax} · ${fmtD(r.pk.date)} · ${fmtN(r.total)} Bilder · ca. ${estMB(r.total,r.pk.layer)} MB${r.pk.surf?" · mit Strassenoberfläche":""}</small><small>${st(r)}</small></span>
      <span class="oact"><button data-o="show" data-i="${i}" title="Auf der Karte zeigen">${mi("pin",18)}</button><button data-o="load" data-i="${i}" title="${r.n>=r.total?"Aktualisieren (alles neu laden)":"Fortsetzen"}">${mi(r.n>=r.total?"refresh":"download",18)}</button><button data-o="del" data-i="${i}" title="Löschen">${mi("trash",18)}</button></span></div>`).join("")
      :`<div class="mrow" style="cursor:default"><span class="mtx"><small>Noch keine Gebiete gespeichert.</small></span></div>`}
      ${loose?`<div class="mrow" style="cursor:default"><span class="mic">${mi("db",20)}</span><span class="mtx"><b>Ohne Gebiet</b><small>${fmtN(loose)} Kartenbilder aus früheren Versionen</small></span><span class="oact"><button data-o="loose" title="Löschen">${mi("trash",18)}</button></span></div>`:""}</div>
@@ -1868,6 +1877,7 @@ async function offlineDialog(){
        <div class="actions"><button class="btn warn" id="cYes">Löschen</button><button class="btn sec" id="cNo">Abbrechen</button></div>`)||(()=>{$("#cNo").onclick=offlineDialog;
        $("#cYes").onclick=async()=>{const keep=new Set();offPacks.filter(x=>x!==pk).forEach(x=>packURLs(x).forEach(u=>keep.add(u)));
          const c=await caches.open(OFFLINE);let n=0;for(const u of packURLs(pk))if(!keep.has(u)&&await c.delete(u))n++;
+         if(pk.surf)await surfDeletePack(pk,offPacks.filter(x=>x!==pk));
          offPacks=offPacks.filter(x=>x!==pk);await saveOffPacks();drawOffAreas();toast(`Gelöscht: ${fmtN(n)} Kartenbilder`,3000);offlineDialog();};})();
     else if(o==="loose")openPanel(`<h2>Kartenbilder ohne Gebiet löschen?</h2><p>${fmtN(loose)} Kartenbilder aus früheren Versionen, die zu keinem gespeicherten Gebiet gehören.</p>
        <div class="actions"><button class="btn warn" id="cYes">Löschen</button><button class="btn sec" id="cNo">Abbrechen</button></div>`)||(()=>{$("#cNo").onclick=offlineDialog;
@@ -1889,7 +1899,7 @@ function offConfig(o){
   o.layer=o.layer||ls("rb_offL")||(map.hasLayer(BASE["Topo"])?"Topo":map.hasLayer(BASE["Satellit"])?"Satellit":"Strassen");
   o.zmax=o.zmax||(o.kind==="section"?12:+ls("rb_offZ")||14);o.radius=o.radius||+ls("rb_offR")||10;o.only=o.only||ls("rb_offO")||"trip";
   if(o.kind==="section"&&!o.sec){const t=curTripObj();o.sec=(MA_SECTORS.find(x=>(t&&t.sections||[]).includes(x.n))||MA_SECTORS[0]).n;}
-  if(o.kind==="section"&&o.pts===undefined)o.pts=true;
+  if(o.kind==="section"&&o.pts===undefined)o.pts=true;if(o.surf===undefined)o.surf=!/^(0|false)$/.test(ls("rb_offSurf"));
   const build=()=>{const areas=[];let name="";
     if(o.kind==="view"){const b=o.box;areas.push(Object.assign({},b,{z1:Math.max(5,Math.min(o.z,o.zmax)-6),z2:o.zmax}));
       name=o.name||("Ausschnitt "+(countryName(countryOf((b.n+b.s)/2,(b.w+b.e)/2))||"")+" "+fmtD(Date.now())).replace(/\s+/g," ");}
@@ -1901,7 +1911,7 @@ function offConfig(o){
       areas.push(Object.assign({},box,{z1:5,z2:8}));
       const src=o.only==="all"?points:o.only==="fix"?src0.filter(p=>p.status!=="idee"):src0;src.forEach(p=>areas.push(Object.assign(ptBox(p,o.radius),{z1:9,z2:o.zmax})));
       name=o.name||(o.only==="all"?"Alle Punkte":"Punkte "+(curTripObj()?curTripObj().name:""))+` (${o.radius} km)`;o._n=src.length;}
-    return {id:o.id||uid(),name,kind:o.kind,layer:o.layer,zmax:o.zmax,areas,date:Date.now()};};
+    return {id:o.id||uid(),name,kind:o.kind,layer:o.layer,zmax:o.zmax,areas,date:Date.now(),surf:!!o.surf};};
   const draw=()=>{const pk=build();const n=packKeys(pk).size;
     openPanel(`<h2>Neues Offline-Gebiet</h2>
      <label>Name</label><input id="cN" value="${esc(pk.name)}">
@@ -1910,11 +1920,12 @@ function offConfig(o){
        <label>Umkreis um jeden Punkt</label><select id="cR">${[5,10,20,30].map(v=>`<option value="${v}" ${v===o.radius?"selected":""}>${v} km</option>`).join("")}</select>`:""}
      <label>Karte</label><select id="cL">${Object.keys(BASE).map(k=>`<option ${k===o.layer?"selected":""}>${k}</option>`).join("")}</select>
      <label>Detailstufe${o.kind==="section"?" für das ganze Gebiet":""}</label><select id="cZ">${[[10,"10 – grobe Übersicht"],[11,"11 – Übersicht"],[12,"12 – Ortschaften und Hauptstrassen"],[13,"13 – Strassen gut lesbar"],[14,"14 – Pisten und Wege"],[15,"15 – sehr detailliert"]].filter(([v])=>o.kind!=="section"||v<=13).map(([v,t])=>`<option value="${v}" ${v===o.zmax?"selected":""}>${t}</option>`).join("")}</select>
+     <label style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink);margin-top:12px"><input type="checkbox" id="cSf" style="width:auto;margin:0" ${o.surf?"checked":""}> Strassenoberfläche mitspeichern (${packCells(pk).length} Kartenstücke à 50 km)</label>
      ${o.kind==="section"?`<label class="rrow" style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink);margin-top:12px"><input type="checkbox" id="cP" style="width:auto;margin:0" ${o.pts?"checked":""}> Rund um eure Punkte im Abschnitt zusätzlich bis Stufe 14 (${o.radius} km)</label>`:""}
      <div class="ocalc ${n>OFF_MAX?"bad":""}"><b>${fmtN(n)} Kartenbilder</b> · ca. ${estMB(n,o.layer)} MB${o.kind==="points"?` · ${o._n} Punkte`:""}${n>OFF_MAX?`<br>Zu viel (max. ${fmtN(OFF_MAX)}) – bitte Detailstufe oder Gebiet verkleinern.`:""}</div>
      <div class="actions"><button class="btn" id="cGo" ${n>OFF_MAX||!n?"disabled":""}>Herunterladen</button><button class="btn sec" id="cBack">Zurück</button>${o.kind==="view"?`<button class="btn sec" id="cRe">Ausschnitt neu wählen</button>`:""}</div>`);
     const ch=(id,k,f,key)=>{const e=$(id);if(e)e.onchange=()=>{o[k]=f(e.type==="checkbox"?e.checked:e.value);if(key)ls(key,String(o[k]));draw();};};
-    ch("#cS","sec",String);ch("#cO","only",String,"rb_offO");ch("#cR","radius",Number,"rb_offR");ch("#cL","layer",String,"rb_offL");ch("#cZ","zmax",Number,o.kind==="section"?null:"rb_offZ");ch("#cP","pts",Boolean);
+    ch("#cS","sec",String);ch("#cO","only",String,"rb_offO");ch("#cR","radius",Number,"rb_offR");ch("#cL","layer",String,"rb_offL");ch("#cZ","zmax",Number,o.kind==="section"?null:"rb_offZ");ch("#cP","pts",Boolean);ch("#cSf","surf",Boolean,"rb_offSurf");
     $("#cN").oninput=e=>{o.name=e.target.value;};
     $("#cBack").onclick=offlineDialog;const re=$("#cRe");if(re)re.onclick=offPickView;
     $("#cGo").onclick=async()=>{const p2=build();p2.name=($("#cN").value||p2.name).trim();await loadOffPacks();offPacks.push(p2);await saveOffPacks();drawOffAreas();offRunPack(p2,false);};};
@@ -1934,8 +1945,10 @@ async function offRunPack(pk,force){if(!navigator.onLine)return toast("Kein Inte
   let idx=0;const worker=async()=>{while(!run.stop&&idx<todo.length){const u=todo[idx++];
     try{const r=await fetch(u,{mode:"cors",cache:force?"reload":"default"});if(r.ok)await c.put(u,r);else fail++;}catch(e){fail++;}
     done++;if(done%10===0||done===total)ui();}};
-  await Promise.all([worker(),worker(),worker(),worker()]);offRun=null;pill.style.display="none";
-  const msg=run.stop?`Angehalten – später in der Übersicht fortsetzen`:`Fertig: ${fmtN(done-fail)} Kartenbilder gespeichert${fail?` · ${fail} Fehler (nochmals «Fortsetzen»)`:""}`;
+  await Promise.all([worker(),worker(),worker(),worker()]);
+  let sf=null;if(pk.surf&&!run.stop){sf=await surfSavePack(pk,(i,n)=>{pill.textContent=`⬇ ${pk.name}: Strassen ${i}/${n}`;const t=$("#oPTxt");if(t)t.textContent=`Kartenbilder fertig · Strassenoberfläche ${i} von ${n} …`;});if(surfOn)drawSurf();}
+  offRun=null;pill.style.display="none";
+  const msg=run.stop?`Angehalten – später in der Übersicht fortsetzen`:`Fertig: ${fmtN(done-fail)} Kartenbilder gespeichert${fail?` · ${fail} Fehler (nochmals «Fortsetzen»)`:""}${sf?` · Strassen ${sf.n-sf.fail}/${sf.n}`:""}`;
   toast(msg,6000);if($("#oPBar"))offlineDialog();}
 
 
@@ -2252,6 +2265,75 @@ const flagEmoji=c=>c&&/^[A-Z]{2}$/.test(c)?String.fromCodePoint(...[...c].map(x=
 function poiOffFind(keys,ctr,R){const out=[];
   for(const p of poiOff)for(const x of p.items){if(!x.m.some(k=>keys.has(k)))continue;const d=distKm(ctr,{lat:x.a,lon:x.o});if(d<=R)out.push({lat:x.a,lon:x.o,t:x.t,d,m:x.m});}
   return out;}
+/* ---------- Strassenoberfläche (wie OsmAnd): farbige Linien aus OpenStreetMap, online pro Kartenausschnitt, offline pro Gebiet ---------- */
+const SURF_CELL=0.5,SURF_MINZ=11;
+const SURF_DE={asphalt:"Asphalt",paved:"befestigt",concrete:"Beton","concrete:plates":"Betonplatten",paving_stones:"Pflaster",sett:"Kopfsteinpflaster",chipseal:"Teerbelag",
+  compacted:"verdichtet",fine_gravel:"Feinschotter",gravel:"Schotter",pebblestone:"Kies",unpaved:"unbefestigt",dirt:"Erde",earth:"Erde",ground:"Naturboden",grass:"Gras",
+  mud:"Schlamm",sand:"Sand",rock:"Fels",stone:"Steine",rocks:"Fels",wood:"Holz",salt:"Salz",snow:"Schnee",ice:"Eis"};
+const GRADE_DE={grade1:"1 – fest (Asphalt/Beton)",grade2:"2 – meist fest (Schotter)",grade3:"3 – gemischt fest/weich",grade4:"4 – meist weich",grade5:"5 – weich (Sand, Erde, Gras)"};
+const SMOOTH_DE={excellent:"sehr gut",good:"gut",intermediate:"mittel – normales Auto geht",bad:"schlecht – hoher Wagen",very_bad:"sehr schlecht – Geländewagen",
+  horrible:"schlimm – 4×4 nötig",very_horrible:"sehr schlimm – nur Spezialfahrzeuge",impassable:"unpassierbar"};
+const HW_DE={trunk:"Fernstrasse",primary:"Hauptstrasse",secondary:"Nebenstrasse",tertiary:"Verbindungsstrasse",unclassified:"Kleine Strasse",road:"Strasse",track:"Piste / Feldweg"};
+/* Farbe nach Oberfläche */
+const SURF_CLS=[["#2e9e44","Asphalt, Beton, Pflaster",/^(asphalt|paved|concrete.*|paving_stones|sett|chipseal)$/],
+  ["#c9b200","verdichtet, Feinschotter",/^(compacted|fine_gravel)$/],
+  ["#f57c00","Schotter, Kies, unbefestigt",/^(gravel|pebblestone|unpaved)$/],
+  ["#8d5524","Erde, Naturboden, Gras",/^(dirt|earth|ground|grass)$/],
+  ["#d32f2f","Sand, Schlamm, Fels",/^(sand|mud|rock|rocks|stone|salt|snow|ice)$/]];
+function surfStyle(w){const z=map.getZoom(),wd={trunk:5,primary:4.5,secondary:4,tertiary:3.5}[w.h]||3;const k=SURF_CLS.find(c=>c[2].test(w.s||""));
+  const soft=/^grade[345]$/.test(w.g||"")||/^(bad|very_bad|horrible|very_horrible|impassable)$/.test(w.sm||"");
+  if(k)return {color:k[0],weight:wd+(z>=14?1:0),opacity:.9,dashArray:soft?"8 5":null};
+  if(!w.s&&/^(trunk|primary|secondary)$/.test(w.h))return {color:"#2e9e44",weight:wd-1,opacity:.45,dashArray:null};
+  return {color:"#7a7a7a",weight:wd-0.5,opacity:.8,dashArray:"3 6"};}
+let surfOn=ls("rb_surf")==="1";const surfLayer=L.layerGroup();const surfCanvas=L.canvas({padding:.2,tolerance:8});
+const surfMem=new Map(),surfBusy=new Set();
+const cellKey=(la,lo)=>`${Math.floor(la/SURF_CELL)}_${Math.floor(lo/SURF_CELL)}`;
+const cellBox=k=>{const [a,b]=k.split("_").map(Number);return {s:a*SURF_CELL,w:b*SURF_CELL,n:(a+1)*SURF_CELL,e:(b+1)*SURF_CELL};};
+function cellsOf(b){const out=[];for(let a=Math.floor(b.s/SURF_CELL);a<=Math.floor((b.n-1e-9)/SURF_CELL);a++)for(let c=Math.floor(b.w/SURF_CELL);c<=Math.floor((b.e-1e-9)/SURF_CELL);c++)out.push(a+"_"+c);return out;}
+async function surfFetch(k){const b=cellBox(k);
+  const q=`[out:json][timeout:120][bbox:${b.s},${b.w},${b.n},${b.e}];way["highway"~"^(trunk|primary|secondary|tertiary|unclassified|road|track)$"];out tags geom qt;`;
+  const j=await ovQuery(q,150000);const ways=[];
+  for(const e of j.elements){if(!e.geometry||e.geometry.length<2)continue;const t=e.tags||{};const pts=[];let pl="";
+    for(const g of e.geometry){const p=[+g.lat.toFixed(4),+g.lon.toFixed(4)];const key=p.join();if(key!==pl){pts.push(p);pl=key;}}
+    if(pts.length<2)continue;
+    ways.push({h:t.highway,s:t.surface||"",g:t.tracktype||"",sm:t.smoothness||"",n:t.name||t["name:fr"]||t.ref||"",x4:t["4wd_only"]==="yes"?1:0,mv:t.motor_vehicle||t.access||"",p:pts});}
+  return {id:"surf_"+k,ways,loaded:Date.now()};}
+async function surfGet(k,net){if(surfMem.has(k))return surfMem.get(k);
+  try{const m=await getOne("meta","surf_"+k);if(m){surfMem.set(k,m);return m;}}catch(e){}
+  if(!net||!navigator.onLine||surfBusy.has(k))return null;surfBusy.add(k);
+  try{const d=await surfFetch(k);surfMem.set(k,d);return d;}catch(e){return null;}finally{surfBusy.delete(k);}}
+let surfT=0;
+function drawSurf(){surfLayer.clearLayers();surfLegend();if(!surfOn)return;if(map.getZoom()<SURF_MINZ){surfHint("Strassenoberfläche: näher hineinzoomen");return;}
+  clearTimeout(surfT);surfT=setTimeout(async()=>{const bb=map.getBounds(),b={s:bb.getSouth(),w:bb.getWest(),n:bb.getNorth(),e:bb.getEast()};
+    const ks=cellsOf(b);if(ks.length>9){surfHint("Strassenoberfläche: näher hineinzoomen");return;}
+    let miss=0;const pb=bb.pad(.1);
+    for(const k of ks){const d=await surfGet(k,true);if(!d){miss++;continue;}if(!surfOn||map.getZoom()<SURF_MINZ)return;
+      for(const w of d.ways){let inside=false;for(const p of w.p)if(pb.contains(p)){inside=true;break;}if(!inside)continue;
+        L.polyline(w.p,Object.assign({renderer:surfCanvas,interactive:true},surfStyle(w))).addTo(surfLayer).on("click",ev=>{L.DomEvent.stopPropagation(ev);surfInfo(w,ev.latlng);});}}
+    surfHint(miss?(navigator.onLine?"Strassenoberfläche: OpenStreetMap antwortet nicht – später nochmals":"Strassenoberfläche: offline nicht gespeichert (Offline-Karten › Strassen mitspeichern)"):"");},250);}
+function surfInfo(w,ll){const r=(l,v)=>v?`<div><b>${l}:</b> ${esc(v)}</div>`:"";
+  L.popup({maxWidth:260}).setLatLng(ll).setContent(`<div style="font-size:13.5px;line-height:1.45"><b style="font-size:15px">${esc(w.n||HW_DE[w.h]||"Strasse")}</b><br>${esc(HW_DE[w.h]||w.h)}
+    ${r("Oberfläche",w.s?(SURF_DE[w.s]||w.s):"nicht eingetragen")}${r("Pistenqualität",GRADE_DE[w.g]||"")}${r("Befahrbarkeit",SMOOTH_DE[w.sm]||w.sm)}
+    ${w.x4?`<div style="color:#d32f2f;font-weight:700">Nur mit 4×4</div>`:""}${/^(no|private)$/.test(w.mv)?`<div style="color:#d32f2f">Für Fahrzeuge gesperrt / privat</div>`:""}
+    <div style="color:#888;font-size:11.5px;margin-top:4px">© OpenStreetMap-Mitwirkende</div></div>`).openOn(map);}
+function surfHint(t){let h=$("#surfHint");if(!h){h=document.createElement("div");h.id="surfHint";$("#map").appendChild(h);}h.textContent=t;h.style.display=t&&surfOn?"block":"none";}
+function surfLegend(){let g=$("#surfLeg");if(!g){g=document.createElement("div");g.id="surfLeg";$("#map").appendChild(g);L.DomEvent.disableClickPropagation(g);
+    g.onclick=()=>{g.classList.toggle("min");ls("rb_surfleg",g.classList.contains("min")?"1":"0");};if(ls("rb_surfleg")==="1")g.classList.add("min");}
+  g.style.display=surfOn&&!ADM?"block":"none";
+  g.innerHTML=`<b>Strassenoberfläche</b> <span class="lt">▾</span><div class="lg">${SURF_CLS.map(c=>`<div><i style="background:${c[0]}"></i>${c[1]}</div>`).join("")}
+    <div><i style="background:repeating-linear-gradient(90deg,#7a7a7a 0 3px,transparent 3px 7px)"></i>nicht eingetragen</div><div><i style="background:repeating-linear-gradient(90deg,#f57c00 0 7px,transparent 7px 11px)"></i>gestrichelt: schlechte Piste</div><div style="color:#777">Linie antippen = Details</div></div>`;}
+surfLayer.on("add",()=>{surfOn=true;ls("rb_surf","1");drawSurf();});
+surfLayer.on("remove",()=>{surfOn=false;ls("rb_surf","0");surfLayer.clearLayers();surfLegend();surfHint("");});
+layCtl.addOverlay(surfLayer,"Strassenoberfläche");
+map.on("moveend zoomend",()=>{if(surfOn)drawSurf();});
+/* Offline: Strassendaten für ein Gebiet speichern bzw. löschen */
+function packCells(pk){const set=new Set();for(const a of pk.areas){if(pk.kind==="points"&&a.z2<9)continue;cellsOf(a).forEach(k=>set.add(k));}return [...set];}
+async function surfSavePack(pk,prog){const ks=packCells(pk);let i=0,fail=0;
+  for(const k of ks){i++;if(prog)prog(i,ks.length);let have=null;try{have=await getOne("meta","surf_"+k);}catch(e){}
+    if(have)continue;try{const d=await surfFetch(k);await put("meta",d);surfMem.set(k,d);}catch(e){fail++;}}
+  return {n:ks.length,fail};}
+async function surfDeletePack(pk,others){const keep=new Set();others.filter(x=>x.surf).forEach(x=>packCells(x).forEach(k=>keep.add(k)));
+  for(const k of packCells(pk))if(!keep.has(k)){try{await del("meta","surf_"+k);}catch(e){}surfMem.delete(k);}}
 /* ---------- Start ---------- */
 (async()=>{
   try{db=await openDB();}catch(e){toast("Speicher nicht verfügbar – Daten werden nicht gesichert",6000);return;}
@@ -2265,7 +2347,7 @@ function poiOffFind(keys,ctr,R){const out=[];
     localStorage.setItem("rb_fix_osm1","1");if(n){await loadPoints();setTimeout(()=>toast(`${n} OsmAnd-Orte wieder ohne Reise`,5000),2500);}}}catch(e){}
   /* Kategorie «Tierbeobachtung» entfernt: bestehende Punkte werden zu «Sehenswürdigkeit» */
   try{let n=0;for(const p of await getAll("points"))if(!p.deleted&&p.cat==="wildlife"){p.cat="sight";p.updated=Date.now();await put("points",p);n++;}if(n){await loadPoints();setTimeout(()=>toast(`${n} Punkte «Tierbeobachtung» sind jetzt «Sehenswürdigkeit»`,5000),2500);}}catch(e){}
-  await loadFlags();wakeAcquire();loadPoiOff().then(drawOsm);await loadOffPacks();drawOffAreas();
+  await loadFlags();wakeAcquire();if(surfOn&&!ADM)surfLayer.addTo(map);loadPoiOff().then(drawOsm);await loadOffPacks();drawOffAreas();
   showHeaderTrip();setTimeout(handleShare,600);setTimeout(async()=>{if(!countryData){await ensureCountries();}else{await assignCountries();}},1500);
   if(_gdNew||sessionStorage.getItem("rb_after_login")){try{sessionStorage.removeItem("rb_after_login");}catch(e){}if(gdToken)setTimeout(()=>syncDrive(),400);}
   try{const o=await getOne("meta","osmpoi");if(o)osmData={items:o.items||[],loaded:o.loaded,scope:o.scope||""};}catch(e){}drawOsm();
