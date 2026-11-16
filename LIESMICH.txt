@@ -1,4 +1,4 @@
-IbexMap – v3.3 (privates Projekt)
+IbexMap – v3.4 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -287,3 +287,9 @@ NEU IN v3.3
 - Hinweis, wenn POI-Daten älter als 3 Monate sind (im POI-Dialog und bei «Bereit für unterwegs?»).
 - Land löschen: wahlweise auch auf Google Drive.
 - Textfelder (Story-Text, Beschreibung, Notiz) wachsen automatisch mit dem Inhalt.
+
+NEU IN v3.4
+- Familienseite: Reise, Titel, Konto, Repository und Passwort werden über Google Drive auf allen Geräten gleich gehalten. Der GitHub-Schlüssel bleibt pro Gerät (nur dort eingeben, wo veröffentlicht werden soll). Beim ersten Abgleich gilt die Einrichtung des Geräts, das zuletzt veröffentlicht hat.
+- «Veröffentlichen» gleicht vorher automatisch mit Google Drive ab (kein alter Stand mehr).
+- «Schlüssel auf diesem Gerät entfernen» statt «Einstellungen löschen».
+- POI-Download läuft im Hintergrund: Anzeige oben auf der Karte (antippen öffnet das Fenster wieder), Warteschlange für mehrere Länder, «Anhalten» jederzeit – auch während der Server-Prüfung.
