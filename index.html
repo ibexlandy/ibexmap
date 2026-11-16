@@ -414,7 +414,7 @@ const ADM=(()=>{try{if(new URLSearchParams(location.search).has("admin")){sessio
   return sessionStorage.getItem("rb_admin")==="1"&&matchMedia("(min-width:900px)").matches;}catch(e){return false;}})();
 if(ADM)document.body.classList.add("adm");
 const GROUP="IbexMap";
-const VERSION="v3.2";
+const VERSION="v3.3";
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
 const MA_SECTORS=[
  {n:"A Norden",zeit:"5.–10. April",klima:"Frühling, grün; 15–22 °C, im Rif Regen möglich, Nächte kühl",info:"Tanger Med, Chefchaouen, Fès, Meknès – ankommen, Städte, einkaufen. Eher Campings.",box:[[33.8,-5.9,35.95,-1.0]]},
@@ -736,6 +736,10 @@ async function photoURL(id){if(thumbs[id])return thumbs[id];const p=await getOne
 let panelKind="",panelBack=null,panelHist=false;
 const PARENTS={menu:["‹ Menü",()=>$("#navMenu").onclick()],list:["‹ Liste",()=>showList()]};
 let panelBackLbl="";
+/* Textfelder wachsen mit dem Inhalt mit */
+function autoGrow(el){if(!el||el.tagName!=="TEXTAREA")return;el.style.height="auto";el.style.height=(el.scrollHeight+2)+"px";}
+document.addEventListener("input",e=>autoGrow(e.target),true);
+const growAll=root=>requestAnimationFrame(()=>(root||document).querySelectorAll("textarea").forEach(autoGrow));
 function openPanel(html,kind=""){
   if(!kind)kind=/^\s*<h2>Menü<\/h2>/.test(html)?"menu":/^\s*<h2>Punkte \(/.test(html)?"list":"";
   const open=isPanelOpen();
@@ -745,7 +749,7 @@ function openPanel(html,kind=""){
   panelKind=kind;
   $("#panel").innerHTML=`<div class="ptop">${panelBack?`<button class="pback" id="pBack">${panelBackLbl}</button>`:"<span></span>"}<span class="pgrab"></span><button class="px" id="pX" aria-label="Schliessen">✕</button></div>`+html;
   $("#sheet").classList.add("open");$("#panel").scrollTop=0;
-  $("#pX").onclick=closePanel;const b=$("#pBack");if(b)b.onclick=panelBack;
+  $("#pX").onclick=closePanel;const b=$("#pBack");if(b)b.onclick=panelBack;growAll($("#panel"));
   if(!panelHist){try{history.pushState({rbPanel:1},"");panelHist=true;}catch(e){}}}
 const isPanelOpen=()=>$("#sheet").classList.contains("open");
 function hidePanel(){$("#sheet").classList.remove("open");panelKind="";panelBack=null;}
@@ -1660,6 +1664,7 @@ async function wizShow(){const g=wz.groups[wz.i];const N=wz.groups.length;
    <label>Notiz</label><textarea id="wNote" style="min-height:60px">${esc(f.note)}</textarea>
    <p class="muted">Detaillierte Bewertung (Sanitär, Umgebung …) später im Punkt über «Bearbeiten».</p>`;
   const F=$("#wzF");bindStars(F);
+  growAll($("#wiz"));
   const rd=()=>{f.title=$("#wTitle").value;f.status=$("#wSt").value;f.visited=$("#wVis").value;f.visitedTo=$("#wTo").value;f.trip=$("#wTrip").value;f.section=$("#wSec").value;f.desc=$("#wDesc").value;f.note=$("#wNote").value;
     const s=F.querySelector('[data-name="__w"]');if(s)f.stars=+s.dataset.v;};
   F.querySelectorAll("[data-cat]").forEach(b=>b.onclick=()=>{rd();f.cat=b.dataset.cat;wizShow();});
@@ -1798,11 +1803,36 @@ async function gd(path,opt={}){const t=await gdAuth();
   if(r.status===401){gdToken=null;try{localStorage.removeItem("rb_gtok");}catch(e){}throw new Error("Anmeldung abgelaufen – nochmals ⟳ tippen");}
   if(!r.ok)throw new Error("Google Drive antwortet mit Fehler "+r.status);return r;}
 async function gdRememberMail(){if(ls("rb_gmail"))return;try{const r=await(await gd("drive/v3/about?fields=user(emailAddress)")).json();const m=r&&r.user&&r.user.emailAddress;if(m)ls("rb_gmail",m);}catch(e){}}
-async function gdList(){let out=[],pt="";do{const r=await(await gd(`drive/v3/files?spaces=appDataFolder&pageSize=1000&fields=nextPageToken,files(id,name)${pt?"&pageToken="+encodeURIComponent(pt):""}`)).json();
+async function gdList(){let out=[],pt="";do{const r=await(await gd(`drive/v3/files?spaces=appDataFolder&pageSize=1000&fields=nextPageToken,files(id,name,size,appProperties)${pt?"&pageToken="+encodeURIComponent(pt):""}`)).json();
   out=out.concat(r.files||[]);pt=r.nextPageToken||"";}while(pt);return out;}
-async function gdUpload(name,blob,id){const fd=new FormData();
-  fd.append("metadata",new Blob([JSON.stringify(id?{}:{name,parents:["appDataFolder"]})],{type:"application/json"}));fd.append("file",blob);
+async function gdUpload(name,blob,id,props){const fd=new FormData();const md=id?{}:{name,parents:["appDataFolder"]};if(props)md.appProperties=props;
+  fd.append("metadata",new Blob([JSON.stringify(md)],{type:"application/json"}));fd.append("file",blob);
   await gd(`upload/drive/v3/files${id?"/"+id:""}?uploadType=multipart`,{method:id?"PATCH":"POST",body:fd});}
+/* ---------- POI-Länder über Google Drive teilen: einmal über Overpass laden, andere Geräte holen es von Drive ---------- */
+const POI_OLD=90*864e5;const poiFile=cc=>`poi_${cc}.json.gz`;
+const poiDrive=()=>{try{return JSON.parse(ls("rb_poidrive")||"[]");}catch(e){return [];}};
+function poiDriveSet(files){ls("rb_poidrive",JSON.stringify(files.filter(f=>/^poi_[A-Z]{2}\.json\.gz$/.test(f.name)).map(f=>({cc:f.name.slice(4,6),id:f.id,size:+f.size||0,
+  loaded:+((f.appProperties||{}).loaded)||0,n:+((f.appProperties||{}).n)||0,enc:(f.appProperties||{}).enc||"gz"}))));}
+async function gzBlob(obj){const b=new Blob([JSON.stringify(obj)],{type:"application/json"});
+  if(typeof CompressionStream==="undefined")return {blob:b,enc:"json"};
+  return {blob:await new Response(b.stream().pipeThrough(new CompressionStream("gzip"))).blob(),enc:"gz"};}
+async function poiToDrive(p,id){const z=await gzBlob({cc:p.cc,loaded:p.loaded,n:p.n,items:p.items});
+  await gdUpload(poiFile(p.cc),z.blob,id,{loaded:String(p.loaded),n:String(p.n),enc:z.enc});}
+async function poiUploadNow(cc){if(!gdClient()||!navigator.onLine)return;const p=poiOff.find(x=>x.cc===cc);if(!p)return;
+  try{toast(`${countryName(cc)} wird für die anderen Geräte auf Google Drive gespeichert …`,60000);
+    const files=await gdList();const f=files.find(x=>x.name===poiFile(cc));await poiToDrive(p,f&&f.id);poiDriveSet(await gdList());
+    toast(`${countryName(cc)}: auch auf Google Drive gespeichert – andere Geräte können es ohne Overpass laden`,5000);}catch(e){toast("Auf Google Drive speichern fehlgeschlagen: "+e.message,6000);}}
+async function poiFromDrive(cc){const r=poiDrive().find(x=>x.cc===cc);if(!r)return;
+  progress(`Orte ${countryName(cc)} von Google Drive`,0,0,`${(r.size/1048576).toFixed(1)} MB werden geladen …`);
+  try{const res=await gd(`drive/v3/files/${r.id}?alt=media`);let data;
+    if(r.enc==="gz"&&typeof DecompressionStream!=="undefined")data=await new Response(res.body.pipeThrough(new DecompressionStream("gzip"))).json();else data=await res.json();
+    if(!data||!Array.isArray(data.items))throw new Error("Datei unvollständig");
+    poiOff=poiOff.filter(p=>p.cc!==cc);poiOff.push({cc,loaded:data.loaded||r.loaded||Date.now(),n:data.items.length,items:data.items});await savePoiOff();try{await del("meta","poipart_"+cc);}catch(e){}
+    progress(`Orte ${countryName(cc)} von Google Drive`,1,1,`Fertig: ${data.items.length.toLocaleString("de-CH")} Orte gespeichert`);drawOsm();setTimeout(poiOffDialog,1200);}
+  catch(e){openPanel(`<h2>Laden fehlgeschlagen</h2><p>${esc(e.message)}</p><div class="actions"><button class="btn sec" id="pdNo">Zurück</button></div>`);$("#pdNo").onclick=poiOffDialog;}}
+async function poiDriveDelete(cc){const r=poiDrive().find(x=>x.cc===cc);if(!r)return;
+  try{await gd(`drive/v3/files/${r.id}`,{method:"DELETE"});ls("rb_poidrive",JSON.stringify(poiDrive().filter(x=>x.cc!==cc)));toast(`${countryName(cc)} auf Google Drive gelöscht`,3000);}
+  catch(e){toast("Löschen auf Google Drive fehlgeschlagen: "+e.message,5000);}}
 async function syncDrive(){if(syncing)return;
   if(!gdClient())return gdSettings();
   if(!navigator.onLine)return toast("Kein Internet – später synchronisieren",4000);
@@ -1831,6 +1861,9 @@ async function syncDrive(){if(syncing)return;
     await gdUpload(GD_DATA,new Blob([JSON.stringify({app:"ibexmap",format:4,updated:Date.now(),trips,deletedTrips:delTrips,flags,flagDel,points:Object.values(local)})],{type:"application/json"}),byName[GD_DATA]&&byName[GD_DATA].id);
     const gone=new Set(Object.values(local).flatMap(p=>p.photoDel||[]));
     for(const f of files){const id=f.name.slice(5,-4);if(/^foto_.+\.jpg$/.test(f.name)&&gone.has(id)&&!need.has(id))await gd(`drive/v3/files/${f.id}`,{method:"DELETE"}).catch(()=>{});}
+    try{poiDriveSet(files);await loadPoiOff();
+      for(const p of poiOff){const r=poiDrive().find(x=>x.cc===p.cc);if(!r||(p.loaded||0)>(r.loaded||0)+1000){toast(`POI ${countryName(p.cc)} auf Google Drive speichern …`,120000);await poiToDrive(p,r&&r.id);}}
+      poiDriveSet(await gdList());}catch(e){}
     ls("rb_lastsync",String(Date.now()));await loadPoints();
     toast(`Abgeglichen: ${nIn} Änderungen geholt, ${up} Fotos hoch-, ${down} heruntergeladen`,5000);
   }catch(e){toast("Abgleich fehlgeschlagen: "+e.message,7000);}
@@ -2383,23 +2416,30 @@ async function poiDownload(cc){if(!navigator.onLine)return toast("Kein Internet"
   const list=Object.values(part.items);
   poiOff=poiOff.filter(p=>p.cc!==cc);poiOff.push({cc,loaded:Date.now(),n:list.length,items:list});await savePoiOff();try{await del("meta","poipart_"+cc);}catch(err){}
   progress(title,total,total,`Fertig: ${list.length.toLocaleString("de-CH")} Orte gespeichert`);
-  drawOsm();setTimeout(poiOffDialog,1500);}
+  drawOsm();setTimeout(async()=>{await poiOffDialog();poiUploadNow(cc);},1500);}
 async function poiOffDialog(){await loadPoiOff();
-  const cand=[...new Set([osmCC(),...points.map(p=>p.country)].filter(Boolean))].filter(c=>!poiOff.some(p=>p.cc===c));
+  const cand=[...new Set([osmCC(),...points.map(p=>p.country)].filter(Boolean))].filter(c=>!poiOff.some(p=>p.cc===c)&&!poiDrive().some(r=>r.cc===c));
   const parts={};for(const c of cand){try{const pp=await getOne("meta","poipart_"+c);if(pp)parts[c]=pp.done.length;}catch(e){}}
   const size=p=>Math.max(1,Math.round(JSON.stringify(p.items).length/1048576));
+  const drv=Object.fromEntries(poiDrive().map(r=>[r.cc,r]));const onDrive=poiDrive().filter(r=>!poiOff.some(p=>p.cc===r.cc));
   openPanel(`<h2>POI-Overlay und Suche (offline)</h2>
    <p class="muted">Wie bei OsmAnd: Alle Arten aus der Suche (Camping, Restaurant, Tankstelle, Wasser, Apotheke, Parkplatz, Aussichtspunkt …) für ein ganzes Land einmal laden. Danach ohne Internet: als <b>POI-Overlay</b> auf der Karte einblenden (Filter › POI-Overlay) und in der <b>Suche</b> nach Kategorie oder Name finden.</p>
    <div class="mgh">Gespeichert</div>
-   <div class="mgrp">${poiOff.length?poiOff.map((p,i)=>`<div class="mrow wrap" style="cursor:default"><span class="mic">${mi("globe",20)}</span><span class="mtx"><b>${flagEmoji(p.cc)} ${esc(countryName(p.cc))}</b><small>${p.n.toLocaleString("de-CH")} Orte · ca. ${size(p)} MB · Stand ${fmtD(p.loaded)}</small></span>
-     <span class="oact"><button data-pr="${i}" title="Neu laden">${mi("refresh",18)}</button><button data-pd="${i}" title="Löschen">${mi("trash",18)}</button></span></div>`).join(""):`<div class="mrow" style="cursor:default"><span class="mtx"><small>Noch kein Land gespeichert.</small></span></div>`}</div>
+   <div class="mgrp">${poiOff.length?poiOff.map((p,i)=>`<div class="mrow wrap" style="cursor:default"><span class="mic">${mi("globe",20)}</span><span class="mtx"><b>${flagEmoji(p.cc)} ${esc(countryName(p.cc))}</b><small>${p.n.toLocaleString("de-CH")} Orte · ca. ${size(p)} MB · Stand ${fmtD(p.loaded)}${Date.now()-p.loaded>POI_OLD?` · <span style="color:#b26a00">älter als 3 Monate – neu laden?</span>`:""}${drv[p.cc]?(drv[p.cc].loaded>p.loaded+1000?` · <span style="color:#b26a00">neuerer Stand auf Google Drive</span>`:" · auch auf Google Drive"):""}</small></span>
+     <span class="oact">${drv[p.cc]&&drv[p.cc].loaded>p.loaded+1000?`<button data-pg="${p.cc}" title="Neueren Stand von Google Drive laden">${mi("cloud",18)}</button>`:""}<button data-pr="${i}" title="Neu laden (OpenStreetMap)">${mi("refresh",18)}</button><button data-pd="${i}" title="Löschen">${mi("trash",18)}</button></span></div>`).join(""):`<div class="mrow" style="cursor:default"><span class="mtx"><small>Noch kein Land gespeichert.</small></span></div>`}</div>
+   ${onDrive.length?`<div class="mgh">Auf Google Drive (von einem anderen Gerät)</div><div class="mgrp">${onDrive.map(r=>`<button class="mrow" data-pg="${r.cc}"><span class="mic">${mi("cloud",20)}</span><span class="mtx"><b>${flagEmoji(r.cc)} ${esc(countryName(r.cc))}</b><small>${r.n?r.n.toLocaleString("de-CH")+" Orte · ":""}${(r.size/1048576).toFixed(1)} MB · Stand ${fmtD(r.loaded)} · ohne OpenStreetMap-Server</small></span><span class="mact">Von Drive laden</span></button>`).join("")}</div>`:""}
    <div class="mgh">Land herunterladen</div>
    <div class="mgrp">${cand.map(c=>`<button class="mrow" data-pl="${c}"><span class="mic">${mi("download",20)}</span><span class="mtx"><b>${flagEmoji(c)} ${esc(countryName(c))}</b><small>${parts[c]?`${parts[c]} Gebiete schon geladen – fortsetzen`:c===osmCC()?"Gebiet der Kartenmitte":"Land mit eigenen Punkten"}</small></span><span class="mact">${parts[c]?"Weiter laden":"Laden"}</span></button>`).join("")}
      <div class="mrow" style="cursor:default"><span class="mtx"><small>Anderes Land: Karte dorthin schieben und dieses Fenster neu öffnen.</small></span></div></div>
    <p class="muted" style="margin-top:12px">Am besten zu Hause im WLAN laden – je nach Land einige Minuten. Die öffentlichen OpenStreetMap-Server sind manchmal überlastet; dann später nochmals versuchen.</p>`);
   $("#panel").querySelectorAll("[data-pl]").forEach(b=>b.onclick=()=>poiDownload(b.dataset.pl));
   $("#panel").querySelectorAll("[data-pr]").forEach(b=>b.onclick=()=>poiDownload(poiOff[+b.dataset.pr].cc));
-  $("#panel").querySelectorAll("[data-pd]").forEach(b=>b.onclick=async()=>{const p=poiOff[+b.dataset.pd];poiOff=poiOff.filter(x=>x!==p);await savePoiOff();toast(`${countryName(p.cc)} gelöscht`,2500);poiOffDialog();});}
+  $("#panel").querySelectorAll("[data-pg]").forEach(b=>b.onclick=()=>poiFromDrive(b.dataset.pg));
+  $("#panel").querySelectorAll("[data-pd]").forEach(b=>b.onclick=()=>{const p=poiOff[+b.dataset.pd];const onD=!!drv[p.cc];
+    openPanel(`<h2>${esc(countryName(p.cc))} löschen?</h2><p>Die POI-Daten werden auf diesem Gerät gelöscht.</p>${onD?`<label style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="pdDrv" style="width:auto;margin:0"> Auch auf Google Drive löschen (dann haben auch die anderen Geräte keine Vorlage mehr)</label>`:""}
+      <div class="actions"><button class="btn warn" id="pdYes">Löschen</button><button class="btn sec" id="pdNo">Abbrechen</button></div>`);
+    $("#pdNo").onclick=poiOffDialog;$("#pdYes").onclick=async()=>{const alsoD=onD&&$("#pdDrv").checked;poiOff=poiOff.filter(x=>x!==p);await savePoiOff();
+      if(alsoD)await poiDriveDelete(p.cc);toast(`${countryName(p.cc)} gelöscht`,2500);drawOsm();poiOffDialog();};});}
 const flagEmoji=c=>c&&/^[A-Z]{2}$/.test(c)?String.fromCodePoint(...[...c].map(x=>0x1F1A5+x.charCodeAt(0))):"";
 /* Offline suchen: Treffer aus den gespeicherten Ländern im Umkreis */
 function poiOffFind(keys,ctr,R){const out=[];
@@ -2507,7 +2547,7 @@ async function readyDialog(){openPanel(`<h2>Bereit für unterwegs?</h2><p class=
     [st(gdClient()&&ageD<1&&!pend,gdClient()),"Abgleich mit Google Drive",!gdClient()?"Nicht eingerichtet – ohne Abgleich gibt es keine Sicherung":lastS?`Letzter Abgleich ${fmtDT(lastS)}${pend?" · seither Änderungen":""}`:"Noch nie abgeglichen",gdClient()?["Jetzt abgleichen",()=>{closePanel();syncDrive();}]:["Einrichten",gdSettings]],
     [st(pts.length&&nMap===pts.length,nMap>0),"Offline-Karten",pts.length?`${nMap} von ${pts.length} Punkten der Reise offline mit Detail ab Stufe 12 (${pc(nMap)} %)`:"Die aktuelle Reise hat noch keine Punkte",["Offline-Karten",offlineDialog]],
     [st(pts.length&&nSurf===pts.length,nSurf>0),"Strassenoberfläche offline",`${nSurf} von ${pts.length} Punkten (${pc(nSurf)} %)`,["Offline-Karten",offlineDialog]],
-    [st(ccs.length&&!ccMiss.length,ccMiss.length<ccs.length),"POI-Overlay und Suche offline",ccs.length?(ccMiss.length?`Fehlt: ${ccMiss.map(countryName).join(", ")}`:`Gespeichert: ${ccs.map(countryName).join(", ")}`):"Noch keine Länder bei den Punkten",["Länder laden",poiOffDialog]],
+    [st(ccs.length&&!ccMiss.length,ccMiss.length<ccs.length),"POI-Overlay und Suche offline",ccs.length?(ccMiss.length?`Fehlt: ${ccMiss.map(countryName).join(", ")}`:`Gespeichert: ${ccs.map(countryName).join(", ")}`+(poiOff.some(p=>ccs.includes(p.cc)&&Date.now()-p.loaded>POI_OLD)?" · Stand älter als 3 Monate – neu laden empfohlen":"")):"Noch keine Länder bei den Punkten",["Länder laden",poiOffDialog]],
     [st(!!countryData,false),"Ländergrenzen",countryData?`${countryData.length} Länder – Land wird offline automatisch zugeordnet`:"Nicht geladen",["Laden",async()=>{toast("Lade Ländergrenzen …",60000);try{await downloadCountries();await assignCountries();toast("Geladen",2500);}catch(e){toast("Laden fehlgeschlagen",3000);}readyDialog();}]],
     [st(!!regionData,true),"Regionen Marokko",regionData?"Geladen – Region wird offline zugeordnet":"Nicht geladen (nur für Marokko nötig)",["Laden",async()=>{toast("Lade Regionsgrenzen …",60000);try{await downloadRegions();toast("Geladen",2500);}catch(e){toast("Laden fehlgeschlagen",3000);}readyDialog();}]],
     [st(famReady(),true),"Familienseite",famReady()?`${nStory} Storypoints markiert${fam.last?` · zuletzt veröffentlicht ${fmtDT(fam.last)}`:" · noch nie veröffentlicht"}`:"Nicht eingerichtet (freiwillig)",[famReady()?"Veröffentlichen":"Einrichten",famReady()?famPublish:famSettings]],

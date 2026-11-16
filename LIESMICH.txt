@@ -1,4 +1,4 @@
-IbexMap – v3.2 (privates Projekt)
+IbexMap – v3.3 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -281,3 +281,9 @@ NEU IN v3.2
 - POI-Overlay herunterladen: Vor dem Laden prüft die App, welche OpenStreetMap-Server (Overpass) gerade antworten, und nimmt den schnellsten zuerst. Antwortet keiner, erscheint sofort ein klarer Hinweis («Server überlastet») mit «Nochmals prüfen» – statt endlos zu warten.
 - Während des Ladens: Live-Anzeige mit Anzahl Orte, aktuellem Server und Wartezeit; neuer Knopf «Pause» (später mit «Weiter laden» fortsetzen).
 - Zusätzlicher Server maps.mail.ru.
+
+NEU IN v3.3
+- POI-Overlay über Google Drive: Ein fertig geladenes Land wird gepackt auch auf Google Drive gespeichert (bereits geladene Länder beim nächsten Abgleich). Andere Geräte laden es unter Menü › POI-Overlay mit «Von Drive laden» – ohne OpenStreetMap-Server. Neuerer Stand auf Drive wird angezeigt (Wolken-Knopf).
+- Hinweis, wenn POI-Daten älter als 3 Monate sind (im POI-Dialog und bei «Bereit für unterwegs?»).
+- Land löschen: wahlweise auch auf Google Drive.
+- Textfelder (Story-Text, Beschreibung, Notiz) wachsen automatisch mit dem Inhalt.
