@@ -414,7 +414,7 @@ const ADM=(()=>{try{if(new URLSearchParams(location.search).has("admin")){sessio
   return sessionStorage.getItem("rb_admin")==="1"&&matchMedia("(min-width:900px)").matches;}catch(e){return false;}})();
 if(ADM)document.body.classList.add("adm");
 const GROUP="IbexMap";
-const VERSION="v3.1";
+const VERSION="v3.2";
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
 const MA_SECTORS=[
  {n:"A Norden",zeit:"5.–10. April",klima:"Frühling, grün; 15–22 °C, im Rif Regen möglich, Nächte kühl",info:"Tanger Med, Chefchaouen, Fès, Meknès – ankommen, Städte, einkaufen. Eher Campings.",box:[[33.8,-5.9,35.95,-1.0]]},
@@ -612,7 +612,8 @@ const OSM={
   water:{n:"Wasser / Brunnen",c:"#0288d1",i:"💧"}
 };
 const OSM_MINZOOM=10;
-const OVERPASS=["https://overpass-api.de/api/interpreter","https://overpass.kumi.systems/api/interpreter","https://overpass.private.coffee/api/interpreter"];
+const OVERPASS=["https://overpass-api.de/api/interpreter","https://maps.mail.ru/osm/tools/overpass/api/interpreter","https://overpass.kumi.systems/api/interpreter","https://overpass.private.coffee/api/interpreter"];
+let ovGood=null,ovNow="";
 let osmData={items:[],loaded:0,scope:""};let osmShow=[];
 try{osmShow=JSON.parse(localStorage.getItem("rb_osm")||"[]");}catch(e){}
 const osmLayer=L.layerGroup().addTo(map);const osmCanvas=L.canvas({padding:.3});
@@ -2325,12 +2326,20 @@ const POI_STMT=(()=>{const simple={},other=[];
     else other.push(sel);})));
   return Object.entries(simple).map(([k,v])=>{const [t,key]=k.split("|");return `${t}["${key}"~"^(${[...v].join("|")})$"];`;}).join("")+other.map(x=>x+";").join("");})();
 /* Server nacheinander versuchen (nicht gleichzeitig – die Server erlauben pro Gerät nur wenige gleichzeitige Abfragen) */
-async function ovSeq(q,ms){let last;
-  for(const ep of OVERPASS){const ac=new AbortController();const to=setTimeout(()=>ac.abort(),ms);
+/* Welche Overpass-Server antworten gerade? Kleine Testabfrage an alle gleichzeitig, schnellste zuerst */
+async function ovProbe(){const q='[out:json][timeout:25];node(47.37,8.54,47.371,8.541);out 1;';
+  const r=await Promise.all(OVERPASS.map(async ep=>{const t=Date.now(),ac=new AbortController(),to=setTimeout(()=>ac.abort(),30000);
+    try{const x=await fetch(ep,{method:"POST",signal:ac.signal,body:"data="+encodeURIComponent(q),headers:{"Content-Type":"application/x-www-form-urlencoded"}});
+      clearTimeout(to);if(!x.ok)return null;const j=await x.json();return j&&Array.isArray(j.elements)?{ep,ms:Date.now()-t}:null;}catch(e){clearTimeout(to);return null;}}));
+  ovGood=r.filter(Boolean).sort((a,b)=>a.ms-b.ms).map(x=>x.ep);return ovGood;}
+const ovHost=ep=>{try{return new URL(ep).hostname.replace(/^www\./,"");}catch(e){return ep;}};
+async function ovSeq(q,ms,sig){let last;const list=ovGood&&ovGood.length?ovGood:OVERPASS;
+  for(const ep of list){if(sig&&sig.aborted)throw new Error("abgebrochen");const ac=new AbortController();const to=setTimeout(()=>ac.abort(),ms);
+    const onAb=()=>ac.abort();if(sig)sig.addEventListener("abort",onAb);ovNow=ovHost(ep);
     try{const r=await fetch(ep,{method:"POST",signal:ac.signal,body:"data="+encodeURIComponent(q),headers:{"Content-Type":"application/x-www-form-urlencoded"}});
       if(!r.ok)throw new Error("HTTP "+r.status);const j=await r.json();clearTimeout(to);
       if(!j||!Array.isArray(j.elements))throw new Error("leer");if(j.remark&&/timed out|out of memory/i.test(j.remark))throw new Error("Zeitüberschreitung");return j;}
-    catch(e){clearTimeout(to);last=e;}}
+    catch(e){clearTimeout(to);last=e;}finally{if(sig)sig.removeEventListener("abort",onAb);}}
   throw last||new Error("nicht erreichbar");}
 /* Ein Land in Gebieten von 1° × 1° laden – 2 Gebiete gleichzeitig; zu volle Gebiete werden geviertelt; bei Abbruch wird fortgesetzt */
 async function poiDownload(cc){if(!navigator.onLine)return toast("Kein Internet",3000);
@@ -2341,27 +2350,33 @@ async function poiDownload(cc){if(!navigator.onLine)return toast("Kein Internet"
   const [w,s0,e,n]=f.b,T=1,tiles=[];
   const hit=(la,lo,t)=>[[la,lo],[la+t,lo],[la,lo+t],[la+t,lo+t],[la+t/2,lo+t/2],[la+t/2,lo],[la+t/2,lo+t],[la,lo+t/2],[la+t,lo+t/2],[la+t/4,lo+t/4],[la+3*t/4,lo+3*t/4],[la+t/4,lo+3*t/4],[la+3*t/4,lo+t/4]].some(([y,x])=>inGeom(x,y,f.g));
   for(let la=Math.floor(s0);la<n;la+=T)for(let lo=Math.floor(w);lo<e;lo+=T)if(hit(la,lo,T))tiles.push({s:la,w:lo,t:T,k:la+"_"+lo});
+  progress(title,0,0,"OpenStreetMap-Server werden geprüft …");
+  if(!(await ovProbe()).length){openPanel(`<h2>Server überlastet</h2><p>Im Moment antwortet keiner der OpenStreetMap-Server (Overpass). Das liegt nicht an der App oder deinem Internet.</p><p class="muted">Bitte später nochmals versuchen – oft klappt es am Abend oder frühen Morgen. Bereits geladene Gebiete bleiben gespeichert.</p><div class="actions"><button class="btn" id="pdRe">Nochmals prüfen</button><button class="btn sec" id="pdNo">Zurück</button></div>`);
+    $("#pdRe").onclick=()=>poiDownload(cc);$("#pdNo").onclick=poiOffDialog;return;}
   let part=null;try{part=await getOne("meta","poipart_"+cc);}catch(err){}
   if(!part||!part.v2)part={id:"poipart_"+cc,v2:1,done:[],items:{}};
   const queue=tiles.filter(t=>!part.done.includes(t.k));const total=tiles.length;let errTile=null,saving=Promise.resolve();
   const doneN=()=>tiles.filter(t=>part.done.includes(t.k)).length;
-  const show=()=>progress(title,doneN(),total,`Gebiet ${Math.min(doneN()+1,total)} von ${total} – kann pro Gebiet bis 2 Minuten dauern`);
-  show();
+  const stopC=new AbortController();let tStart=Date.now();
+  const show=()=>{progress(title,doneN(),total,`${Object.keys(part.items).length.toLocaleString("de-CH")} Orte · Server ${ovNow||"…"} · wartet ${Math.round((Date.now()-tStart)/1000)} s`);
+    if(!$("#pdStop")&&$("#progBox")){$("#progBox").insertAdjacentHTML("beforeend",`<div class="actions"><button class="btn sec" id="pdStop">Pause</button></div>`);
+      $("#pdStop").onclick=()=>{stopC.abort();$("#pdStop").disabled=true;$("#pdStop").textContent="Wird angehalten …";};}};
+  show();const tick=setInterval(()=>{if($("#progBox"))show();},1000);
   const handle=j=>{for(const el of j.elements){const lat=el.lat??(el.center&&el.center.lat),lon=el.lon??(el.center&&el.center.lon);if(lat==null)continue;
       const t0=el.tags||{},tg={};POI_KEYS.forEach(k=>{if(t0[k]!=null)tg[k]=t0[k];});const m=[];
       POI_GROUPS.forEach((g,gi)=>g.items.forEach((it,ii)=>{try{if(poiSelOk(it[2],t0))m.push(gi+"."+ii);}catch(err){}}));
       if(m.length)part.items[el.type[0]+el.id]={a:+lat.toFixed(5),o:+lon.toFixed(5),t:tg,m};}};
   const load=async t=>{/* ein Gebiet; bei Fehler zweimal wiederholen, dann vierteln (bis 0,25°) */
     const q=b=>`[out:json][timeout:180][bbox:${b.s},${b.w},${b.s+b.t},${b.w+b.t}];(${POI_STMT});out center tags qt;`;
-    for(let a=0;a<2;a++){try{handle(await ovSeq(q(t),200000));return true;}catch(err){await sleep(5000);}}
-    if(t.t<=0.25)return false;const h=t.t/2;
+    for(let a=0;a<2;a++){try{handle(await ovSeq(q(t),200000,stopC.signal));tStart=Date.now();return true;}catch(err){if(stopC.signal.aborted)return false;await sleep(5000);}}
+    if(t.t<=0.25||stopC.signal.aborted)return false;const h=t.t/2;
     for(const [dy,dx] of [[0,0],[h,0],[0,h],[h,h]]){const sub={s:t.s+dy,w:t.w+dx,t:h};if(!hit(sub.s,sub.w,h))continue;if(!(await load(sub)))return false;}
     return true;};
   const worker=async()=>{while(queue.length&&!errTile){const t=queue.shift();
       if(await load(t)){part.done.push(t.k);saving=saving.then(()=>put("meta",part));show();}else{errTile=t;}}};
-  await Promise.all([worker(),worker()]);await saving;
+  await Promise.all([worker(),worker()]);await saving;clearInterval(tick);
   if(errTile||doneN()<total){await put("meta",part);
-    openPanel(`<h2>Laden unterbrochen</h2><p>${doneN()} von ${total} Gebieten geladen (${Object.keys(part.items).length.toLocaleString("de-CH")} Orte). Die OpenStreetMap-Server sind gerade überlastet.</p>
+    openPanel(`<h2>Laden unterbrochen</h2><p>${doneN()} von ${total} Gebieten geladen (${Object.keys(part.items).length.toLocaleString("de-CH")} Orte). ${stopC.signal.aborted?"Angehalten.":"Die OpenStreetMap-Server sind gerade überlastet."}</p>
       <p class="muted">Bereits geladene Gebiete bleiben gespeichert – «Weiter laden» setzt dort fort, wo es aufgehört hat. Am besten später nochmals, z. B. am Abend.</p>
       <div class="actions"><button class="btn" id="pdRe">Weiter laden</button><button class="btn sec" id="pdNo">Später</button></div>`);
     $("#pdRe").onclick=()=>poiDownload(cc);$("#pdNo").onclick=poiOffDialog;return;}

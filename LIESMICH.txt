@@ -1,4 +1,4 @@
-IbexMap – v3.1 (privates Projekt)
+IbexMap – v3.2 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -276,3 +276,8 @@ NEU IN v3.1
 - Offline-Karten: neu «Ganzes Land» – Land aus einer Liste wählen (mit Suche und Vorschlägen) und herunterladen, wie bei OsmAnd. Geladen werden nur Kartenbilder, die das Land berühren. Detailstufe bis 13 (Standard 12), optional rund um eure Punkte im Land bis Stufe 14.
 - Storypoint: Das Story-Textfeld bleibt immer sichtbar. Der Haken steuert nur noch das Teilen – der Text bleibt gespeichert.
 - Kategorien umbenannt: «Auto» (vorher Autowerkstatt) und «Einkauf» (vorher Einkauf / Supermarkt).
+
+NEU IN v3.2
+- POI-Overlay herunterladen: Vor dem Laden prüft die App, welche OpenStreetMap-Server (Overpass) gerade antworten, und nimmt den schnellsten zuerst. Antwortet keiner, erscheint sofort ein klarer Hinweis («Server überlastet») mit «Nochmals prüfen» – statt endlos zu warten.
+- Während des Ladens: Live-Anzeige mit Anzahl Orte, aktuellem Server und Wartezeit; neuer Knopf «Pause» (später mit «Weiter laden» fortsetzen).
+- Zusätzlicher Server maps.mail.ru.
