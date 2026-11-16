@@ -1,4 +1,4 @@
-IbexMap – v2.15 (privates Projekt)
+IbexMap – v3.1 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -271,3 +271,8 @@ NEU IN v2.15
 - Filter nach Bewertung: Kartenfilter (Alle / ab ★★★ / ab ★★★★ / ★★★★★, auch im Hinweis «Gefiltert»), Liste (ab ★★★ …) und Verwaltung (Sterne, Mehrfachauswahl inkl. «ohne Bewertung»).
 - Punkt erfassen/bearbeiten: Fenster schliesst sich nicht mehr, wenn man beim Markieren von Text mit der Maus über den Rand fährt oder daneben klickt (nur noch mit ✕, Abbrechen oder Speichern). Andere Fenster schliessen weiterhin mit Klick daneben.
 - POI-Overlay laden repariert: schlankere Abfrage (gleiche Arten zusammengefasst), längere Wartezeit (bis 3 Min. pro Gebiet), Server nacheinander statt gleichzeitig, 2 Gebiete parallel, zu volle Gebiete werden automatisch geviertelt. Sehr häufige Arten (Sitzbank, Bushaltestelle, Moschee/Kirche, WLAN, Spielplatz, Recycling/Entsorgung) nur noch in der Online-Suche.
+
+NEU IN v3.1
+- Offline-Karten: neu «Ganzes Land» – Land aus einer Liste wählen (mit Suche und Vorschlägen) und herunterladen, wie bei OsmAnd. Geladen werden nur Kartenbilder, die das Land berühren. Detailstufe bis 13 (Standard 12), optional rund um eure Punkte im Land bis Stufe 14.
+- Storypoint: Das Story-Textfeld bleibt immer sichtbar. Der Haken steuert nur noch das Teilen – der Text bleibt gespeichert.
+- Kategorien umbenannt: «Auto» (vorher Autowerkstatt) und «Einkauf» (vorher Einkauf / Supermarkt).

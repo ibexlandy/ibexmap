@@ -319,9 +319,9 @@ const CATS={
   camp:{n:"Camping",c:"#1565c0",i:"⛺"},
   sight:{n:"Sehenswürdigkeit",c:"#8e24aa",i:"★"},
   hike:{n:"Wanderung",c:"#6d4c41",i:"🏔️"},
-  shop:{n:"Einkauf / Supermarkt",c:"#00897b",i:"🛒"},
+  shop:{n:"Einkauf",c:"#00897b",i:"🛒"},
   fuel:{n:"Tankstelle",c:"#ef6c00",i:"⛽"},
-  service:{n:"Autowerkstatt",c:"#546e7a",i:"🔧"},
+  service:{n:"Auto",c:"#546e7a",i:"🔧"},
   water:{n:"Wasser",c:"#0288d1",i:"💧"},
   warn:{n:"Achtung",c:"#c62828",i:"⚠️"},
   other:{n:"Sonstiges",c:"#757575",i:"🔹"}
@@ -414,7 +414,7 @@ const ADM=(()=>{try{if(new URLSearchParams(location.search).has("admin")){sessio
   return sessionStorage.getItem("rb_admin")==="1"&&matchMedia("(min-width:900px)").matches;}catch(e){return false;}})();
 if(ADM)document.body.classList.add("adm");
 const GROUP="IbexMap";
-const VERSION="v2.15";
+const VERSION="v3.1";
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
 const MA_SECTORS=[
  {n:"A Norden",zeit:"5.–10. April",klima:"Frühling, grün; 15–22 °C, im Rif Regen möglich, Nächte kühl",info:"Tanger Med, Chefchaouen, Fès, Meknès – ankommen, Städte, einkaufen. Eher Campings.",box:[[33.8,-5.9,35.95,-1.0]]},
@@ -1065,7 +1065,7 @@ function showMapFilter(){
      :`<p class="muted">Orte wie Supermarkt, Tankstelle, Werkstatt, Wasser, Camping, Restaurant … als Overlay auf der Karte – auch offline. Zuerst ein Land laden.${osmData.items.length?" (Der frühere «Versorgung»-Download ist hier aufgegangen – bitte das Land einmal neu laden.)":""}</p><div class="actions"><button class="btn sec" id="pgMan">Orte für ein Land laden …</button></div>`}
 
     <h3>Eigene Punkte</h3>
-    <div class="actions"><button class="btn sec" id="mfAll">Alle</button><button class="btn sec" id="mfSupply">Nur Versorgung (Einkauf, Tankstelle, Werkstatt, Wasser – eigene Punkte und POI-Overlay)</button><button class="btn sec" id="mfNight">Nur Übernachten</button><button class="btn" id="mfClose">Fertig</button></div>`);
+    <div class="actions"><button class="btn sec" id="mfAll">Alle</button><button class="btn sec" id="mfSupply">Nur Versorgung (Einkauf, Tankstelle, Auto, Wasser – eigene Punkte und POI-Overlay)</button><button class="btn sec" id="mfNight">Nur Übernachten</button><button class="btn" id="mfClose">Fertig</button></div>`);
   const save=()=>{try{localStorage.setItem("rb_hidden",JSON.stringify(hiddenCats));}catch(e){}drawPoints();showMapFilter();};
   $("#panel").querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{const k=b.dataset.k;hiddenCats=hiddenCats.includes(k)?hiddenCats.filter(x=>x!==k):[...hiddenCats,k];save();});
   const only=keep=>{hiddenCats=Object.keys(CATS).filter(k=>!keep.includes(k));save();};
@@ -1146,7 +1146,7 @@ async function editPoint(p,isNew=false){
    <div id="fWaterWrap" style="display:${p.cat==="water"?"block":"none"}"><label>Wasser</label><select id="fWater">${Object.entries(WATERQ).map(([k,v])=>`<option value="${k}" ${(p.water||"unklar")===k?"selected":""}>${v}</option>`).join("")}</select></div>
    <div id="fRateBox"></div>
    <label style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink);margin-top:14px"><input type="checkbox" id="fStory" style="width:auto;margin:0" ${p.story?"checked":""}> ${mi("book",16)} Storypoint – auf der Familienseite zeigen</label>
-   <textarea id="fStoryText" placeholder="Text für Publikation" style="min-height:70px;margin-top:6px;display:${p.story?"block":"none"}">${esc(p.storyText||"")}</textarea>
+   <textarea id="fStoryText" placeholder="Story-Text (für die Familienseite)" style="min-height:70px;margin-top:6px">${esc(p.storyText||"")}</textarea><div class="muted" id="fStoryHint" style="font-size:12px;margin-top:2px">${p.story?"Wird beim Veröffentlichen geteilt.":"Wird nicht geteilt – der Text bleibt gespeichert."}</div>
    <label>Beschreibung</label><textarea id="fDesc">${esc(p.desc)}</textarea>
    <label>Notiz unterwegs</label><textarea id="fNote" style="min-height:70px">${esc(p.note)}</textarea>
    <label>Fotos</label><div class="photos" id="fPhotos"></div>
@@ -1181,7 +1181,7 @@ async function editPoint(p,isNew=false){
     const v=$("#fVisited").value,t=$("#fVisTo").value;$("#fVisTo").min=v||"";const n=st?nights(v,t):0;
     $("#fNights").textContent=!st?"":t&&n<0?"«Bis» liegt vor «Von»":n>0?`${n} ${n==1?"Nacht":"Nächte"}`:"«Bis» leer lassen bei nur einer Nacht";};
   $("#fVisited").addEventListener("change",updStay);$("#fVisTo").addEventListener("change",updStay);$("#fCat").addEventListener("change",updStay);updStay();
-  $("#fStory").onchange=e=>{$("#fStoryText").style.display=e.target.checked?"block":"none";};
+  $("#fStory").onchange=e=>{$("#fStoryHint").textContent=e.target.checked?"Wird beim Veröffentlichen geteilt.":"Wird nicht geteilt – der Text bleibt gespeichert.";};
   $("#fTrip").onchange=e=>{$("#fSection").innerHTML=secOpts(e.target.value,"");$("#fSectionNew").style.display="none";};
   $("#fSection").onchange=e=>{$("#fSectionNew").style.display=e.target.value==="__new"?"block":"none";if(e.target.value==="__new")$("#fSectionNew").focus();};
   const updReg=()=>{const la=parseFloat($("#fLat").value.replace(",",".")),lo=parseFloat($("#fLon").value.replace(",","."));if(regionData&&isFinite(la)&&isFinite(lo))$("#fRegion").textContent=regionOf(la,lo)||"ausserhalb der Regionsdaten";};
@@ -1891,7 +1891,7 @@ async function offlineDialog(){
   await loadOffPacks();const have=await offCacheURLs();const used=new Set();
   const rows=offPacks.map(pk=>{const u=packURLs(pk);let n=0;u.forEach(x=>{used.add(x);if(have.has(x))n++;});return {pk,total:u.length,n};});
   const loose=[...have].filter(u=>!used.has(u)).length;
-  const kindI={view:"map",section:"sec",points:"pin"};
+  const kindI={view:"map",section:"sec",points:"pin",country:"globe"};
   const st=r=>r.n>=r.total?`<span style="color:#2e7d32">vollständig</span>`:`<span style="color:var(--accent2)">${fmtN(r.n)} von ${fmtN(r.total)} – fortsetzen</span>`;
   openPanel(`<h2>Offline-Karten</h2>
    <p class="muted" style="margin-top:-6px">${offPacks.length} Gebiet${offPacks.length==1?"":"e"} · ${fmtN(have.size)} Kartenbilder · ca. ${fmtN(Math.round(have.size*0.022))} MB</p>
@@ -1904,13 +1904,14 @@ async function offlineDialog(){
      ${loose?`<div class="mrow" style="cursor:default"><span class="mic">${mi("db",20)}</span><span class="mtx"><b>Ohne Gebiet</b><small>${fmtN(loose)} Kartenbilder aus früheren Versionen</small></span><span class="oact"><button data-o="loose" title="Löschen">${mi("trash",18)}</button></span></div>`:""}</div>
    <div class="mgh">Neues Gebiet herunterladen</div>
    <div class="mgrp">
-     <button class="mrow wrap" id="oNewView"><span class="mic main2">${mi("map",20)}</span><span class="mtx"><b>Kartenausschnitt wählen</b><small>Karte verschieben und zoomen, dann übernehmen</small></span><span class="mchev">${mi("chev",18)}</span></button>
+     <button class="mrow wrap" id="oNewCC"><span class="mic main2">${mi("globe",20)}</span><span class="mtx"><b>Ganzes Land</b><small>Land aus der Liste wählen – wie bei OsmAnd</small></span><span class="mchev">${mi("chev",18)}</span></button>
+     <button class="mrow wrap" id="oNewView"><span class="mic">${mi("map",20)}</span><span class="mtx"><b>Kartenausschnitt wählen</b><small>Karte verschieben und zoomen, dann übernehmen</small></span><span class="mchev">${mi("chev",18)}</span></button>
      <button class="mrow wrap" id="oNewSec"><span class="mic">${mi("sec",20)}</span><span class="mtx"><b>Abschnitt der Reise</b><small>z. B. «C Wüste» – ganzes Gebiet</small></span><span class="mchev">${mi("chev",18)}</span></button>
      <button class="mrow wrap" id="oNewPts"><span class="mic">${mi("pin",20)}</span><span class="mtx"><b>Rund um eure Punkte</b><small>Umkreis um jeden Punkt der Reise, dazu eine grobe Übersicht</small></span><span class="mchev">${mi("chev",18)}</span></button>
    </div>
    <p class="muted" style="margin-top:14px">Am besten zu Hause im WLAN laden. Bilder, die mehrere Gebiete brauchen, werden nur einmal gespeichert und erst gelöscht, wenn kein Gebiet sie mehr braucht. Die Kartendienste sind für normale Nutzung gedacht – bitte nur laden, was ihr wirklich braucht.</p>`);
   $("#oShow").onchange=e=>{offShow=e.target.checked;ls("rb_offshow",offShow?"1":"0");drawOffAreas();};
-  $("#oNewView").onclick=offPickView;$("#oNewSec").onclick=()=>offConfig({kind:"section"});$("#oNewPts").onclick=()=>offConfig({kind:"points"});
+  $("#oNewView").onclick=offPickView;$("#oNewCC").onclick=offCountryPick;$("#oNewSec").onclick=()=>offConfig({kind:"section"});$("#oNewPts").onclick=()=>offConfig({kind:"points"});
   $("#panel").querySelectorAll("[data-o]").forEach(b=>b.onclick=async()=>{const pk=offPacks[+b.dataset.i];const o=b.dataset.o;
     if(o==="show"){closePanel();drawOffAreas(pk);const bb=L.latLngBounds(pk.areas.flatMap(a=>[[a.s,a.w],[a.n,a.e]]));map.fitBounds(bb,{padding:[30,30]});
       if(BASE[pk.layer]&&!map.hasLayer(BASE[pk.layer])){Object.values(BASE).forEach(l=>map.removeLayer(l));BASE[pk.layer].addTo(map);}toast(`${pk.name} – ${pk.layer}`,3000);}
@@ -1924,6 +1925,34 @@ async function offlineDialog(){
     else if(o==="loose")openPanel(`<h2>Kartenbilder ohne Gebiet löschen?</h2><p>${fmtN(loose)} Kartenbilder aus früheren Versionen, die zu keinem gespeicherten Gebiet gehören.</p>
        <div class="actions"><button class="btn warn" id="cYes">Löschen</button><button class="btn sec" id="cNo">Abbrechen</button></div>`)||(()=>{$("#cNo").onclick=offlineDialog;
        $("#cYes").onclick=async()=>{const c=await caches.open(OFFLINE);for(const u of have)if(!used.has(u))await c.delete(u);toast("Gelöscht",2500);offlineDialog();};})();});}
+/* Ganzes Land aus einer Liste wählen */
+async function offCountryPick(){
+  if(!countryData){openPanel(`<h2>Ganzes Land</h2><p class="muted">Ländergrenzen werden geladen …</p>`);
+    if(!navigator.onLine)return openPanel(`<h2>Ganzes Land</h2><p>Für die Länderliste braucht es einmal Internet.</p><div class="actions"><button class="btn sec" id="cBack">Zurück</button></div>`)||($("#cBack").onclick=offlineDialog);
+    try{await downloadCountries();}catch(e){return openPanel(`<h2>Ganzes Land</h2><p>Die Ländergrenzen konnten nicht geladen werden. Bitte später nochmals versuchen.</p><div class="actions"><button class="btn sec" id="cBack">Zurück</button></div>`)||($("#cBack").onclick=offlineDialog);}}
+  prepCountries();
+  const all=[...new Map(countryData.map(f=>[f.c,f])).values()].map(f=>({c:f.c,n:countryName(f.c)})).sort((a,b)=>a.n.localeCompare(b.n,"de"));
+  const sug=[...new Set([...points.filter(p=>p.trip===curTrip).map(p=>p.country),osmCC(),...points.map(p=>p.country)].filter(Boolean))].slice(0,6);
+  const have=new Set(offPacks.filter(p=>p.kind==="country").map(p=>p.cc));
+  const row=c=>`<button class="mrow" data-cc="${c.c}" data-n="${esc(c.n.toLowerCase())}"><span class="mtx"><b>${flagEmoji(c.c)} ${esc(c.n)}</b>${have.has(c.c)?`<small>schon gespeichert</small>`:""}</span><span class="mchev">${mi("chev",18)}</span></button>`;
+  openPanel(`<h2>Land wählen</h2>
+   <input id="ccQ" placeholder="Land suchen …" autocomplete="off">
+   ${sug.length?`<div class="mgh" id="ccSugH">Vorschläge</div><div class="mgrp" id="ccSug">${sug.map(c=>row({c,n:countryName(c)})).join("")}</div>`:""}
+   <div class="mgh">Alle Länder</div><div class="mgrp" id="ccAll">${all.map(row).join("")}</div>
+   <div class="actions"><button class="btn sec" id="cBack">Zurück</button></div>`);
+  $("#ccQ").oninput=e=>{const q=e.target.value.trim().toLowerCase();
+    $("#ccAll").querySelectorAll("[data-cc]").forEach(b=>{b.style.display=!q||b.dataset.n.includes(q)?"":"none";});
+    [$("#ccSug"),$("#ccSugH")].forEach(x=>{if(x)x.style.display=q?"none":"";});};
+  $("#panel").querySelectorAll("[data-cc]").forEach(b=>b.onclick=()=>offConfig({kind:"country",cc:b.dataset.cc}));
+  $("#cBack").onclick=offlineDialog;}
+/* Land in Kacheln zerlegen, die das Land berühren (statt eines grossen Rechtecks) */
+function countryAreas(cc){const f=(countryData||[]).find(x=>x.c===cc);if(!f)return [];
+  const [w,s0,e,n]=f.b,span=Math.max(e-w,n-s0),T=span>8?0.5:span>3?0.25:0.1,out=[];
+  const hit=(la,lo)=>{for(let i=0;i<=4;i++)for(let j=0;j<=4;j++)if(inGeom(lo+T*j/4,la+T*i/4,f.g))return true;return false;};
+  for(let la=Math.floor(s0/T)*T;la<n;la+=T)for(let lo=Math.floor(w/T)*T;lo<e;lo+=T)if(hit(la,lo))out.push({s:+la.toFixed(3),w:+lo.toFixed(3),n:+(la+T).toFixed(3),e:+(lo+T).toFixed(3)});
+  if(!out.length)out.push({s:s0,w,n,e});return out;}
+/* grobe Schätzung ohne alle Kacheln aufzuzählen (für sehr grosse Länder) */
+function tileEstimate(areas,lay){let t=0;const mz=layMaxZ(lay);for(const a of areas)for(let z=a.z1;z<=Math.min(a.z2,mz);z++){const[x1,y1]=tileXY(a.n,a.w,z),[x2,y2]=tileXY(a.s,a.e,z);t+=(x2-x1+1)*(y2-y1+1);}return t;}
 /* Ausschnitt auf der Karte wählen */
 function offPickView(){closePanel();let bar=$("#offbar");
   if(!bar){bar=document.createElement("div");bar.id="offbar";bar.className="placebar";
@@ -1939,37 +1968,43 @@ function offPickView(){closePanel();let bar=$("#offbar");
 /* Einstellungen für ein neues Gebiet */
 function offConfig(o){
   o.layer=o.layer||ls("rb_offL")||(map.hasLayer(BASE["Topo"])?"Topo":map.hasLayer(BASE["Satellit"])?"Satellit":"Strassen");
-  o.zmax=o.zmax||(o.kind==="section"?12:+ls("rb_offZ")||14);o.radius=o.radius||+ls("rb_offR")||10;o.only=o.only||ls("rb_offO")||"trip";
+  o.zmax=o.zmax||(o.kind==="section"||o.kind==="country"?12:+ls("rb_offZ")||14);o.radius=o.radius||+ls("rb_offR")||10;o.only=o.only||ls("rb_offO")||"trip";
   if(o.kind==="section"&&!o.sec){const t=curTripObj();o.sec=(MA_SECTORS.find(x=>(t&&t.sections||[]).includes(x.n))||MA_SECTORS[0]).n;}
-  if(o.kind==="section"&&o.pts===undefined)o.pts=true;if(o.surf===undefined)o.surf=!/^(0|false)$/.test(ls("rb_offSurf"));
+  if((o.kind==="section"||o.kind==="country")&&o.pts===undefined)o.pts=true;
+  if(o.kind==="country"&&!o._areas)o._areas=countryAreas(o.cc);if(o.surf===undefined)o.surf=o.kind==="country"?false:!/^(0|false)$/.test(ls("rb_offSurf"));
   const build=()=>{const areas=[];let name="";
     if(o.kind==="view"){const b=o.box;areas.push(Object.assign({},b,{z1:Math.max(5,Math.min(o.z,o.zmax)-6),z2:o.zmax}));
       name=o.name||("Ausschnitt "+(countryName(countryOf((b.n+b.s)/2,(b.w+b.e)/2))||"")+" "+fmtD(Date.now())).replace(/\s+/g," ");}
     else if(o.kind==="section"){const s=MA_SECTORS.find(x=>x.n===o.sec);s.box.forEach(b=>areas.push({s:b[0],w:b[1],n:b[2],e:b[3],z1:5,z2:o.zmax}));
       if(o.pts)points.filter(p=>s.box.some(b=>p.lat>=b[0]&&p.lat<=b[2]&&p.lon>=b[1]&&p.lon<=b[3])).forEach(p=>areas.push(Object.assign(ptBox(p,o.radius),{z1:o.zmax+1,z2:14})));
       name=o.name||("Abschnitt "+o.sec);}
+    else if(o.kind==="country"){o._areas.forEach(b=>areas.push(Object.assign({},b,{z1:5,z2:o.zmax})));
+      if(o.pts&&o.zmax<14)points.filter(p=>p.country===o.cc).forEach(p=>areas.push(Object.assign(ptBox(p,o.radius),{z1:o.zmax+1,z2:14})));
+      name=o.name||countryName(o.cc);}
     else{const pl=offPlan(o);const src0=o.only==="all"?points:points.filter(p=>p.trip===curTrip);
       let box=MA_BOX;if(src0.length){const la=src0.map(p=>p.lat),lo=src0.map(p=>p.lon);box={s:Math.min(...la)-1,n:Math.max(...la)+1,w:Math.min(...lo)-1,e:Math.max(...lo)+1};}
       areas.push(Object.assign({},box,{z1:5,z2:8}));
       const src=o.only==="all"?points:o.only==="fix"?src0.filter(p=>p.status!=="idee"):src0;src.forEach(p=>areas.push(Object.assign(ptBox(p,o.radius),{z1:9,z2:o.zmax})));
       name=o.name||(o.only==="all"?"Alle Punkte":"Punkte "+(curTripObj()?curTripObj().name:""))+` (${o.radius} km)`;o._n=src.length;}
-    return {id:o.id||uid(),name,kind:o.kind,layer:o.layer,zmax:o.zmax,areas,date:Date.now(),surf:!!o.surf};};
-  const draw=()=>{const pk=build();const n=packKeys(pk).size;
+    return Object.assign({id:o.id||uid(),name,kind:o.kind,layer:o.layer,zmax:o.zmax,areas,date:Date.now(),surf:!!o.surf},o.cc?{cc:o.cc}:{});};
+  const draw=()=>{const pk=build();const est=tileEstimate(pk.areas,BASE[pk.layer]);const n=est>OFF_MAX*2?est:packKeys(pk).size;const big=o.kind==="section"||o.kind==="country";
     openPanel(`<h2>Neues Offline-Gebiet</h2>
+     ${o.kind==="country"?`<label>Land</label><div style="display:flex;align-items:center;gap:10px;font-size:16px;margin:4px 0 2px"><b>${flagEmoji(o.cc)} ${esc(countryName(o.cc))}</b><button class="btn sec" id="cCC" style="padding:4px 12px;font-size:13px;min-height:0">Anderes Land</button></div>`:""}
      <label>Name</label><input id="cN" value="${esc(pk.name)}">
      ${o.kind==="section"?`<label>Abschnitt</label><select id="cS">${MA_SECTORS.map(s=>`<option ${s.n===o.sec?"selected":""}>${esc(s.n)}</option>`).join("")}</select>`:""}
      ${o.kind==="points"?`<label>Welche Punkte</label><select id="cO"><option value="trip" ${o.only==="trip"?"selected":""}>Aktuelle Reise (${esc(curTripObj()?curTripObj().name:"")})</option><option value="fix" ${o.only==="fix"?"selected":""}>Aktuelle Reise – nur Fixpunkte und besuchte</option><option value="all" ${o.only==="all"?"selected":""}>Alle Punkte</option></select>
        <label>Umkreis um jeden Punkt</label><select id="cR">${[5,10,20,30].map(v=>`<option value="${v}" ${v===o.radius?"selected":""}>${v} km</option>`).join("")}</select>`:""}
      <label>Karte</label><select id="cL">${Object.keys(BASE).map(k=>`<option ${k===o.layer?"selected":""}>${k}</option>`).join("")}</select>
-     <label>Detailstufe${o.kind==="section"?" für das ganze Gebiet":""}</label><select id="cZ">${[[10,"10 – grobe Übersicht"],[11,"11 – Übersicht"],[12,"12 – Ortschaften und Hauptstrassen"],[13,"13 – Strassen gut lesbar"],[14,"14 – Pisten und Wege"],[15,"15 – sehr detailliert"]].filter(([v])=>o.kind!=="section"||v<=13).map(([v,t])=>`<option value="${v}" ${v===o.zmax?"selected":""}>${t}</option>`).join("")}</select>
+     <label>Detailstufe${big?" für das ganze Gebiet":""}</label><select id="cZ">${[[10,"10 – grobe Übersicht"],[11,"11 – Übersicht"],[12,"12 – Ortschaften und Hauptstrassen"],[13,"13 – Strassen gut lesbar"],[14,"14 – Pisten und Wege"],[15,"15 – sehr detailliert"]].filter(([v])=>!big||v<=13).map(([v,t])=>`<option value="${v}" ${v===o.zmax?"selected":""}>${t}</option>`).join("")}</select>
      <label style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink);margin-top:12px"><input type="checkbox" id="cSf" style="width:auto;margin:0" ${o.surf?"checked":""}> Strassenoberfläche mitspeichern (${packCells(pk).length} Kartenstücke à 50 km)</label>
-     ${o.kind==="section"?`<label class="rrow" style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink);margin-top:12px"><input type="checkbox" id="cP" style="width:auto;margin:0" ${o.pts?"checked":""}> Rund um eure Punkte im Abschnitt zusätzlich bis Stufe 14 (${o.radius} km)</label>`:""}
+     ${big?`<label class="rrow" style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink);margin-top:12px"><input type="checkbox" id="cP" style="width:auto;margin:0" ${o.pts?"checked":""}> Rund um eure Punkte ${o.kind==="country"?"im Land":"im Abschnitt"} zusätzlich bis Stufe 14 (${o.radius} km)</label>`:""}
+     ${o.kind==="country"&&n>OFF_MAX?`<p class="muted" style="font-size:13px">Tipp: Für ein grosses Land Stufe 11 oder 12 wählen und Details nur rund um eure Punkte – oder einzelne Abschnitte bzw. Ausschnitte genauer laden.</p>`:""}
      <div class="ocalc ${n>OFF_MAX?"bad":""}"><b>${fmtN(n)} Kartenbilder</b> · ca. ${estMB(n,o.layer)} MB${o.kind==="points"?` · ${o._n} Punkte`:""}${n>OFF_MAX?`<br>Zu viel (max. ${fmtN(OFF_MAX)}) – bitte Detailstufe oder Gebiet verkleinern.`:""}</div>
      <div class="actions"><button class="btn" id="cGo" ${n>OFF_MAX||!n?"disabled":""}>Herunterladen</button><button class="btn sec" id="cBack">Zurück</button>${o.kind==="view"?`<button class="btn sec" id="cRe">Ausschnitt neu wählen</button>`:""}</div>`);
     const ch=(id,k,f,key)=>{const e=$(id);if(e)e.onchange=()=>{o[k]=f(e.type==="checkbox"?e.checked:e.value);if(key)ls(key,String(o[k]));draw();};};
-    ch("#cS","sec",String);ch("#cO","only",String,"rb_offO");ch("#cR","radius",Number,"rb_offR");ch("#cL","layer",String,"rb_offL");ch("#cZ","zmax",Number,o.kind==="section"?null:"rb_offZ");ch("#cP","pts",Boolean);ch("#cSf","surf",Boolean,"rb_offSurf");
+    ch("#cS","sec",String);ch("#cO","only",String,"rb_offO");ch("#cR","radius",Number,"rb_offR");ch("#cL","layer",String,"rb_offL");ch("#cZ","zmax",Number,big?null:"rb_offZ");ch("#cP","pts",Boolean);ch("#cSf","surf",Boolean,"rb_offSurf");
     $("#cN").oninput=e=>{o.name=e.target.value;};
-    $("#cBack").onclick=offlineDialog;const re=$("#cRe");if(re)re.onclick=offPickView;
+    $("#cBack").onclick=o.kind==="country"?offCountryPick:offlineDialog;const cc=$("#cCC");if(cc)cc.onclick=offCountryPick;const re=$("#cRe");if(re)re.onclick=offPickView;
     $("#cGo").onclick=async()=>{const p2=build();p2.name=($("#cN").value||p2.name).trim();await loadOffPacks();offPacks.push(p2);await saveOffPacks();drawOffAreas();offRunPack(p2,false);};};
   draw();}
 /* Herunterladen mit Fortschritt (läuft weiter, auch wenn das Fenster zu ist) */
