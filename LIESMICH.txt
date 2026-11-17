@@ -1,4 +1,4 @@
-IbexMap – v4.2 (privates Projekt)
+IbexMap – v4.3 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -308,3 +308,7 @@ NEU IN v4.1
 NEU IN v4.2
 - POI-Download geduldig: kleinere Gebiete (0,5°), eine Abfrage aufs Mal mit Pausen; scheitert ein Gebiet, geht es mit den übrigen weiter und die fehlenden werden automatisch nochmals versucht (2/5/10/20/30 Min., bis 12 Stunden). Anzeige «nächster Versuch um …». Grosse Länder am PC abends starten und laufen lassen.
 - Offline-Karten: Die Liste der Gebiete wird über Google Drive abgeglichen (nicht die Bilder). Unter «Auf einem anderen Gerät gespeichert» lädt ein Tipp dasselbe Gebiet auch auf diesem Gerät.
+
+NEU IN v4.3
+- POI-Download: höchstens 100 s pro Abfrage (vorher über 3 Min.), Gebiete werden bei Bedarf bis 0,125° verkleinert. Nach 3 gescheiterten Gebieten hintereinander macht die App Pause und versucht es später wieder, statt sich durch alle Gebiete zu quälen.
+- Anzeige während des Downloads: Server, aktuelles Stück mit Versuch-Nr., Wartezeit dieser Abfrage, Anzahl erfolgreicher und gescheiterter Abfragen mit letztem Fehler.
