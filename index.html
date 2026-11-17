@@ -241,6 +241,9 @@ details.more summary{cursor:pointer;font-size:14px;font-weight:600;color:var(--i
 .pin span{transform:rotate(45deg);font-size:15px}
 .pinw{position:relative;width:30px;height:30px}
 .pin.visited{border-color:#2e9e44}
+.pinw.imp .pin{width:40px;height:40px;border:3px solid #ffd54f;box-shadow:0 0 0 3px rgba(198,40,40,.85),0 2px 8px rgba(0,0,0,.5)}
+.pinw.imp .pin span{transform:rotate(45deg) scale(1.25)}
+.vimp{position:absolute;top:-8px;left:-8px;width:18px;height:18px;border-radius:50%;background:#c62828;color:#fff;border:2px solid #fff;font:800 12px/14px system-ui,sans-serif;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.4)}
 .vchk{position:absolute;right:-7px;top:-7px;width:17px;height:17px;border-radius:50%;background:#2e9e44;border:2px solid #fff;color:#fff;font-size:11px;font-weight:900;line-height:13px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.4)}
 .vstory{position:absolute;left:-7px;top:-7px;width:17px;height:17px;border-radius:50%;background:#1e6fd9;border:2px solid #fff;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.4)}
 .lstory{display:inline-flex;align-items:center;justify-content:center;background:#1e6fd9;color:#fff;border-radius:50%;width:17px;height:17px;margin-right:4px;vertical-align:-3px}
@@ -295,7 +298,6 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
     <div class="hint" id="hint">Tippe ungefähr auf die Stelle – danach fein einstellen · <u id="hintCancel">Abbrechen</u></div>
     <div class="placebar" id="placebar"><div class="muted" id="pbInfo">Am Griff ✥ ziehen</div>
       <div class="actions"><button class="btn" id="pbOk">✓ Punkt hier setzen</button><button class="btn sec" id="pbNo">Abbrechen</button></div></div>
-    <button class="fab add" id="navAdd" title="Punkt setzen" style="bottom:calc(260px + var(--sb))">＋</button>
     <button class="fab" id="navHere" title="Hier merken (aktueller Standort)" style="bottom:calc(200px + var(--sb))"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.6" fill="currentColor"/></svg></button>
     <button class="fab" id="navList" title="Liste" style="bottom:calc(140px + var(--sb))"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2" fill="currentColor"/><circle cx="4.5" cy="12" r="1.2" fill="currentColor"/><circle cx="4.5" cy="18" r="1.2" fill="currentColor"/></svg></button>
     <button class="fab" id="locBtn" title="Mein Standort">◎</button>
@@ -414,7 +416,7 @@ const ADM=(()=>{try{if(new URLSearchParams(location.search).has("admin")){sessio
   return sessionStorage.getItem("rb_admin")==="1"&&matchMedia("(min-width:900px)").matches;}catch(e){return false;}})();
 if(ADM)document.body.classList.add("adm");
 const GROUP="IbexMap";
-const VERSION="v3.4";
+const VERSION="v4.1";
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
 const MA_SECTORS=[
  {n:"A Norden",zeit:"5.–10. April",klima:"Frühling, grün; 15–22 °C, im Rif Regen möglich, Nächte kühl",info:"Tanger Med, Chefchaouen, Fès, Meknès – ankommen, Städte, einkaufen. Eher Campings.",box:[[33.8,-5.9,35.95,-1.0]]},
@@ -542,6 +544,15 @@ const BASE={
   "Topo":L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",{subdomains:"abc",maxZoom:17,crossOrigin:"anonymous",attribution:"© OpenStreetMap-Mitwirkende, SRTM | © OpenTopoMap (CC-BY-SA)"}),
   "swisstopo (Schweiz)":L.tileLayer("https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg",{maxZoom:19,minZoom:6,crossOrigin:"anonymous",bounds:[[45.6,5.8],[47.95,10.65]],attribution:"© swisstopo"})
 };
+/* Fehlt eine Kachel in dieser Zoomstufe (z. B. Esri in abgelegenen Gebieten, oder offline nicht gespeichert),
+   wird die nächstgröbere vorhandene Kachel vergrössert angezeigt statt einer grauen Fläche */
+function tileFallback(e){const lay=e.target,t=e.tile,c=e.coords;if(!t||t.dataset.fb)return;t.dataset.fb="1";
+  const tryK=k=>{if(k>6||c.z-k<0)return;const pc={x:c.x>>k,y:c.y>>k,z:c.z-k};const im=new Image();im.crossOrigin="anonymous";
+    im.onload=()=>{try{const cv=document.createElement("canvas");cv.width=cv.height=256;const sz=256/(1<<k);
+      cv.getContext("2d").drawImage(im,(c.x-(pc.x<<k))*sz,(c.y-(pc.y<<k))*sz,sz,sz,0,0,256,256);t.src=cv.toDataURL("image/jpeg",0.85);t.style.opacity=1;}catch(err){}};
+    im.onerror=()=>tryK(k+1);im.src=lay.getTileUrl(pc);};
+  tryK(1);}
+Object.values(BASE).forEach(l=>l.on("tileerror",tileFallback));
 let baseName="Strassen";try{baseName=localStorage.getItem("rb_base")||"Strassen";}catch(e){}
 (BASE[baseName]||BASE["Strassen"]).addTo(map);
 const layCtl=L.control.layers(BASE,null,{position:"topright"}).addTo(map);
@@ -552,9 +563,9 @@ map.on("baselayerchange",e=>{try{localStorage.setItem("rb_base",e.name);}catch(e
 const layer=L.layerGroup().addTo(map);
 let points=[];const thumbs={};
 
-function pinIcon(p){const c=CATS[p.cat]||CATS.other;
-  return L.divIcon({className:"",iconSize:[30,30],iconAnchor:[15,30],popupAnchor:[0,-28],
-    html:`<div class="pinw"><div class="pin ${p.status==="besucht"?"visited":""}" style="background:${c.c}"><span>${svgI(p.cat in CATS?p.cat:"other",16)}</span></div>${p.status==="besucht"?`<span class="vchk">✓</span>`:""}${p.story?`<span class="vstory">${storyI(9)}</span>`:""}</div>`});}
+function pinIcon(p){const c=CATS[p.cat]||CATS.other;const S=p.imp?40:30;
+  return L.divIcon({className:"",iconSize:[S,S],iconAnchor:[S/2,S],popupAnchor:[0,-S+2],
+    html:`<div class="pinw${p.imp?" imp":""}">${p.imp?`<span class="vimp">!</span>`:""}<div class="pin ${p.status==="besucht"?"visited":""}" style="background:${c.c}"><span>${svgI(p.cat in CATS?p.cat:"other",16)}</span></div>${p.status==="besucht"?`<span class="vchk">✓</span>`:""}${p.story?`<span class="vstory">${storyI(9)}</span>`:""}</div>`});}
 let hiddenCats=[];try{hiddenCats=JSON.parse(localStorage.getItem("rb_hidden")||"[]");}catch(e){}
 /* Kartenfilter Bewertung: nur Punkte ab n Sternen (0 = alle) */
 let mapStars=0;try{mapStars=+localStorage.getItem("rb_mstars")||0;}catch(e){}const saveStars=()=>{try{localStorage.setItem("rb_mstars",String(mapStars));}catch(e){}};
@@ -580,11 +591,12 @@ function filtState(){const b=$("#filtBtn");if(!b)return;
 function drawPoints(){layer.clearLayers();
   filtState();
   const vis=ADM?points.filter(p=>admShown.has(p.id)):points.filter(p=>!hiddenCats.includes(p.cat in CATS?p.cat:"other")&&!hiddenStat.includes(p.status||"idee")&&(!mapTrip.length||mapTrip.includes(p.trip))&&(mapTrip.includes(p.trip)||!tripHidden(p.trip))&&(!mapCountry.length||mapCountry.includes(p.country))&&(!mapStars||(p.stars||0)>=mapStars));
-  const z=map.getZoom(),single=p=>L.marker([p.lat,p.lon],{icon:pinIcon(p)}).addTo(layer).on("click",()=>{if(ADM){const tr=admFocus(p.id,false);if(tr)tr.scrollIntoView({block:"center",behavior:"smooth"});}showDetail(p.id);});
+  const z=map.getZoom(),single=p=>L.marker([p.lat,p.lon],{icon:pinIcon(p),zIndexOffset:p.imp?1000:0}).addTo(layer).on("click",()=>{if(ADM){const tr=admFocus(p.id,false);if(tr)tr.scrollIntoView({block:"center",behavior:"smooth"});}showDetail(p.id);});
   if(z>=CLUSTER_MAXZOOM||!clusterOn){vis.forEach(single);return;}
   /* Gruppieren nach Kategorie: nahe Punkte gleicher Kategorie (Raster 64 px) werden zu einer Blase mit Anzahl */
   const cells=new Map();
-  vis.forEach(p=>{const cat=p.cat in CATS?p.cat:"other",px=map.project([p.lat,p.lon],z);
+  vis.forEach(p=>{if(p.imp){single(p);return;}/* wichtige Punkte werden nie gruppiert */
+    const cat=p.cat in CATS?p.cat:"other",px=map.project([p.lat,p.lon],z);
     const k=cat+"|"+Math.floor(px.x/64)+"|"+Math.floor(px.y/64);if(!cells.has(k))cells.set(k,{cat,list:[]});cells.get(k).list.push(p);});
   for(const {cat,list} of cells.values()){
     if(list.length===1){single(list[0]);continue;}
@@ -696,7 +708,11 @@ function showOsm(x){const c=OSM[x.ty],t=x.t;const nm=t.name||t["name:fr"]||t.bra
     editPoint(newPoint(x.lat,x.lon,Object.assign({title:nm,cat:x.ty,desc,source:"OpenStreetMap"},x.ty==="water"?{water:(t.amenity==="drinking_water"||t.drinking_water==="yes")?"trink":t.drinking_water==="no"?"brauch":"unklar"}:{})),true);};}
 
 /* ---------- GPS ---------- */
-let me=null,meMarker=null,meCircle=null,follow=false,watchId=null;
+let me=null,meMarker=null,meCircle=null,follow=false,watchId=null,lastPosT=0;
+/* Bezugspunkt für «Nächste zuerst»: aktueller Standort, sonst der zuletzt bekannte, sonst die Kartenmitte */
+function refPos(){if(me)return {lat:me.lat,lon:me.lon,src:"Standort"};
+  try{const l=JSON.parse(localStorage.getItem("rb_lastpos")||"null");if(l&&isFinite(l.lat))return {lat:l.lat,lon:l.lon,src:`letzter Standort ${fmtDT(l.t)}`};}catch(e){}
+  const c=map.getCenter();return {lat:c.lat,lon:c.lng,src:"Kartenmitte (kein Standort bekannt)"};}
 function gpsState(cls,txt){const b=$("#gpsInfo");b.classList.remove("ok","bad");if(cls)b.classList.add(cls);b.title=txt;b.dataset.txt=txt;}
 $("#gpsInfo").onclick=()=>toast($("#gpsInfo").dataset.txt||"GPS aus",4000);
 function startGPS(){
@@ -704,6 +720,7 @@ function startGPS(){
   if(watchId!==null)return;
   watchId=navigator.geolocation.watchPosition(pos=>{
     me={lat:pos.coords.latitude,lon:pos.coords.longitude,acc:pos.coords.accuracy};
+    if(!lastPosT||Date.now()-lastPosT>30000){lastPosT=Date.now();try{localStorage.setItem("rb_lastpos",JSON.stringify({lat:me.lat,lon:me.lon,t:lastPosT}));}catch(e){}}
     gpsState("ok",`GPS ±${Math.round(me.acc)} m`);
     if(!meMarker){meMarker=L.circleMarker([me.lat,me.lon],{radius:8,color:"#fff",weight:3,fillColor:"#1e88e5",fillOpacity:1}).addTo(map);
       meCircle=L.circle([me.lat,me.lon],{radius:me.acc,color:"#1e88e5",weight:1,fillOpacity:.1}).addTo(map);}
@@ -894,10 +911,12 @@ function showSearch(){
     let r=null,src="";
     if(poiOff.length&&keys.size){let h=poiOffFind(keys,ctr,15);if(h.length<5)h=poiOffFind(keys,ctr,50);
       if(h.length||poiOff.some(p=>p.cc===countryOf(ctr.lat,ctr.lon))){r=h;src="offline";}}
-    if(!r){if(!navigator.onLine){$("#sRes").innerHTML=head+`<p class="muted">Ohne Internet nur in gespeicherten Ländern möglich – Menü › Karte › «Orte zum Suchen (offline)».</p>`;bind();return;}
-      $("#sRes").innerHTML=head+`<p class="muted">Suche ${me?"ab deinem Standort":"ab Kartenmitte"} … (kann einige Sekunden dauern)</p>`;bind();
-      r=await overpassAround(sel,ctr.lat,ctr.lon,15000);if(r&&r.length<5)r=await overpassAround(sel,ctr.lat,ctr.lon,50000)||r;}
-    if(!r){$("#sRes").innerHTML=head+`<p>Die OpenStreetMap-Server sind gerade überlastet oder nicht erreichbar.</p><div class="actions"><button class="btn" id="sRetry">Nochmals versuchen</button></div>`;bind();$("#sRetry").onclick=()=>catSearch(label,sel,g,all);return;}
+    if(!r){if(!navigator.onLine){$("#sRes").innerHTML=head+`<p class="muted">Ohne Internet nur in gespeicherten Ländern möglich – Menü › POI-Overlay › Land laden.</p>`;bind();return;}
+      const t0=Date.now();
+      $("#sRes").innerHTML=head+`<p class="muted" id="sWait">Suche ${me?"ab deinem Standort":"ab Kartenmitte"} bei OpenStreetMap …</p><p class="muted" style="font-size:13px">Online-Suche über die öffentlichen OpenStreetMap-Server – die sind oft überlastet. Mit gespeichertem POI-Overlay für das Land (Menü › POI-Overlay) geht die Suche sofort und ohne Internet.</p>`;bind();
+      const tw=setInterval(()=>{const w=$("#sWait");if(!w){clearInterval(tw);return;}w.textContent=`Suche ${me?"ab deinem Standort":"ab Kartenmitte"} bei OpenStreetMap … ${Math.round((Date.now()-t0)/1000)} s`;},1000);
+      r=await overpassAround(sel,ctr.lat,ctr.lon,15000);if(r&&r.length<5)r=await overpassAround(sel,ctr.lat,ctr.lon,50000)||r;clearInterval(tw);}
+    if(!r){$("#sRes").innerHTML=head+`<p>Die OpenStreetMap-Server sind gerade überlastet oder nicht erreichbar.</p><p class="muted">Mit dem POI-Overlay für das Land funktioniert diese Suche sofort und offline – ohne diese Server.</p><div class="actions"><button class="btn" id="sRetry">Nochmals versuchen</button><button class="btn sec" id="sPoi">POI-Overlay laden</button></div>`;bind();$("#sRetry").onclick=()=>catSearch(label,sel,g,all);$("#sPoi").onclick=poiOffDialog;return;}
     const list=r.map(x=>({...x,d:distKm(ctr,x)})).sort((a,b)=>a.d-b.d).slice(0,50);
     $("#sRes").innerHTML=head+`<p class="muted">${list.length} Treffer, ${me?"ab deinem Standort":"ab Kartenmitte"} (Luftlinie)${src==="offline"?" · aus gespeicherten Orten (offline)":""}</p>`
       +(list.length?list.map((x,i)=>{const nm=x.t.name||x.t["name:fr"]||x.t.brand||"";return `<div class="item" data-hit="${i}">${icoBadge(g?g.i:"other",g?g.c:"#6b6b6b",30)}<div><div class="t">${esc(nm||(all?itemOf(g,x.t)||osmLabel(x.t)||label:label))}</div><div class="s">${kmTxt(x.d)}${nm||all?" · "+esc((all&&itemOf(g,x.t))||osmLabel(x.t)||label):""}${x.t.opening_hours?" · "+esc(x.t.opening_hours):""}</div></div></div>`;}).join(""):`<p class="muted">Nichts im Umkreis von 50 km gefunden.</p>`);
@@ -964,6 +983,21 @@ async function geocode(q){if(!q||!navigator.onLine)return null;
   try{const r=await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&accept-language=de&q=${encodeURIComponent(q)}`);const j=await r.json();
     return j[0]?[+j[0].lat,+j[0].lon]:null;}catch(e){return null;}}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+/* Google Plus Codes (Open Location Code), z. B. «8C6Q+XX Zagora» – Google teilt unbenannte Orte oft so */
+const OLC_A="23456789CFGHJMPQRVWX";
+function olcDecode(code){code=code.toUpperCase().replace("+","").replace(/0+$/,"");let la=-90,lo=-180,r=20;
+  for(let i=0;i<Math.min(code.length,10);i+=2){la+=OLC_A.indexOf(code[i])*r;if(code[i+1])lo+=OLC_A.indexOf(code[i+1])*r;if(i+2<Math.min(code.length,10))r/=20;}
+  return [la+r/2,lo+r/2];}
+function olcEncode(lat,lon){lat=Math.min(89.9999,Math.max(-90,lat))+90;lon=((lon+180)%360+360)%360;let c="",r=20;
+  for(let i=0;i<5;i++){const a=Math.floor(lat/r),b=Math.floor(lon/r);c+=OLC_A[a]+OLC_A[b];lat-=a*r;lon-=b*r;r/=20;if(i===3)c+="+";}return c;}
+function olcRecover(short,ref){short=short.toUpperCase();const pad=8-short.indexOf("+");if(pad<=0)return olcDecode(short);
+  const res=Math.pow(20,2-pad/2),h=res/2;let [la,lo]=olcDecode(olcEncode(ref[0],ref[1]).replace("+","").slice(0,pad)+short.replace("+",""));
+  if(ref[0]+h<la&&la-res>=-90)la-=res;else if(ref[0]-h>la&&la+res<=90)la+=res;
+  if(ref[1]+h<lo)lo-=res;else if(ref[1]-h>lo)lo+=res;return [la,lo];}
+async function plusCodeLoc(text){const m=(text||"").match(/(?:^|[\s,(])([23456789CFGHJMPQRVWX]{2,8}\+[23456789CFGHJMPQRVWX]{0,3})(?=[\s,)]|$)([^\n]*)/i);if(!m)return null;
+  const code=m[1].toUpperCase();if(code.indexOf("+")===8)return olcDecode(code);
+  const loc=(m[2]||"").replace(/^[\s,]+/,"").trim();const ref=loc?await geocode(loc)||await geocode(loc.split(",")[0]):map.getCenter()&&[map.getCenter().lat,map.getCenter().lng];
+  return ref?olcRecover(code,ref):null;}
 /* 1. Teilen aus Google Maps (oder jeder anderen App) an ibexmap */
 async function handleShare(){const q=new URLSearchParams(location.search);if(!q.has("st")&&!q.has("sx")&&!q.has("su"))return;
   history.replaceState(null,"",location.pathname);
@@ -973,10 +1007,15 @@ async function handleShare(){const q=new URLSearchParams(location.search);if(!q.
   const name=(title&&!/^https?:/.test(title)?title:lines[0])||"Geteilter Ort";const addr=lines.filter(x=>x!==name).join(", ");
   placeExtra={title:name,desc:addr,source:url,cat:guessCat(name+" "+addr),status:"idee"};
   let ll=coordsFromUrl(url)||coordsFromUrl(text);
-  if(!ll){toast("Suche den Ort …",4000);ll=await geocode([name,addr].filter(Boolean).join(", "))||await geocode(addr)||await geocode(name);}
+  let approx=false;
+  if(!ll){toast("Suche den Ort …",4000);ll=await plusCodeLoc(text+"\n"+title)||await geocode([name,addr].filter(Boolean).join(", "))||await geocode(addr)||await geocode(name);}
+  /* zuletzt: nur Ort/Region aus der Adresse (z. B. «Zagora, Marokko») – dann ungefähr */
+  if(!ll&&addr){const parts=addr.split(",").map(x=>x.trim()).filter(Boolean);for(let i=1;i<parts.length&&!ll;i++){ll=await geocode(parts.slice(i).join(", "));if(ll)approx=true;}}
+  if(!ll&&name){const w=name.split(/\s+/).filter(x=>x.length>3);for(const x of w.reverse()){ll=await geocode(x);if(ll){approx=true;break;}}}
   setPlacing(false);setPlacing(true);
-  if(ll){map.setView(ll,16);putCross(L.latLng(ll[0],ll[1]));toast(`«${name}» – Position prüfen, dann «Punkt hier setzen»`,6000);}
-  else{putCross(map.getCenter());toast("Ort nicht automatisch gefunden – Kreuz an die richtige Stelle ziehen",7000);}}
+  if(ll&&!approx){map.setView(ll,16);putCross(L.latLng(ll[0],ll[1]));toast(`«${name}» – Position prüfen, dann «Punkt hier setzen»`,6000);}
+  else if(ll){map.setView(ll,13);putCross(L.latLng(ll[0],ll[1]));toast(`«${name}»: nur der Ort wurde gefunden – Kreuz an die genaue Stelle ziehen`,8000);}
+  else{putCross(map.getCenter());toast("Ort nicht automatisch gefunden – Kreuz an die richtige Stelle ziehen. Tipp: in Google Maps die Koordinaten kopieren und in der Suche einfügen.",9000);}}
 /* 3. Google Takeout: «Gespeicherte Orte.json» (GeoJSON) oder Listen als .csv */
 function parseCSV(t){const rows=[];let row=[],f="",q=false;
   for(let i=0;i<t.length;i++){const c=t[i];
@@ -1111,6 +1150,7 @@ async function showDetail(id){const p=points.find(x=>x.id===id);if(!p)return;con
       <div class="mrow">${mi("globe")}<span>${esc(countryName(p.country)||"Land unbekannt")}${p.region?" · "+esc(p.region):""}</span></div>
       ${me?`<div class="mrow">${mi("ruler")}<span>${distKm(me,p).toFixed(1)} km Luftlinie</span></div>`:""}
       ${p.cat==="water"?`<div class="mrow">${icoBadge("water","#0288d1",24)}<span><b>${esc(WATERQ[p.water||"unklar"])}</b></span></div>`:""}
+      ${p.imp?`<div class="mrow"><span class="vimp" style="position:static;display:inline-block;width:22px;height:22px;line-height:18px">!</span><span><b>Wichtig</b></span></div>`:""}
       ${p.story?`<div class="mrow"><span class="lstory" style="width:22px;height:22px;margin:0">${storyI(13)}</span><span>Storypoint – wird publiziert</span></div>`:""}
     </div>
     ${RATE[p.cat]&&(p.stars||Object.keys(p.rate||{}).length)?`<div class="rate">${p.stars?`<div class="rrow"><b>Gesamt</b><span class="sv" style="font-size:20px">${starTxt(p.stars)}</span></div>`:""}
@@ -1150,6 +1190,7 @@ async function editPoint(p,isNew=false){
    <label>Land / Region (automatisch)</label><div class="muted">${esc(countryName(p.country||countryOf(p.lat,p.lon))||(countryData?"–":"Ländergrenzen noch nicht geladen"))}</div><div class="muted" id="fRegion">${esc(p.region||regionOf(p.lat,p.lon)||(regionData?"ausserhalb der Regionsdaten":"Regionsgrenzen noch nicht geladen (Menü)"))}</div>
    <div id="fWaterWrap" style="display:${p.cat==="water"?"block":"none"}"><label>Wasser</label><select id="fWater">${Object.entries(WATERQ).map(([k,v])=>`<option value="${k}" ${(p.water||"unklar")===k?"selected":""}>${v}</option>`).join("")}</select></div>
    <div id="fRateBox"></div>
+   <label style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink);margin-top:14px"><input type="checkbox" id="fImp" style="width:auto;margin:0" ${p.imp?"checked":""}> <span class="vimp" style="position:static;display:inline-block">!</span> Wichtig – auf der Karte hervorheben</label>
    <label style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink);margin-top:14px"><input type="checkbox" id="fStory" style="width:auto;margin:0" ${p.story?"checked":""}> ${mi("book",16)} Storypoint – auf der Familienseite zeigen</label>
    <textarea id="fStoryText" placeholder="Story-Text (für die Familienseite)" style="min-height:70px;margin-top:6px">${esc(p.storyText||"")}</textarea><div class="muted" id="fStoryHint" style="font-size:12px;margin-top:2px">${p.story?"Wird beim Veröffentlichen geteilt.":"Wird nicht geteilt – der Text bleibt gespeichert."}</div>
    <label>Beschreibung</label><textarea id="fDesc">${esc(p.desc)}</textarea>
@@ -1162,7 +1203,7 @@ async function editPoint(p,isNew=false){
      </div></div>
    <details class="more" ${p.source?"open":""}><summary>Mehr: Quelle und Koordinaten</summary>
    <label>Quelle</label><input id="fSource" value="${esc(p.source)}" placeholder="Reiseführer S. …, Webseite …">
-   <div class="row"><div><label>Breite</label><input id="fLat" inputmode="decimal" value="${p.lat}"></div><div><label>Länge</label><input id="fLon" inputmode="decimal" value="${p.lon}"></div></div></details>
+   <div class="row"><div><label>Breite</label><input id="fLat" inputmode="decimal" title="Auch «Breite, Länge» oder einen Google-Maps-Link einfügen" value="${p.lat}"></div><div><label>Länge</label><input id="fLon" inputmode="decimal" value="${p.lon}"></div></div></details>
    <div class="actions"><button class="btn" id="fSave">Speichern</button><button class="btn sec" id="fCancel">Abbrechen</button>
    ${isNew?"":`<button class="btn warn" id="fDel">Löschen</button>`}</div>`);
   await renderDraftPhotos();
@@ -1190,7 +1231,9 @@ async function editPoint(p,isNew=false){
   $("#fTrip").onchange=e=>{$("#fSection").innerHTML=secOpts(e.target.value,"");$("#fSectionNew").style.display="none";};
   $("#fSection").onchange=e=>{$("#fSectionNew").style.display=e.target.value==="__new"?"block":"none";if(e.target.value==="__new")$("#fSectionNew").focus();};
   const updReg=()=>{const la=parseFloat($("#fLat").value.replace(",",".")),lo=parseFloat($("#fLon").value.replace(",","."));if(regionData&&isFinite(la)&&isFinite(lo))$("#fRegion").textContent=regionOf(la,lo)||"ausserhalb der Regionsdaten";};
-  $("#fLat").oninput=updReg;$("#fLon").oninput=updReg;
+  /* «30.3387, -5.8430» oder ein Google-Maps-Link in eines der Felder eingefügt: beide Felder auf einmal füllen */
+  const both=e=>{const v=e.target.value;if(/[,;\s].*\d|https?:/.test(v.trim())){const r=parseLoc(v);if(r&&r.ll){$("#fLat").value=+r.ll[0].toFixed(7);$("#fLon").value=+r.ll[1].toFixed(7);toast("Breite und Länge übernommen",2500);}}updReg();};
+  $("#fLat").oninput=both;$("#fLon").oninput=both;
   const addFiles=async files=>{for(const f of files){if(!f.type.startsWith("image/"))continue;
       try{const b=await resize(f);const id=uid();await put("photos",{id,blob:b});draftPhotos.push(id);}catch(e){toast(e.message);}}
     renderDraftPhotos();};
@@ -1212,7 +1255,7 @@ async function editPoint(p,isNew=false){
     readRate();const cr=RATE[$("#fCat").value];
     if(cr){const r={};for(const[k,,ty]of cr){const v=draftRate[k]||{};if(ty){if(isOn(v)||v.t)r[k]={b:isOn(v),t:v.t||""};}else if(v.s||v.t)r[k]={s:v.s||0,t:v.t||""};}p.rate=r;p.stars=draftStars||0;}
     if($("#fCat").value==="water")p.water=$("#fWater").value;
-    p.story=$("#fStory").checked;p.storyText=$("#fStoryText").value.trim();
+    p.imp=$("#fImp").checked||undefined;p.story=$("#fStory").checked;p.storyText=$("#fStoryText").value.trim();
     Object.assign(p,{title:$("#fTitle").value.trim(),cat:$("#fCat").value,status:$("#fStatus").value,section:sec,region:regionOf(lat,lon)||p.region||"",
       desc:$("#fDesc").value,note:$("#fNote").value,source:$("#fSource").value.trim(),lat,lon,photos:draftPhotos,updated:Date.now()});
     if(p.status==="besucht")p.visited=$("#fVisited").value||p.visited||new Date().toISOString().slice(0,10);
@@ -1226,8 +1269,8 @@ async function renderDraftPhotos(){const box=$("#fPhotos");if(!box)return;let h=
   box.innerHTML=h||`<span class="muted">Noch keine Fotos</span>`;
   box.querySelectorAll("button").forEach(b=>b.onclick=()=>{draftPhotos=draftPhotos.filter(x=>x!==b.dataset.id);renderDraftPhotos();});}
 
-function confirmBox(text,onYes){const prev=$("#panel").innerHTML;
-  const wrap=document.createElement("div");wrap.innerHTML=`<hr><p><b>${text}</b></p><div class="actions"><button class="btn warn" id="cYes">Ja</button><button class="btn sec" id="cNo">Nein</button></div>`;
+function confirmBox(text,onYes){const old=$("#cBox");if(old)old.remove();
+  const wrap=document.createElement("div");wrap.id="cBox";wrap.innerHTML=`<hr><p><b>${text}</b></p><div class="actions"><button class="btn warn" id="cYes">Ja</button><button class="btn sec" id="cNo">Nein</button></div>`;
   $("#panel").appendChild(wrap);wrap.scrollIntoView();
   $("#cYes").onclick=onYes;$("#cNo").onclick=()=>wrap.remove();}
 
@@ -1245,7 +1288,6 @@ function setPlacing(on){placing=on;if(!on){placeMode="point";}const pk=document.
   if(!on){if(cross){map.removeLayer(cross);cross=null;}$("#placebar").style.display="none";}}
 function putCross(ll){if(!cross){cross=L.marker(ll,{icon:crossIcon,draggable:true,autoPan:true,zIndexOffset:2000,keyboard:false}).addTo(map);cross.on("drag",pbInfo);}
   else cross.setLatLng(ll);$("#hint").style.display="none";$("#placebar").style.display="block";pbInfo();}
-$("#navAdd").onclick=()=>startPlace(map.getCenter(),"point");
 $("#hintCancel").onclick=e=>{e.stopPropagation();setPlacing(false);};
 $("#pbNo").onclick=e=>{e.stopPropagation();placeExtra=null;placeMode="point";setPlacing(false);};
 let placeExtra=null;
@@ -1304,14 +1346,15 @@ async function renderItems(){
   const inS=(S,v)=>!S.size||S.has(v);
   let list=points.filter(p=>(!LF.trip.size||LF.trip.has(p.trip||"__none"))&&(LF.trip.has(p.trip)||!tripHidden(p.trip))&&inS(LF.cc,p.country)&&inS(LF.cat,p.cat in CATS?p.cat:"other")&&inS(LF.st,p.status||"idee")&&inS(LF.sec,p.section)&&(!LF.stars.size||(p.stars||0)>=Math.min(...[...LF.stars].map(Number)))&&(!q||(ptTitle(p)+" "+p.desc+" "+p.section+" "+(p.region||"")+" "+countryName(p.country)+" "+tripName(p.trip)+" "+p.note).toLowerCase().includes(q)));
   const dkey=p=>p.visited?new Date(p.visited+"T12:00:00").getTime():(p.created||0);
-  if(lSort==="dist"&&me)list=list.map(p=>({p,d:distKm(me,p)})).sort((a,b)=>a.d-b.d).map(x=>x.p);
+  const rp=refPos();
+  if(lSort==="dist")list=list.map(p=>({p,d:distKm(rp,p)})).sort((a,b)=>a.d-b.d).map(x=>x.p);
   else if(lSort==="new")list.sort((a,b)=>dkey(b)-dkey(a));
   else if(lSort==="old")list.sort((a,b)=>dkey(a)-dkey(b));
   else if(lSort==="stars")list.sort((a,b)=>(b.stars||0)-(a.stars||0)||dkey(b)-dkey(a));
-  let h="";
+  let h=lSort==="dist"&&list.length?`<p class="muted" style="font-size:13px;margin:4px 0 8px">Nächste zuerst – ab ${esc(rp.src)}</p>`:"";
   for(const p of list){const c=CATS[p.cat]||CATS.other;const u=p.photos?.length?await photoURL(p.photos[0]):"";
     h+=`<div class="item" data-id="${p.id}">${u?`<img src="${u}">`:`<div class="noimg" style="background:${c.c}">${svgI(p.cat in CATS?p.cat:"other",34)}</div>`}
-      <div><div class="t">${p.status==="besucht"?`<span class="lchk">✓</span>`:""}${p.story?`<span class="lstory">${storyI(10)}</span>`:""}${esc(ptTitle(p))}${p.stars&&RATE[p.cat]?` <span class="sv" style="font-weight:400;font-size:13px">${starTxt(p.stars)}</span>`:""}</div><div class="s"><span class="dot" style="background:${c.c}"></span>${esc(c.n)} · ${esc(STATUS[p.status]||"")}${p.section?" · "+esc(p.section):""} · ${esc(fmtD(p.visited||p.created))}${me?" · "+distKm(me,p).toFixed(0)+" km":""}</div></div></div>`;}
+      <div><div class="t">${p.status==="besucht"?`<span class="lchk">✓</span>`:""}${p.story?`<span class="lstory">${storyI(10)}</span>`:""}${esc(ptTitle(p))}${p.stars&&RATE[p.cat]?` <span class="sv" style="font-weight:400;font-size:13px">${starTxt(p.stars)}</span>`:""}</div><div class="s"><span class="dot" style="background:${c.c}"></span>${esc(c.n)} · ${esc(STATUS[p.status]||"")}${p.section?" · "+esc(p.section):""} · ${esc(fmtD(p.visited||p.created))}${" · "+distKm(rp,p).toFixed(0)+" km"}</div></div></div>`;}
   $("#lItems").innerHTML=h||`<p class="muted">Keine Punkte gefunden.</p>`;
   $("#lItems").querySelectorAll(".item").forEach(e=>e.onclick=()=>showDetail(e.dataset.id));
 }
@@ -2187,7 +2230,7 @@ async function storageDialog(){
    <p class="muted">Belegt laut Browser: ${est.usage?MB(est.usage):"?"}${est.quota?` von max. ${MB(est.quota)}`:""}. ${persisted?"Speicher ist als dauerhaft geschützt.":"Speicher ist (noch) nicht als dauerhaft geschützt – nach dem Installieren der App gibt Android das meist frei."}</p>
    <p class="muted">Punkte und Fotos werden beim Leeren nie gelöscht.</p>`);
   $("#stTiles").onclick=async()=>{await caches.delete(TILECACHE);toast("Karten-Zwischenspeicher geleert");storageDialog();};}
-const TILECACHE="reisebuch-tiles-v3";
+const TILECACHE="reisebuch-tiles-v4";
 /* ---------- Update ---------- */
 let swReg=null;
 async function checkUpdate(){if(!navigator.onLine)return toast("Kein Internet",3000);toast("Suche Update …",5000);
@@ -2620,7 +2663,11 @@ async function readyDialog(){openPanel(`<h2>Bereit für unterwegs?</h2><p class=
   showHeaderTrip();setTimeout(handleShare,600);setTimeout(async()=>{if(!countryData){await ensureCountries();}else{await assignCountries();}},1500);
   if(_gdNew||sessionStorage.getItem("rb_after_login")){try{sessionStorage.removeItem("rb_after_login");}catch(e){}if(gdToken)setTimeout(()=>syncDrive(),400);}
   try{const o=await getOne("meta","osmpoi");if(o)osmData={items:o.items||[],loaded:o.loaded,scope:o.scope||""};}catch(e){}drawOsm();
-  if(points.length){const b=L.latLngBounds(points.map(p=>[p.lat,p.lon]));map.fitBounds(b,{padding:[30,30]});}
+  /* letzte Kartenansicht wiederherstellen (beim Neuladen, nach Update oder Google-Anmeldung) – sonst alle Punkte zeigen */
+  let lv=null;try{lv=JSON.parse(localStorage.getItem("rb_view")||"null");}catch(e){}
+  if(lv&&isFinite(lv.lat)&&isFinite(lv.lon)&&isFinite(lv.z))map.setView([lv.lat,lv.lon],lv.z,{animate:false});
+  else if(points.length){const b=L.latLngBounds(points.map(p=>[p.lat,p.lon]));map.fitBounds(b,{padding:[30,30]});}
+  map.on("moveend",()=>{const c=map.getCenter();try{localStorage.setItem("rb_view",JSON.stringify({lat:+c.lat.toFixed(5),lon:+c.lng.toFixed(5),z:map.getZoom()}));}catch(e){}});
   if(!ADM)startGPS();
   $("#ver").textContent=VERSION;
   if("serviceWorker" in navigator&&location.protocol==="https:"){

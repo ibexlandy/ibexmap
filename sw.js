@@ -1,4 +1,4 @@
-const APP="reisebuch-app-v3.4",TILES="reisebuch-tiles-v3",OFFLINE="reisebuch-offline",MAXTILES=3000;
+const APP="reisebuch-app-v4.1",TILES="reisebuch-tiles-v4",OFFLINE="reisebuch-offline",MAXTILES=3000;
 const SHELL=["./","index.html","topo.svg","manifest.webmanifest","icon-192.png","icon-512.png","icon-maskable-512.png","favicon.png",
 "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css",
 "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"];
@@ -13,7 +13,9 @@ self.addEventListener("fetch",e=>{const u=new URL(e.request.url);
   e.respondWith((async()=>{
    const off=await (await caches.open(OFFLINE)).match(e.request.url);if(off)return off;
    const c=await caches.open(TILES);const hit=await c.match(e.request);if(hit)return hit;
-   try{const r=await fetch(e.request);if(r.ok&&r.type!=="opaque"){c.put(e.request,r.clone());trim();}return r;}catch(err){return Response.error();}})());return;}
+   /* Esri: fehlende Kacheln als 404 statt Bild «Map data not yet available» – die App zeigt dann die vergrösserte gröbere Kachel */
+   const nu=/arcgisonline/.test(u.hostname)?e.request.url+(u.search?"&":"?")+"blankTile=false":e.request.url;
+   try{const r=await fetch(nu,{mode:"cors",credentials:"omit"});if(r.ok&&r.type!=="opaque"){c.put(e.request,r.clone());trim();}return r;}catch(err){return Response.error();}})());return;}
  if(e.request.method!=="GET")return;
  if(u.origin===location.origin){
   /* Schnellstart: App-Dateien sofort aus dem Speicher, im Hintergrund frisch vom Server holen.

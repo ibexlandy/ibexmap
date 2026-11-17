@@ -1,4 +1,4 @@
-IbexMap – v3.4 (privates Projekt)
+IbexMap – v4.1 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -293,3 +293,14 @@ NEU IN v3.4
 - «Veröffentlichen» gleicht vorher automatisch mit Google Drive ab (kein alter Stand mehr).
 - «Schlüssel auf diesem Gerät entfernen» statt «Einstellungen löschen».
 - POI-Download läuft im Hintergrund: Anzeige oben auf der Karte (antippen öffnet das Fenster wieder), Warteschlange für mehrere Länder, «Anhalten» jederzeit – auch während der Server-Prüfung.
+
+NEU IN v4.1
+- Punkte als «Wichtig» markieren (Häkchen beim Bearbeiten): grösser, gelb-roter Ring mit «!», immer obenauf und nie gruppiert.
+- Liste «Nächste zuerst» sortiert ab aktuellem oder zuletzt bekanntem Standort (sonst Kartenmitte); oben steht, ab wo gemessen wird.
+- Karte öffnet wieder in der zuletzt benutzten Ansicht (kein Herauszoomen beim Neuladen).
+- Koordinaten «Breite, Länge» oder Google-Maps-Link in ein Koordinatenfeld einfügen füllt beide Felder.
+- Teilen aus Google Maps: Plus Codes werden erkannt; sonst wird wenigstens der Ort (z. B. Zagora) gesucht.
+- Fehlende Esri-Kartenbilder in hohen Zoomstufen: statt «Map data not yet available» wird die gröbere Kachel vergrössert gezeigt (auch offline). Kartenzwischenspeicher wird einmal geleert.
+- Kategoriesuche: Sekundenanzeige, Hinweis auf das POI-Overlay und Knopf «POI-Overlay laden» bei überlasteten Servern.
+- Löschen-Bestätigung erscheint nur noch einmal.
+- Oranger ＋-Knopf entfernt (Punkt setzen: lange auf die Karte drücken, Suche oder Standort-Knopf).
