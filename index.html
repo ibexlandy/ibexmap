@@ -416,7 +416,7 @@ const ADM=(()=>{try{if(new URLSearchParams(location.search).has("admin")){sessio
   return sessionStorage.getItem("rb_admin")==="1"&&matchMedia("(min-width:900px)").matches;}catch(e){return false;}})();
 if(ADM)document.body.classList.add("adm");
 const GROUP="IbexMap";
-const VERSION="v4.3";
+const VERSION="v4.4";
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
 const MA_SECTORS=[
  {n:"A Norden",zeit:"5.–10. April",klima:"Frühling, grün; 15–22 °C, im Rif Regen möglich, Nächte kühl",info:"Tanger Med, Chefchaouen, Fès, Meknès – ankommen, Städte, einkaufen. Eher Campings.",box:[[33.8,-5.9,35.95,-1.0]]},
@@ -1906,6 +1906,7 @@ async function syncDrive(){if(syncing)return false;let ok=false;
     await gdUpload(GD_DATA,new Blob([JSON.stringify({app:"ibexmap",format:4,updated:Date.now(),trips,deletedTrips:delTrips,flags,flagDel,fam:famShared()||undefined,offShared:offSharedMerge(),points:Object.values(local)})],{type:"application/json"}),byName[GD_DATA]&&byName[GD_DATA].id);
     const gone=new Set(Object.values(local).flatMap(p=>p.photoDel||[]));
     for(const f of files){const id=f.name.slice(5,-4);if(/^foto_.+\.jpg$/.test(f.name)&&gone.has(id)&&!need.has(id))await gd(`drive/v3/files/${f.id}`,{method:"DELETE"}).catch(()=>{});}
+    try{surfDriveSet(files);}catch(e){}
     try{poiDriveSet(files);await loadPoiOff();
       for(const p of poiOff){const r=poiDrive().find(x=>x.cc===p.cc);if(!r||(p.loaded||0)>(r.loaded||0)+1000){toast(`POI ${countryName(p.cc)} auf Google Drive speichern …`,120000);await poiToDrive(p,r&&r.id);}}
       poiDriveSet(await gdList());}catch(e){}
@@ -1985,8 +1986,8 @@ async function offlineDialog(){
    <div class="mgrp"><label class="mrow"><span class="mic">${mi("map",20)}</span><span class="mtx"><b>Gebiete auf der Karte zeigen</b><small>Farbige Rahmen um die gespeicherten Gebiete</small></span><input type="checkbox" class="msw" id="oShow" ${offShow?"checked":""}></label></div>
    <div class="mgh">Gespeicherte Gebiete</div>
    <div class="mgrp">${rows.length?rows.map((r,i)=>`<div class="mrow wrap" style="cursor:default"><span class="mic" style="background:${FLAG_COLORS[(i+1)%FLAG_COLORS.length]}22;color:${FLAG_COLORS[(i+1)%FLAG_COLORS.length]}">${mi(kindI[r.pk.kind]||"map",20)}</span>
-     <span class="mtx"><b>${esc(r.pk.name)}</b><small>${esc(r.pk.layer)} · Detail ${r.pk.zmax} · ${fmtD(r.pk.date)} · ${fmtN(r.total)} Bilder · ca. ${estMB(r.total,r.pk.layer)} MB${r.pk.surf?" · mit Strassenoberfläche":""}</small><small>${st(r)}</small></span>
-     <span class="oact"><button data-o="show" data-i="${i}" title="Auf der Karte zeigen">${mi("pin",18)}</button><button data-o="load" data-i="${i}" title="${r.n>=r.total?"Aktualisieren (alles neu laden)":"Fortsetzen"}">${mi(r.n>=r.total?"refresh":"download",18)}</button><button data-o="del" data-i="${i}" title="Löschen">${mi("trash",18)}</button></span></div>`).join("")
+     <span class="mtx"><b>${esc(r.pk.name)}</b><small>${esc(r.pk.layer)} · Detail ${r.pk.zmax} · ${fmtD(r.pk.date)} · ${fmtN(r.total)} Bilder · ca. ${estMB(r.total,r.pk.layer)} MB${r.pk.surf?" · mit Strassenoberfläche":""}</small><small>${st(r)}${r.pk.surf&&r.pk.surfMiss?` · <span style="color:var(--accent2)">Strassenoberfläche: ${r.pk.surfMiss} Felder fehlen – fortsetzen</span>`:""}</small></span>
+     <span class="oact"><button data-o="show" data-i="${i}" title="Auf der Karte zeigen">${mi("pin",18)}</button><button data-o="load" data-i="${i}" title="${r.n>=r.total&&!(r.pk.surf&&r.pk.surfMiss)?"Aktualisieren (alles neu laden)":"Fortsetzen"}">${mi(r.n>=r.total&&!(r.pk.surf&&r.pk.surfMiss)?"refresh":"download",18)}</button><button data-o="del" data-i="${i}" title="Löschen">${mi("trash",18)}</button></span></div>`).join("")
      :`<div class="mrow" style="cursor:default"><span class="mtx"><small>Noch keine Gebiete gespeichert.</small></span></div>`}
      ${loose?`<div class="mrow" style="cursor:default"><span class="mic">${mi("db",20)}</span><span class="mtx"><b>Ohne Gebiet</b><small>${fmtN(loose)} Kartenbilder aus früheren Versionen</small></span><span class="oact"><button data-o="loose" title="Löschen">${mi("trash",18)}</button></span></div>`:""}</div>
    ${offOther().length?`<div class="mgh">Auf einem anderen Gerät gespeichert</div><div class="mgrp">${offOther().map(d=>`<div class="mrow wrap" style="cursor:default"><span class="mic">${mi("cloud",20)}</span>
@@ -2008,7 +2009,7 @@ async function offlineDialog(){
   $("#panel").querySelectorAll("[data-o]").forEach(b=>b.onclick=async()=>{const pk=offPacks[+b.dataset.i];const o=b.dataset.o;
     if(o==="show"){closePanel();drawOffAreas(pk);const bb=L.latLngBounds(pk.areas.flatMap(a=>[[a.s,a.w],[a.n,a.e]]));map.fitBounds(bb,{padding:[30,30]});
       if(BASE[pk.layer]&&!map.hasLayer(BASE[pk.layer])){Object.values(BASE).forEach(l=>map.removeLayer(l));BASE[pk.layer].addTo(map);}toast(`${pk.name} – ${pk.layer}`,3000);}
-    else if(o==="load"){const r=rows[+b.dataset.i];offRunPack(pk,r.n>=r.total);}
+    else if(o==="load"){const r=rows[+b.dataset.i];offRunPack(pk,r.n>=r.total&&!(pk.surf&&pk.surfMiss));}
     else if(o==="del")openPanel(`<h2>«${esc(pk.name)}» löschen?</h2><p>Die Kartenbilder dieses Gebiets werden gelöscht, ausser sie gehören auch zu einem anderen Gebiet.</p>
        <div class="actions"><button class="btn warn" id="cYes">Löschen</button><button class="btn sec" id="cNo">Abbrechen</button></div>`)||(()=>{$("#cNo").onclick=offlineDialog;
        $("#cYes").onclick=async()=>{ls("rb_offhide",JSON.stringify([...offHide(),pk.id]));const keep=new Set();offPacks.filter(x=>x!==pk).forEach(x=>packURLs(x).forEach(u=>keep.add(u)));
@@ -2106,19 +2107,26 @@ async function offRunPack(pk,force){if(!navigator.onLine)return toast("Kein Inte
   const todo=urls.filter(u=>!have.has(u));const run=offRun={stop:false,pk};let done=0,fail=0;const total=todo.length;
   const pill=$("#offPill")||(()=>{const d=document.createElement("button");d.id="offPill";$("#map").appendChild(d);return d;})();
   const ui=()=>{const pc=total?Math.round(done/total*100):100;pill.style.display="block";pill.textContent=`⬇ ${pk.name}: ${pc} %`;
-    const b=$("#oPBar");if(b){b.style.width=pc+"%";$("#oPTxt").textContent=`${fmtN(done)} von ${fmtN(total)} (${pc} %)${fail?` · ${fail} Fehler`:""}${urls.length-total?` · ${fmtN(urls.length-total)} waren schon gespeichert`:""}`;}};
+    const b=$("#oPBar");if(b){b.style.width=pc+"%";$("#oPTxt").textContent=`${fmtN(done)} von ${fmtN(total)} (${pc} %)${fail?` · ${fail} noch offen – ${run.why||""}, wird nochmals versucht`:""}${urls.length-total?` · ${fmtN(urls.length-total)} waren schon gespeichert`:""}`;}};
   const showP=()=>{openPanel(`<h2>${esc(pk.name)}</h2><p class="muted">${esc(pk.layer)} · Detail ${pk.zmax}</p><div class="bar" style="height:14px"><div id="oPBar"></div></div><p id="oPTxt" style="font-size:15px"></p>
     <p class="muted">Läuft weiter, auch wenn du dieses Fenster schliesst (App offen lassen). Oben auf der Karte siehst du den Stand.</p>
     <div class="actions"><button class="btn sec" id="oPStop">Anhalten</button><button class="btn sec" id="oPHide">Ausblenden</button></div>`);
     $("#oPStop").onclick=()=>{run.stop=true;};$("#oPHide").onclick=closePanel;ui();};
   pill.onclick=showP;showP();
-  let idx=0;const worker=async()=>{while(!run.stop&&idx<todo.length){const u=todo[idx++];
-    try{const r=await fetch(u,{mode:"cors",cache:force?"reload":"default"});if(r.ok)await c.put(u,r);else fail++;}catch(e){fail++;}
-    done++;if(done%10===0||done===total)ui();}};
-  await Promise.all([worker(),worker(),worker(),worker()]);
-  let sf=null;if(pk.surf&&!run.stop){sf=await surfSavePack(pk,(i,n)=>{pill.textContent=`⬇ ${pk.name}: Strassen ${i}/${n}`;const t=$("#oPTxt");if(t)t.textContent=`Kartenbilder fertig · Strassenoberfläche ${i} von ${n} …`;});if(surfOn)drawSurf();}
+  /* Kartendienste (v. a. OpenTopoMap) bremsen bei vielen Anfragen («429 zu viele Anfragen») oder sind kurz überlastet:
+     dann kurz warten, gescheiterte Bilder sammeln und am Ende in bis zu 3 Runden langsamer nochmals versuchen */
+  let retry=[];run.why="";
+  const pass=async(list,n)=>{let idx=0;const worker=async()=>{while(!run.stop&&idx<list.length){const u=list[idx++];let st=0;
+      try{const r=await fetch(u,{mode:"cors",cache:force?"reload":"default"});st=r.status;if(r.ok){await c.put(u,r);done++;if(done%10===0||done===total)ui();continue;}}catch(e){st=-1;}
+      retry.push(u);fail=retry.length;run.why=st===429?"Kartendienst bremst (zu viele Anfragen)":st===-1?"keine Verbindung":"Server antwortet nicht ("+st+")";ui();
+      await sleep(st===429||st===503||st===-1?15000:2000);}};
+    await Promise.all(Array.from({length:n},worker));};
+  await pass(todo,pk.layer==="Topo"?2:4);
+  for(let r=1;r<=3&&retry.length&&!run.stop;r++){const list=retry;retry=[];fail=0;run.why=`Runde ${r}: ${list.length} fehlende Bilder werden nochmals geladen …`;ui();
+    await sleep(r*20000);await pass(list,1);}
+  let sf=null;if(pk.surf&&!run.stop){sf=await surfSavePack(pk,(i,n,st)=>{pill.textContent=`⬇ ${pk.name}: Strassen ${i}/${n}${st&&st.wait?" · Pause":""}`;const t=$("#oPTxt");if(t)t.textContent=`Kartenbilder fertig · Strassenoberfläche ${i} von ${n}`+(st?(st.wait?` · ${st.wait}`:` · Server ${ovNow||"…"} · wartet ${Math.round((Date.now()-st.since)/1000)} s · Abfragen ${st.ok} ok, ${st.fail} gescheitert${st.why?` (zuletzt: ${st.why})`:""}`):"");},run);await saveOffPacks();if(surfOn)drawSurf();}
   offRun=null;pill.style.display="none";
-  const msg=run.stop?`Angehalten – später in der Übersicht fortsetzen`:`Fertig: ${fmtN(done-fail)} Kartenbilder gespeichert${fail?` · ${fail} Fehler (nochmals «Fortsetzen»)`:""}${sf?` · Strassen ${sf.n-sf.fail}/${sf.n}`:""}`;
+  const msg=run.stop?`Angehalten – später in der Übersicht fortsetzen`:`Fertig: ${fmtN(done)} Kartenbilder gespeichert${retry.length?` · ${retry.length} fehlen noch (später in der Übersicht «Fortsetzen»)`:""}${sf?` · Strassen ${sf.n-sf.fail}/${sf.n}`:""}`;
   toast(msg,6000);if($("#oPBar"))offlineDialog();}
 
 
@@ -2587,9 +2595,9 @@ const surfMem=new Map(),surfBusy=new Set();
 const cellKey=(la,lo)=>`${Math.floor(la/SURF_CELL)}_${Math.floor(lo/SURF_CELL)}`;
 const cellBox=k=>{const [a,b]=k.split("_").map(Number);return {s:a*SURF_CELL,w:b*SURF_CELL,n:(a+1)*SURF_CELL,e:(b+1)*SURF_CELL};};
 function cellsOf(b){const out=[];for(let a=Math.floor(b.s/SURF_CELL);a<=Math.floor((b.n-1e-9)/SURF_CELL);a++)for(let c=Math.floor(b.w/SURF_CELL);c<=Math.floor((b.e-1e-9)/SURF_CELL);c++)out.push(a+"_"+c);return out;}
-async function surfFetch(k){const b=cellBox(k);
+async function surfFetch(k,fetcher){const b=cellBox(k);
   const q=`[out:json][timeout:120][bbox:${b.s},${b.w},${b.n},${b.e}];way["highway"~"^(trunk|primary|secondary|tertiary|unclassified|road|track)$"];out tags geom qt;`;
-  const j=await ovQuery(q,150000);const ways=[];
+  const j=fetcher?await fetcher(q):await ovQuery(q,150000);const ways=[];
   for(const e of j.elements){if(!e.geometry||e.geometry.length<2)continue;const t=e.tags||{};const pts=[];let pl="";
     for(const g of e.geometry){const p=[+g.lat.toFixed(4),+g.lon.toFixed(4)];const key=p.join();if(key!==pl){pts.push(p);pl=key;}}
     if(pts.length<2)continue;
@@ -2625,10 +2633,48 @@ layCtl.addOverlay(surfLayer,"Strassenoberfläche");
 map.on("moveend zoomend",()=>{if(surfOn)drawSurf();});
 /* Offline: Strassendaten für ein Gebiet speichern bzw. löschen */
 function packCells(pk){const set=new Set();for(const a of pk.areas){if(pk.kind==="points"&&a.z2<9)continue;cellsOf(a).forEach(k=>set.add(k));}return [...set];}
-async function surfSavePack(pk,prog){const ks=packCells(pk);let i=0,fail=0;
-  for(const k of ks){i++;if(prog)prog(i,ks.length);let have=null;try{have=await getOne("meta","surf_"+k);}catch(e){}
-    if(have)continue;try{const d=await surfFetch(k);await put("meta",d);surfMem.set(k,d);}catch(e){fail++;}}
-  return {n:ks.length,fail};}
+/* Strassenoberfläche über Google Drive teilen: pro Offline-Gebiet eine gepackte Datei; andere Geräte holen sie dort statt bei Overpass */
+const surfDrive=()=>{try{return JSON.parse(ls("rb_surfdrive")||"[]");}catch(e){return [];}};
+function surfDriveSet(files){ls("rb_surfdrive",JSON.stringify(files.filter(f=>/^surf_.+\.json\.gz$/.test(f.name)).map(f=>({pid:f.name.slice(5,-8),id:f.id,size:+f.size||0,enc:(f.appProperties||{}).enc||"gz"}))));}
+async function surfToDrive(pk){if(!gdClient()||!navigator.onLine)return;const cells={};
+  for(const k of packCells(pk)){let h=null;try{h=await getOne("meta","surf_"+k);}catch(e){}if(h)cells[k]=h;}
+  if(!Object.keys(cells).length)return;
+  try{const z=await gzBlob({pid:pk.id,cells});const files=await gdList();const f=files.find(x=>x.name===`surf_${pk.id}.json.gz`);
+    await gdUpload(`surf_${pk.id}.json.gz`,z.blob,f&&f.id,{enc:z.enc,n:String(Object.keys(cells).length)});surfDriveSet(await gdList());
+    toast(`Strassenoberfläche «${pk.name}» auch auf Google Drive gespeichert`,4000);}catch(e){}}
+async function surfFromDrive(pk,show){if(!gdClient()||!navigator.onLine)return 0;const need=new Set(packCells(pk));let got=0;
+  const defs=[...offPacks,...offShared()];
+  for(const r of surfDrive()){const d=defs.find(x=>x.id===r.pid);if(d&&!packCells(d).some(k=>need.has(k)))continue;
+    let miss=0;for(const k of need){let h=null;try{h=await getOne("meta","surf_"+k);}catch(e){}if(!h)miss++;}if(!miss)break;
+    try{if(show)show(`Strassenoberfläche von Google Drive (${(r.size/1048576).toFixed(1)} MB) …`);
+      const res=await gd(`drive/v3/files/${r.id}?alt=media`);
+      const data=r.enc==="gz"&&typeof DecompressionStream!=="undefined"?await new Response(res.body.pipeThrough(new DecompressionStream("gzip"))).json():await res.json();
+      for(const [k,v] of Object.entries(data.cells||{})){if(!need.has(k))continue;let h=null;try{h=await getOne("meta","surf_"+k);}catch(e){}
+        if(!h){await put("meta",v);surfMem.set(k,v);got++;}}}catch(e){}}
+  return got;}
+/* Strassenoberfläche für ein Offline-Gebiet: geduldig wie der POI-Download – eine Abfrage aufs Mal, nur antwortende Server,
+   nach 3 gescheiterten Feldern hintereinander Pause (2/5/10/20/30 Min.), fehlende Felder später nochmals, bis 6 Stunden */
+async function surfSavePack(pk,prog,run){const ks=packCells(pk);const st={ok:0,fail:0,why:"",wait:"",cur:0,since:Date.now()};
+  const stop=()=>run&&run.stop;const nap=async ms=>{const t=Date.now()+ms;while(Date.now()<t&&!stop())await sleep(1000);};
+  const missing=async()=>{const m=[];for(const k of ks){let h=null;try{h=await getOne("meta","surf_"+k);}catch(e){}if(!h)m.push(k);}return m;};
+  st.wait="";await surfFromDrive(pk,t=>{st.wait=t;prog&&prog(0,ks.length,st);});st.wait="";
+  const tEnd=Date.now()+6*3600e3;let round=0,open=await missing();
+  const show=()=>prog&&prog(ks.length-open.length,ks.length,st);
+  while(open.length&&!stop()){
+    st.wait="Server werden geprüft …";show();
+    if((await ovProbe()).length){st.wait="";let miss=0;const list=open.slice();
+      for(const k of list){if(stop())break;st.since=Date.now();show();
+        try{const d=await surfFetch(k,q=>ovSeq(q,100000));await put("meta",d);surfMem.set(k,d);st.ok++;miss=0;open=open.filter(x=>x!==k);show();await nap(1500);}
+        catch(e){st.fail++;st.why=e.message;show();if(++miss>=3)break;await nap(8000);}}
+      open=await missing();}
+    if(!open.length||stop())break;
+    if(Date.now()>tEnd)break;
+    const mins=POI_WAIT[Math.min(round++,POI_WAIT.length-1)];const at=new Date(Date.now()+mins*60e3);
+    st.wait=`${open.length} Felder offen (Server überlastet) – nächster Versuch um ${String(at.getHours()).padStart(2,"0")}:${String(at.getMinutes()).padStart(2,"0")}`;show();
+    await nap(mins*60e3);}
+  open=await missing();pk.surfMiss=open.length;
+  if(st.ok>0)surfToDrive(pk);
+  return {n:ks.length,fail:open.length};}
 async function surfDeletePack(pk,others){const keep=new Set();others.filter(x=>x.surf).forEach(x=>packCells(x).forEach(k=>keep.add(k)));
   for(const k of packCells(pk))if(!keep.has(k)){try{await del("meta","surf_"+k);}catch(e){}surfMem.delete(k);}}
 /* ---------- Papierkorb: gelöschte Punkte 30 Tage wiederherstellbar ---------- */

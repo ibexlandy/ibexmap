@@ -1,4 +1,4 @@
-IbexMap – v4.3 (privates Projekt)
+IbexMap – v4.4 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -312,3 +312,8 @@ NEU IN v4.2
 NEU IN v4.3
 - POI-Download: höchstens 100 s pro Abfrage (vorher über 3 Min.), Gebiete werden bei Bedarf bis 0,125° verkleinert. Nach 3 gescheiterten Gebieten hintereinander macht die App Pause und versucht es später wieder, statt sich durch alle Gebiete zu quälen.
 - Anzeige während des Downloads: Server, aktuelles Stück mit Versuch-Nr., Wartezeit dieser Abfrage, Anzahl erfolgreicher und gescheiterter Abfragen mit letztem Fehler.
+
+NEU IN v4.4
+- Offline-Karten: Topo lädt mit 2 statt 4 gleichzeitigen Anfragen; bremst der Kartendienst oder fehlt die Verbindung, wartet die App kurz. Fehlende Kartenbilder werden am Ende in bis zu 3 Runden einzeln nachgeholt; die Anzeige nennt den Grund.
+- Strassenoberfläche: geduldiger Download wie bei den POIs (nur antwortende Server, max. 100 s pro Abfrage, Pause nach 3 Fehlschlägen, Nachversuche bis 6 Stunden), Anzeige mit Server/Wartezeit/Fehlern; in der Übersicht «Strassenoberfläche: x Felder fehlen – fortsetzen» lädt nur die fehlende Oberfläche nach.
+- Strassenoberfläche über Google Drive: fertige Felder werden pro Gebiet gepackt auf Drive gespeichert; andere Geräte holen sie zuerst dort und fragen nur Fehlendes bei Overpass an.
