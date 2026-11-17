@@ -1,4 +1,4 @@
-IbexMap – v4.1 (privates Projekt)
+IbexMap – v4.2 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -304,3 +304,7 @@ NEU IN v4.1
 - Kategoriesuche: Sekundenanzeige, Hinweis auf das POI-Overlay und Knopf «POI-Overlay laden» bei überlasteten Servern.
 - Löschen-Bestätigung erscheint nur noch einmal.
 - Oranger ＋-Knopf entfernt (Punkt setzen: lange auf die Karte drücken, Suche oder Standort-Knopf).
+
+NEU IN v4.2
+- POI-Download geduldig: kleinere Gebiete (0,5°), eine Abfrage aufs Mal mit Pausen; scheitert ein Gebiet, geht es mit den übrigen weiter und die fehlenden werden automatisch nochmals versucht (2/5/10/20/30 Min., bis 12 Stunden). Anzeige «nächster Versuch um …». Grosse Länder am PC abends starten und laufen lassen.
+- Offline-Karten: Die Liste der Gebiete wird über Google Drive abgeglichen (nicht die Bilder). Unter «Auf einem anderen Gerät gespeichert» lädt ein Tipp dasselbe Gebiet auch auf diesem Gerät.
