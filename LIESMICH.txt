@@ -1,4 +1,4 @@
-IbexMap – v6.1 (privates Projekt)
+IbexMap – v6.2 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -323,3 +323,10 @@ NEU IN v6.1
 - Übersicht aller Geräte in den Offline-Karten: Tabelle Gebiet × Gerät mit Kartenbildern %, Strassenoberfläche % und POI ✓ (Stand des letzten Abgleichs). Jedes Gerät hat einen Namen (Stift zum Ändern).
 - Doppelte Länder-Gebiete werden automatisch zusammengefasst und nicht mehr doppelt angelegt.
 - Speicheranzeige (belegt, erlaubt, dauerhaft geschützt ja/nein); bei vollem Speicher klare Meldung «Speicher voll» statt endloser Versuche.
+
+NEU IN v6.2
+- Neue einheitliche Ansicht «Offline-Daten» (Menü) ersetzt die getrennten Einträge Offline-Karten und POI-Overlay.
+- Pro Land eine Karte mit drei Zeilen (Karte, Strassenoberfläche, POI-Overlay) und pro Gerät einem farbigen Feld: grün = komplett, orange = unvollständig (%), grau = fehlt. Bei Strassenoberfläche und POI zusätzlich, ob sie bereits auf Google Drive liegen.
+- Klare Erklärung, was wie geladen wird: Karte lädt jedes Gerät selbst; Strassenoberfläche und POI einmal laden (am besten am PC im Browser), danach holen die anderen Geräte sie von Google Drive.
+- Pro Land «Was hier fehlt» und Knopf «Hier vervollständigen»: lädt alles Fehlende auf diesem Gerät auf dem schnellsten Weg.
+- Unten: Land hinzufügen, Jetzt abgleichen, Details zu Offline-Karten und POI-Overlay.

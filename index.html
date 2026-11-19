@@ -416,7 +416,7 @@ const ADM=(()=>{try{if(new URLSearchParams(location.search).has("admin")){sessio
   return sessionStorage.getItem("rb_admin")==="1"&&matchMedia("(min-width:900px)").matches;}catch(e){return false;}})();
 if(ADM)document.body.classList.add("adm");
 const GROUP="IbexMap";
-const VERSION="v6.1";
+const VERSION="v6.2";
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
 const MA_SECTORS=[
  {n:"A Norden",zeit:"5.–10. April",klima:"Frühling, grün; 15–22 °C, im Rif Regen möglich, Nächte kühl",info:"Tanger Med, Chefchaouen, Fès, Meknès – ankommen, Städte, einkaufen. Eher Campings.",box:[[33.8,-5.9,35.95,-1.0]]},
@@ -1386,8 +1386,7 @@ $("#navMenu").onclick=async()=>{
      +row("mTrash","trash","Papierkorb",trashN?`${trashN} gelöschte Punkte · 30 Tage wiederherstellbar`:"leer")
      +(matchMedia("(min-width:900px)").matches&&!ADM?row("mAdm","table","Verwaltung (Tabelle)","Alle Punkte am PC sortieren, filtern und bearbeiten",{act:"Öffnen"}):""))}
    ${grp("Karte",
-     row("mOff","mapdl","Offline-Karten","Gespeicherte Gebiete und neue herunterladen")
-     +row("mPoi","search","POI-Overlay und Suche (offline)",poiOff.length?poiOff.map(p=>countryName(p.cc)).join(", ")+" gespeichert":"Camping, Restaurant, Wasser … ohne Internet finden")
+     row("mOff","mapdl","Offline-Daten","Karten, Strassenoberfläche und POI pro Land – was jedes Gerät hat")
      +row("mCountries","globe","Ländergrenzen",countryData?`${countryData.length} Länder geladen`:"Noch nicht geladen",{act:countryData?"Neu laden":"Laden"})
      +row("mReg","map","Regionen Marokko",regionData?`${(regionData.prov||[]).length} Provinzen geladen`:"Provinzen und Regionen",{act:regionData?"Neu laden":"Laden"})
      +(regionData?row("mRegAll","pin","Region für alle Punkte","Aus den Regionsgrenzen ermitteln",{act:"Ermitteln"}):""))}
@@ -1406,7 +1405,7 @@ $("#navMenu").onclick=async()=>{
   $("#mCountries").onclick=async()=>{if(!navigator.onLine)return toast("Kein Internet",3000);toast("Lade Ländergrenzen …",60000);
     try{const n=await downloadCountries();const k=await assignCountries();toast(`${n} Länder geladen, ${k} Punkte zugeordnet`,4000);$("#navMenu").onclick();}catch(e){toast("Laden fehlgeschlagen",4000);}};
   $("#mFamSet").onclick=famSettings;const fp=$("#mFamPub");if(fp)fp.onclick=famPublish;
-  $("#mGset").onclick=gdSettings;const ms=$("#mSync");if(ms)ms.onclick=syncDrive;$("#mOff").onclick=offlineDialog;$("#mPoi").onclick=poiOffDialog;
+  $("#mGset").onclick=gdSettings;const ms=$("#mSync");if(ms)ms.onclick=syncDrive;$("#mOff").onclick=offOverview;
   $("#mPhotos").onclick=photoDialog;$("#mWiz").onclick=wizardStart;$("#mReady").onclick=readyDialog;$("#mTrash").onclick=trashDialog;
   $("#mExport").onclick=exportPackage;$("#mGpx").onclick=exportGPX;$("#mImport").onclick=()=>pickWait($("#fileImport"),"Datei importieren","Reisepaket, GPX, OsmAnd-.osf oder Google-Orte auswählen. Google-Orte vorher über Google Takeout «Maps (Meine Orte)» bzw. «Gespeichert» als .json oder .csv exportieren.");
 };
@@ -1960,6 +1959,58 @@ async function loadOffPacks(){try{const m=await getOne("meta","offpacks");offPac
     if(k&&seen[k]){const a=seen[k];a.zmax=Math.max(a.zmax,p.zmax);a.surf=a.surf||p.surf;if(p.areas.length>a.areas.length)a.areas=p.areas;ch=true;continue;}
     if(k)seen[k]=p;keep.push(p);}
   if(ch){offPacks=keep;try{await saveOffPacks();}catch(e){}}}
+/* ---------- Offline-Daten: EINE Übersicht pro Land über alle Geräte (Karte, Strassenoberfläche, POI) ---------- */
+async function offOverview(){openPanel(`<h2>Offline-Daten</h2><p class="muted">Wird zusammengestellt …</p>`);
+  const me=await devStatusLocal();const all=devAll();const myId=devId();
+  const ids=[myId,...Object.keys(all).filter(i=>i!==myId).sort((a,b)=>(all[a].name||"").localeCompare(all[b].name||""))].filter(i=>all[i]);
+  const defs=[...offPacks,...offShared()];const surfOnDrive=cc=>surfDrive().some(r=>{const d=defs.find(x=>x.id===r.pid);return d&&d.cc===cc;});
+  const poiOnDrive=cc=>poiDrive().some(r=>r.cc===cc);
+  /* alle Länder, die irgendwo vorkommen */
+  const ccs=new Set();ids.forEach(i=>{(all[i].packs||[]).forEach(p=>{const c=(p.key||"").split("|");if(c.length===2&&/^[A-Z]{2}$/.test(c[0]))ccs.add(c[0]);});(all[i].poi||[]).forEach(p=>ccs.add(p.cc));});
+  offShared().forEach(d=>{if(d.kind==="country"&&d.cc)ccs.add(d.cc);});poiDrive().forEach(r=>ccs.add(r.cc));
+  const list=[...ccs].sort((a,b)=>countryName(a).localeCompare(countryName(b),"de"));
+  const pc=(n,t)=>t?Math.floor(n/t*100):0;
+  const chip=(v,label)=>{const ok=v==="✓"||v>=100,none=v==null;
+    return `<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:12px;font-size:12.5px;margin:2px 4px 2px 0;background:${none?"#0000000d":ok?"#d9f0dc":"#fde7d3"};color:${none?"var(--muted)":ok?"#1f6b2a":"#9a4a00"}">${esc(label)}: <b>${none?"fehlt":v==="✓"?"✓":v+" %"}</b></span>`;};
+  const dn=i=>esc(all[i].name||"?")+(i===myId?" (hier)":"");
+  const card=cc=>{const per=ids.map(i=>{const d=all[i];const pk=(d.packs||[]).find(p=>p.key&&p.key.startsWith(cc+"|"));
+      return {i,map:pk?pc(pk.n,pk.total):null,mapLab:pk?`${pk.layer} ${pk.zmax}`:"",surf:pk&&pk.surf?(pk.surfMiss==null?0:pc(pk.surfCells-pk.surfMiss,pk.surfCells)):null,poi:(d.poi||[]).some(p=>p.cc===cc)?"✓":null};});
+    const mine=per.find(x=>x.i===myId);const sd=surfOnDrive(cc),pd=poiOnDrive(cc);
+    const todo=[];if(!mine||mine.map==null||mine.map<100)todo.push("Kartenbilder");if(!mine||mine.surf==null||mine.surf<100)todo.push("Strassenoberfläche"+(sd?" (von Drive)":" (OpenStreetMap)"));if(!mine||!mine.poi)todo.push("POI"+(pd?" (von Drive)":" (OpenStreetMap)"));
+    return `<div class="mgrp" style="padding:12px 14px;margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><b style="font-size:17px">${flagEmoji(cc)} ${esc(countryName(cc))}</b>
+        <span style="margin-left:auto">${todo.length?`<button class="btn" data-ov="${cc}" style="padding:6px 12px;min-height:0;font-size:13px">Hier vervollständigen</button>`:`<span style="color:#1f6b2a;font-size:13px;font-weight:600">auf diesem Gerät komplett ✓</span>`}</span></div>
+      <table style="width:100%;border-collapse:collapse;font-size:13.5px">
+        <tr><td style="padding:6px 0;vertical-align:top;width:34%"><b>Karte</b><br><span class="muted" style="font-size:12px">jedes Gerät lädt selbst</span></td>
+          <td style="padding:6px 0">${per.map(x=>chip(x.map,all[x.i].name+(x.i===myId?" (hier)":""))).join("")}</td></tr>
+        <tr style="border-top:1px solid #0001"><td style="padding:6px 0;vertical-align:top"><b>Strassenoberfläche</b><br><span class="muted" style="font-size:12px">1× laden, dann über Drive</span><br><span style="font-size:12px;color:${sd?"#1f6b2a":"#9a4a00"}">Google Drive: ${sd?"vorhanden ✓":"noch nicht"}</span></td>
+          <td style="padding:6px 0">${per.map(x=>chip(x.surf,all[x.i].name+(x.i===myId?" (hier)":""))).join("")}</td></tr>
+        <tr style="border-top:1px solid #0001"><td style="padding:6px 0;vertical-align:top"><b>POI-Overlay</b><br><span class="muted" style="font-size:12px">1× laden, dann über Drive</span><br><span style="font-size:12px;color:${pd?"#1f6b2a":"#9a4a00"}">Google Drive: ${pd?"vorhanden ✓":"noch nicht"}</span></td>
+          <td style="padding:6px 0">${per.map(x=>chip(x.poi,all[x.i].name+(x.i===myId?" (hier)":""))).join("")}</td></tr>
+      </table>
+      ${todo.length?`<p style="font-size:12.5px;margin:6px 0 0;color:#9a4a00">Auf diesem Gerät fehlt: ${esc(todo.join(" · "))}</p>`:""}</div>`;};
+  let stor="";try{const e=await navigator.storage.estimate();const pr=navigator.storage.persisted?await navigator.storage.persisted():false;
+    stor=`${fmtN(Math.round(e.usage/1048576))} MB belegt von ca. ${fmtN(Math.round(e.quota/1048576))} MB · ${pr?"dauerhaft geschützt":"nicht dauerhaft geschützt"}`;}catch(e){}
+  const others=offPacks.filter(p=>p.kind!=="country");
+  openPanel(`<h2>Offline-Daten</h2>
+    <p class="muted" style="margin-top:-6px">Pro Land: was jedes Gerät hat (andere Geräte: Stand ihres letzten Abgleichs). Grün = komplett, orange = unvollständig, grau = fehlt.</p>
+    <div style="font-size:12.5px;background:#ffffff80;border-radius:10px;padding:8px 10px;margin-bottom:12px"><b>Karte:</b> lädt jedes Gerät selbst vom Kartendienst – am besten im WLAN.<br><b>Strassenoberfläche und POI:</b> kommen von den langsamen OpenStreetMap-Servern. Einmal laden (am besten am PC im Browser, App offen lassen) – danach holen alle anderen Geräte sie in Sekunden von Google Drive. «Hier vervollständigen» nimmt automatisch den schnellsten Weg.</div>
+    <div class="mgrp" style="margin-bottom:12px"><div class="mrow" style="cursor:default"><span class="mic">${mi("pin",20)}</span><span class="mtx"><b>Dieses Gerät: ${esc(devName())}</b><small>${esc(stor)}</small></span><span class="oact"><button id="ovDev" title="Namen ändern">${mi("edit",18)}</button></span></div></div>
+    ${ids.length<2?`<p style="font-size:13px;background:#fff8e1;border-radius:10px;padding:8px 10px">Noch keine anderen Geräte sichtbar: Auf jedem Gerät v6.2 öffnen, Gerätenamen setzen und abgleichen (Kreispfeil). Danach hier nochmals abgleichen.</p>`:""}
+    ${list.length?list.map(card).join(""):`<p class="muted">Noch kein Land offline gespeichert.</p>`}
+    <div class="mgrp"><button class="mrow main" id="ovAdd"><span class="mic">${mi("globe",20)}</span><span class="mtx"><b>Land hinzufügen</b><small>Karte, Strassenoberfläche und POI komplett</small></span><span class="mchev">${mi("chev",18)}</span></button>
+      <button class="mrow" id="ovSync"><span class="mic">${mi("sync",20)}</span><span class="mtx"><b>Jetzt abgleichen</b><small>Stand dieses Geräts melden, andere Geräte aktualisieren</small></span><span class="mchev">${mi("chev",18)}</span></button>
+      <button class="mrow" id="ovMaps"><span class="mic">${mi("mapdl",20)}</span><span class="mtx"><b>Details: Offline-Karten</b><small>${offPacks.length} Gebiete auf diesem Gerät${others.length?` (davon ${others.length} Ausschnitte/Abschnitte)`:""}, löschen, Ausschnitte</small></span><span class="mchev">${mi("chev",18)}</span></button>
+      <button class="mrow" id="ovPoi"><span class="mic">${mi("search",20)}</span><span class="mtx"><b>Details: POI-Overlay</b><small>Länder einzeln laden, löschen, Anzeige</small></span><span class="mchev">${mi("chev",18)}</span></button></div>`);
+  $("#ovDev").onclick=()=>{openPanel(`<h2>Name dieses Geräts</h2><input id="dvN" value="${esc(devName())}" placeholder="z. B. PC, Handy Lukas, Tablet"><div class="actions"><button class="btn" id="dvOk">Speichern</button><button class="btn sec" id="dvNo">Abbrechen</button></div>`);
+    $("#dvNo").onclick=offOverview;$("#dvOk").onclick=()=>{const v=$("#dvN").value.trim();if(v)ls("rb_devname",v);offOverview();};};
+  $("#ovAdd").onclick=offCountryPick;$("#ovMaps").onclick=offlineDialog;$("#ovPoi").onclick=poiOffDialog;
+  $("#ovSync").onclick=async()=>{if(!gdClient())return gdSettings();await syncDrive();offOverview();};
+  $("#panel").querySelectorAll("[data-ov]").forEach(b=>b.onclick=async()=>{const cc=b.dataset.ov;await loadOffPacks();
+    let pk=offPacks.find(p=>p.kind==="country"&&p.cc===cc);
+    if(!pk){const d=offShared().find(x=>x.kind==="country"&&x.cc===cc);if(d){pk=Object.assign({},d,{date:Date.now(),surf:true,poi:true});offPacks.push(pk);await saveOffPacks();}}
+    if(!pk)return offConfig({kind:"country",cc});
+    pk.surf=true;pk.poi=true;await saveOffPacks();offRunPack(pk,false);});}
 /* ---------- Übersicht aller Geräte: jedes Gerät meldet beim Abgleich, was es offline gespeichert hat ---------- */
 const devId=()=>{let d=ls("rb_devid");if(!d){d=uid();ls("rb_devid",d);}return d;};
 function devGuess(){const u=navigator.userAgent;if(/Android/.test(u))return /SM-X|SM-T|Tablet/i.test(u)||!/Mobile/.test(u)?"Tablet":"Handy";if(/iPad/.test(u))return "Tablet";if(/iPhone/.test(u))return "Handy";return "PC";}
