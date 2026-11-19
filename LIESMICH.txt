@@ -1,4 +1,4 @@
-IbexMap – v6.3 (privates Projekt)
+IbexMap – v6.4 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -334,3 +334,13 @@ NEU IN v6.2
 NEU IN v6.3
 - Schnellerer Start: Kartenbibliothek sofort aus dem Gerätespeicher (vorher zuerst übers Netz, hing bei schlechtem Empfang); kein langer Durchlauf aller Offline-Kartenbilder mehr nach Updates; Karte öffnet direkt in der letzten Ansicht; POI-Overlay, Ländergrenzen und Aufräumen laden erst danach im Hintergrund; POI-Daten werden nur noch einmal gelesen; alte Reparaturen laufen nur noch einmal.
 - Offline-Daten: Schalter «Kartenbilder auf diesem Gerät laden». Am PC standardmässig aus – der PC lädt pro Land nur Strassenoberfläche und POI (die über Google Drive an die anderen Geräte gehen). In der Übersicht steht bei der Karte des PCs «nicht nötig».
+
+NEU IN v6.4
+- Offline-Karten: Zählung der gespeicherten Kartenbilder repariert. Auf Android lieferte das Auflisten aller Offline-Bilder bei sehr vielen Bildern nichts zurück – die App zeigte 0 %, obwohl die Karte offline vorhanden war. Jetzt wird pro Gebiet eine Stichprobe (bis 400 Bilder) direkt im Speicher geprüft. «Fortsetzen» prüft jedes Bild zuerst im Speicher und lädt nur wirklich fehlende neu.
+- Ganzes Land jetzt auch auf Detailstufe 13 (Grenze für Länder 90'000 statt 25'000 Kartenbilder; Marokko ca. 55'000 Bilder, gut 1 GB). Hinweis bei grossen Downloads; bestehende Bilder werden nicht neu geladen.
+- Karten über Google Drive: Ein Gerät (standardmässig der PC) lädt die Kartenbilder einmal vom Kartendienst und legt sie gepackt auf Google Drive (Pakete à max. 32×32 Bilder). Handys und Tablet holen fehlende Bilder zuerst dort – in Minuten statt Stunden – und fragen nur den Rest beim Kartendienst an. Neue Schalter in «Offline-Daten»: «Kartenbilder auf diesem Gerät» (überall ein) und «Karten für die anderen Geräte auf Google Drive bereitstellen» (am PC ein). Übersicht zeigt pro Land, wie viel der Karte auf Drive liegt.
+- Download-Ablauf in 4 sichtbaren Schritten: vorhandene Bilder prüfen · von Google Drive · vom Kartendienst · für die anderen Geräte bereitstellen. Google-Anmeldung wird vorher erneuert (sie gilt ca. 1 h), nie mehr ein Wechsel zur Anmeldeseite mitten im Download. Prüfung des freien Drive-Speichers vor dem Hochladen.
+- Schneller: Download-Anfragen gehen direkt ans Netz statt über den Zwischenspeicher (vorher doppelt gespeichert); Topo mit 3 statt 2 gleichzeitigen Anfragen; Bildschirm bleibt während des Downloads an (sonst hält Android die App an).
+- Höhere Detailstufen: ganzes Land bis Stufe 14 (Grenze 250'000 Bilder); rund um eure Punkte wählbar bis Stufe 14, 15 oder 16 mit Umkreis 5/10/20 km.
+- Satellit: in Gebieten ohne Esri-Bilder werden keine Platzhalter mehr gespeichert und nicht endlos nachgeladen.
+- NEU: Prototyp «Vektorkarte (Test)» (Menü › Karte, Datei vektor.html): Karte aus OpenStreetMap als eine Datei pro Land (Protomaps .pmtiles), scharf in jeder Zoomstufe; Höhenlinien und Relief aus Höhendaten; Pisten hervorgehoben; eigene Punkte; Satellit umschaltbar; GPS mit Blickrichtung, Karte drehbar. Ohne Kartendatei zeigt sie online die Weltkarte zum Ausprobieren; die Marokko-Datei wird einmal am PC mit dem Programm pmtiles erstellt (Anleitung auf der Seite) und dann auf jedem Gerät geladen. Die heutige Karte bleibt unverändert.

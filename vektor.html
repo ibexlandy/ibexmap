@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2f3b2f">
+<title>IbexMap – Vektorkarte (Test)</title>
+<link rel="icon" href="favicon.png">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.css">
+<style>
+:root{--bg:#f4f1ea;--ink:#222;--muted:#6b6b6b;--accent:#2f3b2f;--accent2:#c8742c;--line:#d9d3c7}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+#app{position:fixed;inset:0;display:flex;flex-direction:column}
+header{flex:none;display:flex;align-items:center;gap:8px;padding:calc(6px + env(safe-area-inset-top)) 8px 6px 6px;background:var(--accent);color:#fff;min-height:52px}
+header a,header button{border:0;background:none;color:#fff;width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer}
+header a:active,header button:active{background:rgba(255,255,255,.15)}
+.ht{flex:1;min-width:0;line-height:1.15}.ht b{font-size:18px}.ht small{display:block;font-size:12.5px;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#map{flex:1;position:relative}
+.chips{position:absolute;left:10px;top:10px;z-index:5;display:flex;flex-wrap:wrap;gap:6px;max-width:calc(100% - 70px)}
+.chip{border:0;border-radius:18px;padding:7px 12px;font:inherit;font-size:13.5px;background:#fff;color:var(--ink);box-shadow:0 1px 5px rgba(0,0,0,.25);display:flex;align-items:center;gap:6px;cursor:pointer}
+.chip.on{background:var(--accent);color:#fff}
+#panel{position:absolute;left:0;right:0;bottom:0;z-index:10;background:#fff;border-radius:16px 16px 0 0;box-shadow:0 -4px 18px rgba(0,0,0,.25);padding:14px 16px calc(16px + env(safe-area-inset-bottom));max-height:80%;overflow:auto;display:none}
+#panel h2{margin:0 0 6px;font-size:19px}
+#panel p{margin:6px 0;font-size:14.5px;line-height:1.4}
+.muted{color:var(--muted)}
+.btn{border:0;border-radius:10px;padding:11px 16px;font:inherit;font-size:15px;font-weight:600;background:var(--accent);color:#fff;cursor:pointer}
+.btn.sec{background:#eee;color:var(--ink)}
+.btn:disabled{opacity:.45}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.card{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0}
+.bar{height:10px;background:#e4e0d6;border-radius:5px;overflow:hidden;margin:8px 0}.bar div{height:100%;width:0;background:var(--accent2)}
+code{background:#f1eee6;border-radius:6px;padding:2px 5px;font-size:13px;word-break:break-all}
+ol{padding-left:20px;margin:6px 0}ol li{margin:5px 0;font-size:14.5px;line-height:1.4}
+#msg{position:absolute;left:50%;top:60px;transform:translateX(-50%);z-index:20;background:#222;color:#fff;border-radius:18px;padding:8px 14px;font-size:14px;display:none;max-width:90%;text-align:center}
+.maplibregl-popup-content{border-radius:10px;font-size:14px;padding:10px 12px}
+</style>
+</head>
+<body>
+<div id="app">
+ <header>
+  <a href="./" title="Zurück zu IbexMap"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></a>
+  <div class="ht"><b>Vektorkarte</b> <span style="font-size:11px;opacity:.6">Test</span><small id="src">wird gestartet …</small></div>
+  <button id="bInfo" title="Kartendaten"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg></button>
+ </header>
+ <div id="map">
+  <div class="chips">
+   <button class="chip on" data-base="vec">Vektor</button>
+   <button class="chip" data-base="sat">Satellit</button>
+   <button class="chip on" id="cCont">Höhenlinien</button>
+   <button class="chip on" id="cHill">Relief</button>
+   <button class="chip on" id="cPts">Eigene Punkte</button>
+  </div>
+  <div id="msg"></div>
+  <div id="panel"></div>
+ </div>
+</div>
+<script src="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/pmtiles@4/dist/pmtiles.js"></script>
+<script src="https://unpkg.com/@protomaps/basemaps@5/dist/basemaps.js"></script>
+<script src="https://unpkg.com/maplibre-contour@0.1.0/dist/index.min.js"></script>
+<script>
+"use strict";
+/* IbexMap – Prototyp Vektorkarte
+   Karte: Protomaps (OpenStreetMap) als eine .pmtiles-Datei pro Land, gespeichert im Gerätespeicher (OPFS) – scharf in jeder Zoomstufe.
+   Höhenlinien und Relief: aus Höhendaten (Terrarium, AWS) im Browser berechnet. Eigene Punkte: direkt aus der IbexMap-Datenbank. */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmtN=n=>Number(n).toLocaleString("de-CH");
+const MB=b=>fmtN(Math.round(b/1048576));
+function msg(t,ms=3500){const e=$("#msg");e.textContent=t;e.style.display="block";clearTimeout(e._t);e._t=setTimeout(()=>e.style.display="none",ms);}
+const panel=$("#panel");function openP(h){panel.innerHTML=h;panel.style.display="block";}function closeP(){panel.style.display="none";}
+const missing=["maplibregl","pmtiles","basemaps","mlcontour"].filter(n=>!window[n]);
+if(missing.length){document.body.innerHTML=`<div style="padding:24px;font-family:system-ui"><h2>Vektorkarte konnte nicht starten</h2><p>Fehlende Bausteine: ${missing.join(", ")}.</p><p>Beim ersten Öffnen braucht die Seite einmal Internet. Danach funktioniert sie offline.</p><p><a href="./">Zurück zu IbexMap</a></p></div>`;throw new Error("libs");}
+
+const CAT={wild:"#2e7d32",camp:"#1565c0",sight:"#8e24aa",hike:"#6d4c41",shop:"#00897b",fuel:"#ef6c00",service:"#546e7a",water:"#0288d1",warn:"#c62828",other:"#757575"};
+const CATN={wild:"Stellplatz",camp:"Camping",sight:"Sehenswürdigkeit",hike:"Wanderung",shop:"Einkauf",fuel:"Tankstelle",service:"Auto",water:"Wasser",warn:"Achtung",other:"Sonstiges"};
+const GLYPHS="https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf";
+const SPRITE="https://protomaps.github.io/basemaps-assets/sprites/v4/light";
+const DEM_URL="https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png";
+
+/* ---------- Kartendatei: offline im Gerätespeicher oder online zum Ausprobieren ---------- */
+const proto=new pmtiles.Protocol();maplibregl.addProtocol("pmtiles",proto.tile);
+async function opfsDir(){return await navigator.storage.getDirectory();}
+async function savedFiles(){const out=[];try{const d=await opfsDir();for await(const [n,h] of d.entries())if(h.kind==="file"&&/\.pmtiles$/i.test(n)){const f=await h.getFile();out.push({name:n,size:f.size,file:f});}}catch(e){}return out.sort((a,b)=>b.size-a.size);}
+async function latestBuild(){const today=new Date();
+  for(let i=0;i<14;i++){const d=new Date(today-i*864e5);const s=d.toISOString().slice(0,10).replace(/-/g,"");const u=`https://build.protomaps.com/${s}.pmtiles`;
+    try{const r=await fetch(u,{headers:{Range:"bytes=0-15"}});if(r.ok||r.status===206)return {url:u,date:s};}catch(e){}}return null;}
+let srcInfo={kind:"",label:""};
+async function pickSource(){
+  const files=await savedFiles();
+  if(files.length){const p=new pmtiles.PMTiles(new pmtiles.FileSource(files[0].file));proto.add(p);
+    srcInfo={kind:"file",label:`Offline: ${files[0].name} (${MB(files[0].size)} MB)`,url:"pmtiles://"+files[0].name,files};return srcInfo;}
+  if(!navigator.onLine){srcInfo={kind:"none",label:"Keine Kartendatei gespeichert und kein Internet"};return srcInfo;}
+  const b=await latestBuild();
+  if(b){srcInfo={kind:"online",label:`Online-Test (Welt, Stand ${b.date.slice(6)}.${b.date.slice(4,6)}.${b.date.slice(0,4)}) – noch nicht offline`,url:"pmtiles://"+b.url,build:b};return srcInfo;}
+  srcInfo={kind:"none",label:"Kartendaten online nicht erreichbar"};return srcInfo;}
+
+/* ---------- Höhenlinien und Relief ---------- */
+const dem=new mlcontour.DemSource({url:DEM_URL,encoding:"terrarium",maxzoom:12,worker:true});
+dem.setupMaplibre(maplibregl);
+
+/* ---------- Stil ---------- */
+function buildStyle(src){
+  const sources={},layers=[];
+  if(src.url){sources.protomaps={type:"vector",url:src.url,attribution:'© <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> · <a href="https://protomaps.com">Protomaps</a>'};
+    layers.push(...basemaps.layers("protomaps",basemaps.namedFlavor("light"),{lang:"de"}));}
+  else layers.push({id:"bg",type:"background",paint:{"background-color":"#efe9dc"}});
+  sources.sat={type:"raster",tiles:["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],tileSize:256,maxzoom:19,attribution:"Bilder © Esri, Maxar"};
+  layers.splice(layers.length?1:0,0,{id:"sat",type:"raster",source:"sat",layout:{visibility:"none"}});
+  sources.hill={type:"raster-dem",tiles:[dem.sharedDemProtocolUrl],encoding:"terrarium",tileSize:256,maxzoom:12};
+  sources.cont={type:"vector",tiles:[dem.contourProtocolUrl({multiplier:1,thresholds:{9:[200,1000],10:[100,500],11:[50,250],12:[20,100],13:[20,100],14:[10,50],15:[10,50]},elevationKey:"ele",levelKey:"level",contourLayer:"contours"})],maxzoom:15};
+  /* Relief und Höhenlinien unter die Strassen legen */
+  const firstRoad=layers.findIndex(l=>/road|transit|boundar/i.test(l.id));
+  const terrain=[
+    {id:"hill",type:"hillshade",source:"hill",paint:{"hillshade-exaggeration":0.35,"hillshade-shadow-color":"#5a4a3a","hillshade-highlight-color":"#ffffff"}},
+    {id:"cont",type:"line",source:"cont","source-layer":"contours",minzoom:9,paint:{"line-color":"#a0784a","line-opacity":["match",["get","level"],1,0.75,0.4],"line-width":["match",["get","level"],1,1.1,0.6]}},
+    {id:"cont-l",type:"symbol",source:"cont","source-layer":"contours",minzoom:11,filter:[">",["get","level"],0],
+      layout:{"symbol-placement":"line","text-field":["concat",["number-format",["get","ele"],{}],"\u202Fm"],"text-size":10.5,"text-font":["Noto Sans Regular"]},
+      paint:{"text-color":"#8a6238","text-halo-color":"#fff","text-halo-width":1.2}}];
+  layers.splice(firstRoad>0?firstRoad:layers.length,0,...terrain);
+  /* Pisten (OSM «track») deutlich hervorheben */
+  if(src.url)layers.push({id:"tracks",type:"line",source:"protomaps","source-layer":"roads",minzoom:10,filter:["==",["get","kind_detail"],"track"],
+    paint:{"line-color":"#9a4a00","line-width":["interpolate",["linear"],["zoom"],10,0.8,14,2.2,17,4],"line-dasharray":[3,1.5]}});
+  return {version:8,glyphs:GLYPHS,sprite:SPRITE,sources,layers};}
+
+/* ---------- Eigene Punkte aus IbexMap ---------- */
+function readPoints(){return new Promise(res=>{try{const r=indexedDB.open("reisebuch");r.onsuccess=()=>{const db=r.result;
+  if(!db.objectStoreNames.contains("points"))return res([]);const q=db.transaction("points").objectStore("points").getAll();q.onsuccess=()=>res(q.result.filter(p=>!p.deleted&&isFinite(p.lat)&&isFinite(p.lon)));q.onerror=()=>res([]);};r.onerror=()=>res([]);}catch(e){res([]);}});}
+async function addPoints(){const pts=await readPoints();
+  const fc={type:"FeatureCollection",features:pts.map(p=>({type:"Feature",geometry:{type:"Point",coordinates:[p.lon,p.lat]},
+    properties:{id:p.id,t:p.title||"",c:CAT[p.cat]||CAT.other,cat:CATN[p.cat]||"",imp:p.imp?1:0,note:(p.desc||p.note||"").slice(0,200)}}))};
+  if(map.getSource("pts"))map.getSource("pts").setData(fc);
+  else{map.addSource("pts",{type:"geojson",data:fc});
+    map.addLayer({id:"pts",type:"circle",source:"pts",paint:{"circle-radius":["interpolate",["linear"],["zoom"],5,["case",["==",["get","imp"],1],6,4],12,["case",["==",["get","imp"],1],11,8]],
+      "circle-color":["get","c"],"circle-stroke-color":"#fff","circle-stroke-width":2}});
+    map.addLayer({id:"pts-l",type:"symbol",source:"pts",minzoom:10,layout:{"text-field":["get","t"],"text-size":12.5,"text-font":["Noto Sans Medium"],"text-offset":[0,1.2],"text-anchor":"top","text-optional":true},
+      paint:{"text-color":"#222","text-halo-color":"#fff","text-halo-width":1.5}});
+    map.on("click","pts",e=>{const f=e.features[0],p=f.properties;new maplibregl.Popup({offset:10}).setLngLat(f.geometry.coordinates)
+      .setHTML(`<b>${esc(p.t)}</b><br><span style="color:${p.c}">${esc(p.cat)}</span>${p.note?`<br><span style="color:#555">${esc(p.note)}</span>`:""}`).addTo(map);});
+    map.on("mouseenter","pts",()=>map.getCanvas().style.cursor="pointer");map.on("mouseleave","pts",()=>map.getCanvas().style.cursor="");}
+  return pts.length;}
+
+/* ---------- Karte ---------- */
+let lv=null;try{lv=JSON.parse(localStorage.getItem("rb_view")||"null");}catch(e){}
+let map;
+(async()=>{
+  const src=await pickSource();$("#src").textContent=src.label;
+  map=new maplibregl.Map({container:"map",style:buildStyle(src),center:lv?[lv.lon,lv.lat]:[-6.5,31.8],zoom:lv?lv.z:6,maxZoom:18,attributionControl:{compact:true},hash:false});
+  map.addControl(new maplibregl.NavigationControl({visualizePitch:true}),"top-right");
+  map.addControl(new maplibregl.GeolocateControl({positionOptions:{enableHighAccuracy:true},trackUserLocation:true,showUserHeading:true}),"top-right");
+  map.addControl(new maplibregl.ScaleControl({unit:"metric"}),"bottom-left");
+  map.on("load",async()=>{const n=await addPoints();msg(src.kind==="file"?`Offline-Karte geladen · ${n} eigene Punkte`:src.kind==="online"?`Online-Testkarte · ${n} eigene Punkte – für offline: Kartendatei laden (Pfeil oben rechts)`:src.label,5000);
+    if(src.kind!=="file")setTimeout(infoPanel,1200);});
+  map.on("error",e=>{const m=String(e&&e.error&&e.error.message||"");if(/pmtiles|Failed to fetch|NetworkError/i.test(m)&&!navigator.onLine)return;console.warn(m);});
+})();
+
+/* Bedienung */
+document.querySelectorAll("[data-base]").forEach(b=>b.onclick=()=>{const sat=b.dataset.base==="sat";
+  document.querySelectorAll("[data-base]").forEach(x=>x.classList.toggle("on",x===b));
+  map.setLayoutProperty("sat","visibility",sat?"visible":"none");
+  map.getStyle().layers.forEach(l=>{if(l.source==="protomaps"&&l.id!=="tracks"&&!/label|place|road|boundar|pois?$/i.test(l.id))map.setLayoutProperty(l.id,"visibility",sat?"none":"visible");});});
+const tog=(btn,ids)=>{btn.onclick=()=>{const on=!btn.classList.contains("on");btn.classList.toggle("on",on);ids.forEach(id=>map.getLayer(id)&&map.setLayoutProperty(id,"visibility",on?"visible":"none"));};};
+tog($("#cCont"),["cont","cont-l"]);tog($("#cHill"),["hill"]);tog($("#cPts"),["pts","pts-l"]);
+
+/* ---------- Kartendateien verwalten ---------- */
+async function infoPanel(){const files=await savedFiles();let est="";
+  try{const e=await navigator.storage.estimate();est=`Speicher: ${MB(e.usage)} MB belegt von ca. ${MB(e.quota)} MB`;}catch(e){}
+  const b=srcInfo.build?srcInfo.build.date:"JJJJMMTT";
+  openP(`<h2>Kartendaten</h2>
+   <p class="muted">${esc(srcInfo.label)}<br>${esc(est)}</p>
+   ${files.length?files.map(f=>`<div class="card"><b>${esc(f.name)}</b> · ${MB(f.size)} MB <button class="btn sec" data-del="${esc(f.name)}" style="float:right;padding:6px 10px;font-size:13px">Löschen</button></div>`).join(""):`<div class="card">Noch keine Kartendatei auf diesem Gerät.</div>`}
+   <div class="row"><button class="btn" id="pFile">Kartendatei laden (.pmtiles)</button><button class="btn sec" id="pClose">Schliessen</button></div>
+   <input type="file" id="pIn" accept=".pmtiles" style="display:none">
+   <div id="pProg" style="display:none"><div class="bar"><div id="pBar"></div></div><p id="pTxt" class="muted"></p></div>
+   <h2 style="margin-top:16px">Kartendatei Marokko erstellen (einmal am PC)</h2>
+   <ol>
+    <li>Das Programm <b>pmtiles</b> herunterladen: <code>github.com/protomaps/go-pmtiles/releases</code> › Datei <code>go-pmtiles_…_Windows_x86_64.zip</code>, entpacken (z.&nbsp;B. nach <code>C:\\Karten</code>).</li>
+    <li>In diesem Ordner die Eingabeaufforderung öffnen (Adresszeile: <code>cmd</code> eintippen, Enter).</li>
+    <li>Zuerst nur die Grösse anzeigen:<br><code>pmtiles extract https://build.protomaps.com/${b}.pmtiles marokko.pmtiles --bbox=-17.2,20.7,-0.9,36.0 --maxzoom=15 --dry-run</code></li>
+    <li>Dann ohne <code>--dry-run</code> wiederholen. Es entsteht <code>marokko.pmtiles</code>.</li>
+    <li>Hier «Kartendatei laden» und die Datei wählen. Fürs Handy: Datei per Google Drive aufs Handy und dort ebenso laden.</li>
+   </ol>
+   <p class="muted">Spanien: <code>--bbox=-9.5,35.9,3.4,43.9</code> und Dateiname <code>spanien.pmtiles</code>. Die aktuellste Datums-Datei steht auf <code>maps.protomaps.com/builds</code>.</p>`);
+  $("#pClose").onclick=closeP;$("#pFile").onclick=()=>$("#pIn").click();
+  $("#pIn").onchange=e=>{const f=e.target.files[0];if(f)importFile(f);};
+  panel.querySelectorAll("[data-del]").forEach(b=>b.onclick=async()=>{if(!confirmDel(b.dataset.del))return;try{await(await opfsDir()).removeEntry(b.dataset.del);}catch(e){}msg("Gelöscht – Seite wird neu geladen");setTimeout(()=>location.reload(),900);});}
+function confirmDel(n){return window.confirm(`${n} von diesem Gerät löschen?`);}
+async function importFile(f){if(!/\.pmtiles$/i.test(f.name))return msg("Bitte eine .pmtiles-Datei wählen");
+  $("#pProg").style.display="block";const bar=$("#pBar"),txt=$("#pTxt");
+  try{const d=await opfsDir();const h=await d.getFileHandle(f.name,{create:true});const w=await h.createWritable();
+    const rd=f.stream().getReader();let n=0;const t0=Date.now();
+    for(;;){const {done,value}=await rd.read();if(done)break;await w.write(value);n+=value.length;bar.style.width=Math.floor(n/f.size*100)+"%";txt.textContent=`${MB(n)} von ${MB(f.size)} MB gespeichert …`;}
+    await w.close();txt.textContent=`Fertig in ${Math.round((Date.now()-t0)/1000)} s – Karte wird neu geladen`;setTimeout(()=>location.reload(),900);}
+  catch(e){txt.textContent="Speichern fehlgeschlagen: "+(e.name==="QuotaExceededError"?"zu wenig Speicher":e.message);}}
+$("#bInfo").onclick=infoPanel;
+try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
+if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).catch(()=>{});
+</script>
+</body>
+</html>
