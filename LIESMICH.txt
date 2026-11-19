@@ -1,4 +1,4 @@
-IbexMap – v6.6 (privates Projekt)
+IbexMap – v6.7 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -361,3 +361,7 @@ NEU IN v6.6
 - Suche: zusätzlich Fahnen und Notizen der Punkte; neue POI-Gruppe «Ortschaften» (Städte, Dörfer, Weiler) – nach dem Neuladen des POI-Overlays findet die Suche auch Orte offline.
 - Nachtmodus (Menü › Unterwegs): aus / ein / automatisch 20–6 Uhr; dunkle Bedienung, Kartenbilder abgedunkelt, Vektorkarte im dunklen Stil.
 - Datenbank-Version 3 (neuer Speicher für Fahrspuren).
+
+NEU IN v6.7
+- Fehler behoben: «Vektorkarte: Cannot access 'ls' before initialization» beim Start mit gewählter Vektorkarte.
+- Unerwartete Fehler werden als Meldung «Fehler: … (Zeile …)» angezeigt statt still abzubrechen.

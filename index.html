@@ -447,7 +447,7 @@ const ADM=(()=>{try{if(new URLSearchParams(location.search).has("admin")){sessio
   return sessionStorage.getItem("rb_admin")==="1"&&matchMedia("(min-width:900px)").matches;}catch(e){return false;}})();
 if(ADM)document.body.classList.add("adm");
 const GROUP="IbexMap";
-const VERSION="v6.6";
+const VERSION="v6.7";
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
 const MA_SECTORS=[
  {n:"A Norden",zeit:"5.–10. April",klima:"Frühling, grün; 15–22 °C, im Rif Regen möglich, Nächte kühl",info:"Tanger Med, Chefchaouen, Fès, Meknès – ankommen, Städte, einkaufen. Eher Campings.",box:[[33.8,-5.9,35.95,-1.0]]},
@@ -469,6 +469,10 @@ const flagI=`<svg viewBox="0 0 24 24" width="16" height="16" style="vertical-ali
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 function toast(t,ms=2500){const e=$("#toast");e.textContent=t;e.style.display="block";clearTimeout(e._t);e._t=setTimeout(()=>e.style.display="none",ms);}
+/* Einstellungen (früh definiert – wird von der Vektorkarte schon beim Start gebraucht) */
+const ls=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k)||"";if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v);}catch(e){return "";}};
+/* unerwartete Fehler sichtbar machen (statt still abzubrechen) */
+window.addEventListener("error",ev=>{try{if(ev&&ev.message&&!/ResizeObserver|Script error/.test(ev.message))toast("Fehler: "+ev.message+(ev.lineno?" (Zeile "+ev.lineno+")":""),9000);}catch(e){}});
 
 /* ---------- IndexedDB ---------- */
 let db;
@@ -1994,7 +1998,6 @@ $("#tripName").onclick=manageTrips;
 /* ---------- Google-Drive-Abgleich ---------- */
 const GD_SCOPE="https://www.googleapis.com/auth/drive.appdata",GD_DATA="reisebuch_daten.json";
 let gdToken=null,gdExp=0,syncing=false;
-const ls=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k)||"";if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v);}catch(e){return "";}};
 /* Bildschirm wach halten, solange IbexMap offen und sichtbar ist (Screen Wake Lock API) */
 let wakeLock=null;const wakeOn=()=>ls("rb_wake")!=="0";
 async function wakeAcquire(){if(!wakeOn()||!("wakeLock" in navigator)||document.visibilityState!=="visible"||wakeLock)return;
