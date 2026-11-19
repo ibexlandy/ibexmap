@@ -24,7 +24,34 @@ header{flex:none;display:flex;align-items:center;gap:6px;padding:calc(6px + env(
 .hbtn{position:relative;flex:none;width:42px;height:42px;border:0;border-radius:50%;background:none;color:#fff;display:flex;align-items:center;justify-content:center;padding:0}
 .hbtn:active{background:rgba(255,255,255,.15)}
 .sdot{position:absolute;top:7px;right:7px;width:10px;height:10px;border-radius:50%;background:var(--accent2);border:2px solid #92b78c;display:none}
-.hbtn.busy svg{animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+.hbtn.busy svg{animation:spin 1s linear infinite}
+#driveBar{position:absolute;left:0;right:0;bottom:0;z-index:700;display:none;flex-direction:column;gap:8px;padding:10px 10px calc(10px + var(--sb));background:rgba(34,44,33,.93);color:#fff;box-shadow:0 -4px 16px rgba(0,0,0,.3)}
+#driveBar .dinfo{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px;opacity:.95;padding:0 4px}#driveBar .dinfo b{font-size:20px}
+#driveBar .recdot{color:#ff8a80;font-weight:700}
+#driveBar .dbtns{display:grid;grid-template-columns:1.35fr 1fr 1fr 1fr 1fr;gap:8px}
+.dbtn{border:0;border-radius:14px;min-height:76px;background:rgba(255,255,255,.12);color:#fff;font:inherit;font-size:12.5px;font-weight:600;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:6px 2px}
+.dbtn svg{stroke:currentColor}.dbtn.main{background:var(--accent2)}.dbtn.rec{background:rgba(229,57,53,.35)}.dbtn:active{transform:scale(.97)}
+body.drive .fab:not(#locBtn){display:none!important}body.drive #locBtn{bottom:calc(150px + var(--sb))!important}
+.qgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px}
+.qbtn{border:1px solid var(--line);background:var(--card);border-radius:14px;padding:12px 4px;display:flex;flex-direction:column;align-items:center;gap:6px;font:inherit;font-size:13px;font-weight:600;color:var(--ink)}
+/* Nachtmodus: dunkle Bedienung, Kartenbilder abgedunkelt, Vektorkarte im dunklen Stil */
+body.night{--bg:#171b17;--ink:#e9e7e1;--muted:#a4aa9f;--card:#242a23;--line:#3a4238;--accent:#1d251c}
+body.night .panel{background:#1c231b;--muted:#aab5a6;--line:#3a4a37}
+body.night .panel input:not([type=checkbox]):not([type=radio]),body.night .panel select,body.night .panel textarea{background:#2a3229;color:var(--ink);border-color:#3f4a3d}
+body.night .fab,body.night .ptop .px{background:#2a3229;color:var(--ink)}
+body.night .btn.sec{background:#323b30;color:var(--ink)}
+body.night .toast{background:#e9e7e1;color:#171b17}
+body.night .leaflet-tile-pane{filter:brightness(.62) contrast(1.08) saturate(.85)}
+body.night.vecon .leaflet-tile-pane{filter:none}
+body.night .leaflet-control-layers,body.night .leaflet-bar a{background:#2a3229;color:var(--ink)}
+body.night header{background:#1d251c!important;color:#e9e7e1}body.night header .hname,body.night header .htrip,body.night header .hbtn{color:#e9e7e1!important}
+body.night .ptop{background:#1c231b}
+body.night .panel *{text-shadow:none!important}
+body.night .mic{background:#323b30!important;color:var(--ink)}
+body.night .ovc.ok{background:#25402a;color:#9be0a5}body.night .ovc.part{background:#4a3320;color:#ffc48a}body.night .ovc.no{background:#ffffff14}
+body.night .leaflet-container{background:#111}
+.hbtn.expired::after{content:"!";position:absolute;top:5px;right:5px;width:15px;height:15px;border-radius:50%;background:#e53935;color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;line-height:1}
+.hbtn.expired .sdot{display:none!important}@keyframes spin{to{transform:rotate(360deg)}}
 .gdot{position:absolute;right:8px;bottom:9px;width:9px;height:9px;border-radius:50%;background:#9e9e9e;border:2px solid var(--accent)}
 #gpsInfo.ok .gdot{background:#4caf50}#gpsInfo.bad .gdot{background:#e53935}
 @keyframes pulse{50%{opacity:.8}}
@@ -302,6 +329,7 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
     <button class="fab" id="navHere" title="Hier merken (aktueller Standort)" style="bottom:calc(200px + var(--sb))"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.6" fill="currentColor"/></svg></button>
     <button class="fab" id="navList" title="Liste" style="bottom:calc(140px + var(--sb))"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2" fill="currentColor"/><circle cx="4.5" cy="12" r="1.2" fill="currentColor"/><circle cx="4.5" cy="18" r="1.2" fill="currentColor"/></svg></button>
     <button class="fab" id="locBtn" title="Mein Standort">◎</button>
+    <button class="fab" id="driveBtn" title="Fahrmodus" style="left:12px;right:auto;bottom:calc(20px + var(--sb))"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2.2"/><path d="M3.8 10.5c2.6-.9 5.4-1.3 8.2-1.3s5.6.4 8.2 1.3M10.2 13.6 7.6 20M13.8 13.6l2.6 6.4"/></svg></button>
     <button class="fab" id="flagBtn" title="Fahnen (Vormerker)" style="top:76px;left:12px;right:auto;bottom:auto;display:none"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M5 22V3" stroke="#d84315" stroke-width="2.4" stroke-linecap="round"/><path d="M6 3.5h12l-3 4.5 3 4.5H6z" fill="#d84315"/></svg><b class="fcount"></b></button>
     <button class="fab" id="searchBtn" title="Ort suchen" style="top:12px;left:12px;right:auto;bottom:auto"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg></button>
     <button class="fab" id="filtBtn" title="Filter: was auf der Karte angezeigt wird" style="bottom:calc(80px + var(--sb))"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"><path d="M3 4h18l-7 8.5V19l-4 2v-8.5z"/></svg></button>
@@ -366,6 +394,8 @@ const MI={
   download:`<path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M4.5 15v3.5a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V15"/>`,
   photo:`<rect x="3" y="5.5" width="18" height="14" rx="2"/><circle cx="12" cy="12.5" r="3.5"/><path d="M8.5 5.5 10 3.5h4l1.5 2"/>`,
   nav:`<path d="M12 3 19.5 20 12 16l-7.5 4z"/>`,
+  wheel:`<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2.2"/><path d="M3.8 10.5c2.6-.9 5.4-1.3 8.2-1.3s5.6.4 8.2 1.3M10.2 13.6 7.6 20M13.8 13.6l2.6 6.4"/>`,
+  moon:`<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>`,
   mapdl:`<path d="M9 4.5 3.5 6.5v13L9 17.5l6 2 5.5-2v-6M9 4.5v13M15 10.5v9M18 3v6M15.5 6.5 18 9l2.5-2.5"/>`,
   map:`<path d="M9 4.5 3.5 6.5v13L9 17.5l6 2 5.5-2v-13L15 6.5zM9 4.5v13M15 6.5v13"/>`,
   screen:`<rect x="6.5" y="2.5" width="11" height="19" rx="2"/><path d="M10.5 18.5h3M12 6.5v1M9.2 8.6l.7.7M14.8 8.6l-.7.7M12 10a2 2 0 1 0 0 .01"/>`,
@@ -417,7 +447,7 @@ const ADM=(()=>{try{if(new URLSearchParams(location.search).has("admin")){sessio
   return sessionStorage.getItem("rb_admin")==="1"&&matchMedia("(min-width:900px)").matches;}catch(e){return false;}})();
 if(ADM)document.body.classList.add("adm");
 const GROUP="IbexMap";
-const VERSION="v6.5";
+const VERSION="v6.6";
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
 const MA_SECTORS=[
  {n:"A Norden",zeit:"5.–10. April",klima:"Frühling, grün; 15–22 °C, im Rif Regen möglich, Nächte kühl",info:"Tanger Med, Chefchaouen, Fès, Meknès – ankommen, Städte, einkaufen. Eher Campings.",box:[[33.8,-5.9,35.95,-1.0]]},
@@ -442,9 +472,10 @@ function toast(t,ms=2500){const e=$("#toast");e.textContent=t;e.style.display="b
 
 /* ---------- IndexedDB ---------- */
 let db;
-function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open("reisebuch",2);
+function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open("reisebuch",3);
   r.onupgradeneeded=()=>{const d=r.result;for(const st of ["points","photos"])if(!d.objectStoreNames.contains(st))d.createObjectStore(st,{keyPath:"id"});
-    if(!d.objectStoreNames.contains("meta"))d.createObjectStore("meta",{keyPath:"id"});};
+    if(!d.objectStoreNames.contains("meta"))d.createObjectStore("meta",{keyPath:"id"});
+    if(!d.objectStoreNames.contains("tracks"))d.createObjectStore("tracks",{keyPath:"id"});};
   r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
 function tx(store,mode,fn){return new Promise((res,rej)=>{const t=db.transaction(store,mode);const s=t.objectStore(store);const out=fn(s);t.oncomplete=()=>res(out&&out.result!==undefined?out.result:out);t.onerror=()=>rej(t.error);});}
 const getAll=st=>new Promise((res,rej)=>{const r=db.transaction(st).objectStore(st).getAll();r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});
@@ -580,7 +611,7 @@ function vecLibs(){return vecLibP||(vecLibP=(async()=>{
   vecPrefetch();})().catch(e=>{vecLibP=null;throw e;}));}
 /* Schriften und Symbole einmal vorausladen, damit Beschriftungen auch offline erscheinen */
 let vecPre=false;function vecPrefetch(){if(vecPre||!navigator.onLine)return;vecPre=true;
-  const urls=[VEC_SPRITE+".json",VEC_SPRITE+".png",VEC_SPRITE+"@2x.json",VEC_SPRITE+"@2x.png"];
+  const DS=VEC_SPRITE.replace(/light$/,"dark");const urls=[VEC_SPRITE+".json",VEC_SPRITE+".png",VEC_SPRITE+"@2x.json",VEC_SPRITE+"@2x.png",DS+".json",DS+".png",DS+"@2x.json",DS+"@2x.png"];
   ["Noto Sans Regular","Noto Sans Medium","Noto Sans Italic"].forEach(f=>["0-255","256-511","512-767","768-1023","1024-1279","1536-1791","1792-2047","8192-8447","8448-8703"].forEach(r=>urls.push(VEC_GLYPHS.replace("{fontstack}",encodeURIComponent(f)).replace("{range}",r))));
   urls.forEach((u,i)=>setTimeout(()=>fetch(u).catch(()=>{}),i*60));}
 async function opfs(){return await navigator.storage.getDirectory();}
@@ -591,11 +622,11 @@ async function vecFiles(){const out={};try{const d=await opfs();const meta=vecMe
   for await(const [n,h] of d.entries()){if(h.kind!=="file")continue;const m=n.match(/^vec_([A-Z]{2})\.pmtiles$/);const cc=m?m[1]:VEC_ALIAS[n.toLowerCase()];if(!cc||(out[cc]&&out[cc].ok))continue;
     const f=await h.getFile();const want=(meta[cc]||{}).size||f.size;out[cc]={name:n,file:f,size:f.size,want,ok:f.size>0&&f.size>=want,pc:want?Math.floor(f.size/want*100):0};}}catch(e){}return out;}
 /* Kartenstil: pro Land eine Quelle; Höhenlinien und Relief unter die Strassen; Pisten (OSM «track») braun gestrichelt */
-async function vecStyle(){const fs=await vecFiles();const sources={},layers=[],per=[];let bg=null;
+async function vecStyle(){const fs=await vecFiles();const sources={},layers=[],per=[];let bg=null;const dark=nightNow();vecFlavor=dark?"dark":"light";
   for(const [cc,v] of Object.entries(fs)){if(!v.ok)continue;const sid="v_"+cc;
     if(vecAdded[v.name]!==v.file.lastModified+":"+v.size){vecProto.add(new pmtiles.PMTiles(new pmtiles.FileSource(v.file)));vecAdded[v.name]=v.file.lastModified+":"+v.size;}
     sources[sid]={type:"vector",url:"pmtiles://"+v.name,attribution:'© <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> · Protomaps'};
-    const own=[];basemaps.layers(sid,basemaps.namedFlavor("light"),{lang:"de"}).forEach(l=>{if(l.type==="background"){if(!bg)bg=Object.assign({},l,{id:"bg"});return;}own.push(Object.assign({},l,{id:cc+"_"+l.id}));});
+    const own=[];basemaps.layers(sid,basemaps.namedFlavor(vecFlavor),{lang:"de"}).forEach(l=>{if(l.type==="background"){if(!bg)bg=Object.assign({},l,{id:"bg"});return;}own.push(Object.assign({},l,{id:cc+"_"+l.id}));});
     own.push({id:cc+"_tracks",type:"line",source:sid,"source-layer":"roads",minzoom:10,filter:["==",["get","kind_detail"],"track"],
       paint:{"line-color":"#9a4a00","line-width":["interpolate",["linear"],["zoom"],10,0.8,14,2.2,17,4],"line-dasharray":[3,1.5]}});per.push(own);}
   /* mehrere Länder: Ebenen gleicher Art nebeneinander, damit Relief und Höhenlinien überall unter den Strassen liegen */
@@ -603,21 +634,30 @@ async function vecStyle(){const fs=await vecFiles();const sources={},layers=[],p
   sources.hill={type:"raster-dem",tiles:[vecDem.sharedDemProtocolUrl],encoding:"terrarium",tileSize:256,maxzoom:DEM_MAXZ};
   sources.cont={type:"vector",tiles:[vecDem.contourProtocolUrl({multiplier:1,thresholds:{9:[200,1000],10:[100,500],11:[50,250],12:[20,100],13:[20,100],14:[10,50],15:[10,50],16:[10,50]},elevationKey:"ele",levelKey:"level",contourLayer:"contours"})],maxzoom:16};
   const terrain=[{id:"hill",type:"hillshade",source:"hill",paint:{"hillshade-exaggeration":0.35,"hillshade-shadow-color":"#5a4a3a","hillshade-highlight-color":"#ffffff"}},
-    {id:"cont",type:"line",source:"cont","source-layer":"contours",minzoom:9,paint:{"line-color":"#a0784a","line-opacity":["match",["get","level"],1,0.75,0.4],"line-width":["match",["get","level"],1,1.1,0.6]}},
+    {id:"cont",type:"line",source:"cont","source-layer":"contours",minzoom:9,paint:{"line-color":dark?"#c9a77a":"#a0784a","line-opacity":["match",["get","level"],1,0.75,0.4],"line-width":["match",["get","level"],1,1.1,0.6]}},
     {id:"cont-l",type:"symbol",source:"cont","source-layer":"contours",minzoom:11,filter:[">",["get","level"],0],
       layout:{"symbol-placement":"line","text-field":["concat",["number-format",["get","ele"],{}]," m"],"text-size":10.5,"text-font":["Noto Sans Regular"]},
-      paint:{"text-color":"#8a6238","text-halo-color":"#fff","text-halo-width":1.2}}];
+      paint:{"text-color":dark?"#e0c49c":"#8a6238","text-halo-color":dark?"#1b1b1b":"#fff","text-halo-width":1.2}}];
   const at=layers.findIndex(l=>/_(water|roads?|boundar)/.test(l.id));layers.splice(at>=0?at:layers.length,0,...terrain);
   layers.unshift(bg||{id:"bg",type:"background",paint:{"background-color":"#efe9dc"}});
-  return {style:{version:8,glyphs:VEC_GLYPHS,sprite:VEC_SPRITE,sources,layers},n:Object.keys(sources).filter(k=>k.startsWith("v_")).length};}
-const VecLayer=L.Layer.extend({onAdd(m){this._m=m;this._on=true;vecMount(this).catch(e=>{toast("Vektorkarte: "+e.message,7000);});},
-  onRemove(m){this._on=false;if(this._gl&&m.hasLayer(this._gl))m.removeLayer(this._gl);}});
+  return {style:{version:8,glyphs:VEC_GLYPHS,sprite:dark?VEC_SPRITE.replace(/light$/,"dark"):VEC_SPRITE,sources,layers},n:Object.keys(sources).filter(k=>k.startsWith("v_")).length};}
+/* Nachtmodus: aus / ein / automatisch (20–6 Uhr) */
+const nightMode=()=>ls("rb_night")||"off";
+const nightNow=()=>{const m=nightMode();if(m==="auto"){const h=new Date().getHours();return h>=20||h<6;}return m==="on";};
+let vecFlavor="";
+function nightApply(){const on=nightNow();document.body.classList.toggle("night",on);const mt=document.querySelector('meta[name="theme-color"]');if(mt)mt.content=on?"#1d251c":"#2f3b2f";
+  if(VEC._on&&vecFlavor&&vecFlavor!==(on?"dark":"light"))vecRefresh();}
+const VecLayer=L.Layer.extend({onAdd(m){this._m=m;this._on=true;document.body.classList.add("vecon");vecMount(this).catch(e=>{toast("Vektorkarte: "+e.message,7000);});},
+  onRemove(m){this._on=false;document.body.classList.remove("vecon");if(this._gl&&m.hasLayer(this._gl))m.removeLayer(this._gl);}});
 const VEC=new VecLayer();
 async function vecMount(v){await vecLibs();if(!v._on)return;const s=await vecStyle();if(!v._on)return;
   if(!v._gl)v._gl=L.maplibreGL({style:s.style});else{try{v._gl.getMaplibreMap().setStyle(s.style);}catch(e){}}
   if(!v._m.hasLayer(v._gl))v._gl.addTo(v._m);
   if(!s.n)toast("Vektorkarte: auf diesem Gerät ist noch keine Länderdatei – Menü › Offline-Daten",7000);}
-async function vecRefresh(){if(VEC._on)try{await vecMount(VEC);}catch(e){}}
+async function vecRefresh(){if(VEC._on)try{await vecMount(VEC);}catch(e){}else vecAutoDefault();}
+/* Sobald auf einem Gerät eine Länderdatei liegt: einmalig automatisch auf die Vektorkarte umschalten (danach gilt die eigene Wahl) */
+async function vecAutoDefault(){if(ADM||ls("rb_vecauto")==="1"||map.hasLayer(VEC))return;const fs=await vecFiles();
+  if(Object.values(fs).some(v=>v.ok)){ls("rb_vecauto","1");setBase(VEC_NAME);toast("Vektorkarte eingeschaltet – andere Kartenarten oben rechts",5000);}}
 /* Länderdateien auf Google Drive (eine pro Land) */
 const vecDrive=()=>{try{return JSON.parse(ls("rb_vecdrive")||"{}");}catch(e){return {};}};
 function vecDriveSet(files){const m={};files.forEach(f=>{const x=f.name.match(/^vec_([A-Z]{2})\.pmtiles$/);if(x){const p=f.appProperties||{};m[x[1]]={id:f.id,size:+p.size||+f.size||0,build:p.build||""};}});ls("rb_vecdrive",JSON.stringify(m));return m;}
@@ -732,8 +772,21 @@ map.on("zoomend",()=>drawPoints());
 let syncDotT=null;function syncDotSoon(){clearTimeout(syncDotT);syncDotT=setTimeout(syncDot,2500);}
 async function syncDot(){const b=$("#syncBtn");if(!b||!gdClient())return;const last=+ls("rb_lastsync")||0;let pend=false;
   try{pend=(await getAll("points")).some(p=>(p.updated||0)>last+2000);}catch(e){}
+  try{if(!pend){const m=await getOne("meta","flags");pend=!!(m&&(m.updated||0)>last+2000)||trips.some(t=>(t.updated||0)>last+2000);}}catch(e){}
+  if(pend)autoSyncSoon();
+  b.classList.toggle("expired",!gdOk());
   const on=pend||Date.now()-last>864e5;let d=b.querySelector(".sdot");if(!d){d=document.createElement("span");d.className="sdot";b.appendChild(d);}
-  d.style.display=on?"block":"none";b.title=on?(pend?"Änderungen noch nicht abgeglichen – antippen":"Länger nicht abgeglichen – antippen"):"Mit Google Drive abgleichen";}
+  d.style.display=on?"block":"none";b.title=!gdOk()?"Google-Anmeldung abgelaufen – antippen, um neu anzumelden und abzugleichen":on?(pend?"Änderungen noch nicht abgeglichen – antippen":"Länger nicht abgeglichen – antippen"):"Mit Google Drive abgleichen";}
+/* ---------- Automatischer Abgleich ----------
+   Solange die Google-Anmeldung gültig ist (ca. 1 Stunde nach dem Anmelden): beim Start, 30 s nach Änderungen,
+   alle 10 Minuten und beim Zurückkehren in die App. Läuft still im Hintergrund; ist die Anmeldung abgelaufen,
+   zeigt der Abgleich-Knopf ein rotes «!» – ein Tipp darauf meldet neu an. */
+const autoSyncOn=()=>ls("rb_autosync")!=="0";
+let autoT=null;
+function autoSyncSoon(ms=30000){if(!autoSyncOn()||!gdOk())return;clearTimeout(autoT);autoT=setTimeout(()=>{if(document.visibilityState==="visible"&&navigator.onLine)syncDrive(true);},ms);}
+setInterval(()=>{if(autoSyncOn()&&gdOk()&&navigator.onLine&&document.visibilityState==="visible"&&Date.now()-(+ls("rb_lastsync")||0)>9*60000)syncDrive(true);else syncDot();},60000);
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&autoSyncOn()&&gdOk()&&Date.now()-(+ls("rb_lastsync")||0)>5*60000)autoSyncSoon(2000);});
+window.addEventListener("online",()=>autoSyncSoon(3000));
 async function loadPoints(){points=(await getAll("points")).filter(p=>!p.deleted);syncDotSoon();points.sort((a,b)=>(a.title||"").localeCompare(b.title||""));drawPoints();if(ADM&&document.getElementById("adm"))admRender();}
 
 /* ---------- OSM-Orte (wie OsmAnd-POI) ---------- */
@@ -841,7 +894,7 @@ function startGPS(){
   watchId=navigator.geolocation.watchPosition(pos=>{
     me={lat:pos.coords.latitude,lon:pos.coords.longitude,acc:pos.coords.accuracy};
     if(!lastPosT||Date.now()-lastPosT>30000){lastPosT=Date.now();try{localStorage.setItem("rb_lastpos",JSON.stringify({lat:me.lat,lon:me.lon,t:lastPosT}));}catch(e){}}
-    gpsState("ok",`GPS ±${Math.round(me.acc)} m`);
+    gpsState("ok",`GPS ±${Math.round(me.acc)} m`);lastSpd=pos.coords.speed;trkAdd(me.lat,me.lon,me.acc);if(driveOn)driveInfo();
     if(!meMarker){meMarker=L.circleMarker([me.lat,me.lon],{radius:8,color:"#fff",weight:3,fillColor:"#1e88e5",fillOpacity:1}).addTo(map);
       meCircle=L.circle([me.lat,me.lon],{radius:me.acc,color:"#1e88e5",weight:1,fillOpacity:.1}).addTo(map);}
     else{meMarker.setLatLng([me.lat,me.lon]);meCircle.setLatLng([me.lat,me.lon]).setRadius(me.acc);}
@@ -957,7 +1010,10 @@ const POI_GROUPS=[
   ["Touristen-Information",/^(information|touristinfo|info)/,'nwr["tourism"="information"]["information"="office"]']]},
  {g:"Verkehr und Kommunikation",i:"other",c:"#546e7a",items:[
   ["Bahnhof",/^(bahnhof|zug)/,'nwr["railway"="station"]'],["Bushaltestelle",/^(bus|haltestelle)/,'nwr["highway"="bus_stop"]'],["Fähre / Hafen",/^(fähre|faehre|hafen)/,'nwr["amenity"="ferry_terminal"]'],
-  ["Post",/^(post)$/,'nwr["amenity"="post_office"]'],["WLAN",/^(wifi|wlan|internet)/,'nwr["internet_access"~"^(wlan|yes)$"]']]}
+  ["Post",/^(post)$/,'nwr["amenity"="post_office"]'],["WLAN",/^(wifi|wlan|internet)/,'nwr["internet_access"~"^(wlan|yes)$"]']]},
+ /* Ortschaften: damit Orte auch offline gefunden werden (immer als letzte Gruppe – die Nummern der anderen bleiben gleich) */
+ {g:"Ortschaften",i:"other",c:"#5d4037",items:[
+  ["Stadt",/^(stadt|ville|city)/,'node["place"~"^(city|town)$"]'],["Dorf",/^(dorf|village|douar)/,'node["place"="village"]'],["Weiler",/^(weiler|hameau|hamlet)/,'node["place"="hamlet"]']]}
 ];
 POI_GROUPS.forEach(g=>{if(!ICON[g.i])g.i="other";});
 const POI_DICT=POI_GROUPS.flatMap(g=>g.items.map(([l,re,sel])=>[re,sel,l,g]));
@@ -1009,7 +1065,7 @@ function goLoc(L0){if(!L0)return;if(!L0.ll){toast(L0.short&&/goo\.gl/.test(L0.ur
 map.on("click",()=>{if(searchMark&&!placing){map.removeLayer(searchMark);searchMark=null;}});
 function showSearch(){
   openPanel(`<h2>Suchen</h2>
-   <div class="row"><input id="sQ" type="search" placeholder="Ort, Art, Koordinaten oder Google-Maps-Link" value="${esc(lastQ)}" enterkeyhint="search" autocomplete="off"><button class="btn" id="sGo" style="flex:none">Suchen</button></div>
+   <div class="row"><input id="sQ" type="search" placeholder="Ort, eigener Punkt, Fahne, Art, Koordinaten oder Google-Link" value="${esc(lastQ)}" enterkeyhint="search" autocomplete="off"><button class="btn" id="sGo" style="flex:none">Suchen</button></div>
    <div id="sRes"></div>`);
   const q=$("#sQ");
   const catList=()=>{$("#sRes").innerHTML=`<h3>Kategorien</h3>`+POI_GROUPS.map((g,i)=>`<div class="item" data-grp="${i}">${icoBadge(g.i,g.c,32)}<div style="flex:1"><div class="t">${esc(g.g)}</div><div class="s">${esc(g.items.map(x=>x[0]).join(", "))}</div></div><span class="muted">›</span></div>`).join("")
@@ -1043,7 +1099,8 @@ function showSearch(){
     bind();$("#sRes").querySelectorAll("[data-hit]").forEach(e=>e.onclick=()=>{const x=list[+e.dataset.hit];goTo(x.lat,x.lon,17,(x.t.name||label));});};
   if(!lastQ)setTimeout(()=>{},0);
   const local=()=>{const t=q.value.trim().toLowerCase();lastQ=q.value;if(t.length<2){catList();return;}
-    const own=points.filter(p=>(ptTitle(p)+" "+(p.desc||"")+" "+(p.region||"")+" "+(p.section||"")).toLowerCase().includes(t)).slice(0,15);
+    const own=points.filter(p=>(ptTitle(p)+" "+(p.desc||"")+" "+(p.note||"")+" "+(p.region||"")+" "+(p.section||"")+" "+((CATS[p.cat]||{}).n||"")).toLowerCase().includes(t)).slice(0,15);
+    const fl=flags.map((f,i)=>({f,i})).filter(({f,i})=>flagLabel(f,i).toLowerCase().includes(t)).slice(0,10);
     const osm=(poiOff.length?[]:osmData.items||[]).filter(x=>{const n=(x.t.name||x.t["name:fr"]||x.t.brand||"").toLowerCase();return n&&n.includes(t);}).slice(0,15);
     const pc=me?{lat:me.lat,lon:me.lon}:{lat:map.getCenter().lat,lon:map.getCenter().lng};const pn=x=>x.t.name||x.t["name:fr"]||x.t["name:de"]||x.t.brand||"";
     const poi=t.length<3?[]:poiOff.flatMap(p=>p.items.filter(x=>{const n=(pn(x)+" "+(x.t["name:ar"]||"")).toLowerCase();return n.includes(t);})).map(x=>({...x,d:distKm(pc,{lat:x.a,lon:x.o})})).sort((a,b)=>a.d-b.d).slice(0,20);
@@ -1052,12 +1109,14 @@ function showSearch(){
     const cm=POI_DICT.filter(([re,,l])=>re.test(t)||l.toLowerCase().includes(t)).slice(0,6);
     if(cm.length)h+=`<h3>Kategorien – in der Nähe suchen</h3>`+cm.map(([,,l,g],i)=>`<div class="item" data-cm="${i}">${icoBadge(g.i,g.c,30)}<div><div class="t">${esc(l)}</div><div class="s">${esc(g.g)}</div></div></div>`).join("");
     if(own.length)h+=`<h3>Eigene Punkte</h3>`+own.map(p=>{const c=CATS[p.cat]||CATS.other;return `<div class="item" data-own="${p.id}">${icoBadge(p.cat in CATS?p.cat:"other",c.c,30)}<div><div class="t">${esc(ptTitle(p))}</div><div class="s">${esc(c.n)}${p.region?" · "+esc(p.region):""}</div></div></div>`;}).join("");
+    if(fl.length)h+=`<h3>Fahnen</h3>`+fl.map(({f,i})=>`<div class="item" data-fl="${f.id}"><span class="ico" style="background:${flagColor(f)};width:30px;height:30px;color:#fff;font-weight:800">${i+1}</span><div><div class="t">${esc(flagLabel(f,i))}</div><div class="s">Fahne${me?" · "+kmTxt(distKm(me,f)):""}</div></div></div>`).join("");
     if(poi.length)h+=`<h3>Orte (offline gespeichert)</h3>`+poi.map((x,i)=>{const [gi,ii]=x.m[0].split(".").map(Number),g=POI_GROUPS[gi];return `<div class="item" data-poi="${i}">${icoBadge(g.i,g.c,30)}<div><div class="t">${esc(pn(x))}</div><div class="s">${esc(g.items[ii][0])} · ${kmTxt(x.d)}</div></div></div>`;}).join("");
     if(osm.length)h+=`<h3>Gespeicherte OSM-Orte</h3>`+osm.map((x,i)=>`<div class="item" data-osm="${i}">${icoBadge(x.ty,OSM[x.ty].c,30)}<div><div class="t">${esc(x.t.name||x.t["name:fr"]||x.t.brand)}</div><div class="s">${esc(osmKind(x.t))}</div></div></div>`).join("");
     $("#sRes").innerHTML=h+`<div id="sWeb"><p class="muted">${navigator.onLine?"Für Orte weltweit «Suchen» tippen.":"Offline: nur eigene und gespeicherte Orte."}</p></div>`;
     const sl=$("#sLoc");if(sl)sl.onclick=()=>goLoc(loc);
     $("#sRes").querySelectorAll("[data-cm]").forEach(e=>e.onclick=()=>{const m=cm[+e.dataset.cm];catSearch(m[2],m[1],m[3]);});
     $("#sRes").querySelectorAll("[data-own]").forEach(e=>e.onclick=()=>{const p=points.find(x=>x.id===e.dataset.own);closePanel();map.setView([p.lat,p.lon],15);setTimeout(()=>showDetail(p.id),300);});
+    $("#sRes").querySelectorAll("[data-fl]").forEach(e=>e.onclick=()=>{const f=flags.find(x=>x.id===e.dataset.fl);if(!f)return;closePanel();map.setView([f.lat,f.lon],15);setTimeout(()=>showFlag(f.id),300);});
     $("#sRes").querySelectorAll("[data-poi]").forEach(e=>e.onclick=()=>{const x=poi[+e.dataset.poi];closePanel();map.setView([x.a,x.o],16);setTimeout(()=>showPoi(x),300);});
     $("#sRes").querySelectorAll("[data-osm]").forEach(e=>e.onclick=()=>{const x=osm[+e.dataset.osm];closePanel();map.setView([x.lat,x.lon],16);setTimeout(()=>showOsm(x),300);});};
   const web=async()=>{const t=q.value.trim();if(t.length<2)return;const L0=parseLoc(t);if(L0)return goLoc(L0);local();if(!navigator.onLine)return;
@@ -1505,6 +1564,11 @@ $("#navMenu").onclick=async()=>{
      +row("mGpx","nav","GPX für OsmAnd",`Alle Punkte in einer Gruppe «${GROUP}»`,{act:"Exportieren"})
      +row("mTrash","trash","Papierkorb",trashN?`${trashN} gelöschte Punkte · 30 Tage wiederherstellbar`:"leer")
      +(matchMedia("(min-width:900px)").matches&&!ADM?row("mAdm","table","Verwaltung (Tabelle)","Alle Punkte am PC sortieren, filtern und bearbeiten",{act:"Öffnen"}):""))}
+   ${!ADM?grp("Unterwegs",
+     row("mDrive","wheel","Fahrmodus","Grosse Knöpfe, Karte folgt dir, Punkt oder Foto mit einem Tipp, Bildschirm bleibt an",{act:driveOn?"aktiv":"Starten"})
+     +row("mTrk","route","Fahrspuren",`${trkOn()?"Aufzeichnung ein":"Aufzeichnung aus"} · ${trks.filter(t=>!t.del&&t.pts.length>1).length} Tage · auch auf der Familienseite`)
+     +row("mNight","moon","Nachtmodus",{off:"Aus",on:"Ein",auto:"Automatisch (20–6 Uhr)"}[nightMode()],{act:"Ändern"})
+     +row("mAuto","sync","Automatischer Abgleich",autoSyncOn()?"Ein – solange die Google-Anmeldung gültig ist":"Aus – nur mit dem Kreispfeil",{act:autoSyncOn()?"Ausschalten":"Einschalten"})):""}
    ${grp("Karte",
      row("mOff","mapdl","Offline-Daten","Karten, Strassenoberfläche und POI pro Land – was jedes Gerät hat")
      +row("mVec","map","Vektorkarte zeigen","Scharf in jeder Zoomstufe, Höhenlinien, Pisten – offline aus der Länderdatei",{act:map.hasLayer(VEC)?"aktiv":"Zeigen"})
@@ -1527,6 +1591,9 @@ $("#navMenu").onclick=async()=>{
     try{const n=await downloadCountries();const k=await assignCountries();toast(`${n} Länder geladen, ${k} Punkte zugeordnet`,4000);$("#navMenu").onclick();}catch(e){toast("Laden fehlgeschlagen",4000);}};
   $("#mFamSet").onclick=famSettings;const fp=$("#mFamPub");if(fp)fp.onclick=famPublish;
   $("#mGset").onclick=gdSettings;const ms=$("#mSync");if(ms)ms.onclick=syncDrive;$("#mOff").onclick=offOverview;const mv=$("#mVec");if(mv)mv.onclick=()=>{closePanel();setBase(VEC_NAME);};
+  const md=$("#mDrive");if(md)md.onclick=()=>driveMode(!driveOn);const mt=$("#mTrk");if(mt)mt.onclick=tracksDialog;
+  const mn=$("#mNight");if(mn)mn.onclick=()=>{const o=["off","on","auto"];const n=o[(o.indexOf(nightMode())+1)%3];ls("rb_night",n);nightApply();toast("Nachtmodus: "+{off:"aus",on:"ein",auto:"automatisch (20–6 Uhr)"}[n],3000);$("#navMenu").onclick();};
+  const mAu=$("#mAuto");if(mAu)mAu.onclick=()=>{ls("rb_autosync",autoSyncOn()?"0":"1");toast(autoSyncOn()?"Automatischer Abgleich ein":"Automatischer Abgleich aus",3000);if(autoSyncOn())autoSyncSoon(2000);$("#navMenu").onclick();};
   $("#mPhotos").onclick=photoDialog;$("#mWiz").onclick=wizardStart;$("#mReady").onclick=readyDialog;$("#mTrash").onclick=trashDialog;
   $("#mExport").onclick=exportPackage;$("#mGpx").onclick=exportGPX;$("#mImport").onclick=()=>pickWait($("#fileImport"),"Datei importieren","Reisepaket, GPX, OsmAnd-.osf oder Google-Orte auswählen. Google-Orte vorher über Google Takeout «Maps (Meine Orte)» bzw. «Gespeichert» als .json oder .csv exportieren.");
 };
@@ -1938,7 +2005,7 @@ document.addEventListener("visibilitychange",()=>{if(document.visibilityState===
 const gdClient=()=>ls("rb_gclient");
 const lastSync=()=>{const t=+ls("rb_lastsync");return t?fmtDT(t):"noch nie";};
 function showSyncBtn(){$("#syncBtn").style.display=gdClient()?"":"none";}
-$("#syncBtn").onclick=()=>syncDrive();
+$("#syncBtn").onclick=()=>{if(gdClient()&&!gdOk()){toast("Google-Anmeldung erneuern …",3000);return gdAuth();}syncDrive();};
 function loadGIS(){return new Promise((res,rej)=>{if(window.google&&google.accounts&&google.accounts.oauth2)return res();
   const e=document.createElement("script");e.src="https://accounts.google.com/gsi/client";e.onload=res;e.onerror=()=>rej(new Error("Google-Anmeldung nicht ladbar"));document.head.appendChild(e);});}
 /* Anmeldung per Weiterleitung auf die Google-Seite (zuverlässiger als Popup; dort kann jedes Konto gewählt werden) */
@@ -1996,10 +2063,13 @@ async function poiFromDrive(cc){const r=poiDrive().find(x=>x.cc===cc);if(!r)retu
 async function poiDriveDelete(cc){const r=poiDrive().find(x=>x.cc===cc);if(!r)return;
   try{await gd(`drive/v3/files/${r.id}`,{method:"DELETE"});ls("rb_poidrive",JSON.stringify(poiDrive().filter(x=>x.cc!==cc)));toast(`${countryName(cc)} auf Google Drive gelöscht`,3000);}
   catch(e){toast("Löschen auf Google Drive fehlgeschlagen: "+e.message,5000);}}
-async function syncDrive(){if(syncing)return false;let ok=false;
-  if(!gdClient()){gdSettings();return false;}
-  if(!navigator.onLine){toast("Kein Internet – später synchronisieren",4000);return false;}
-  syncing=true;$("#syncBtn").classList.add("busy");toast("Synchronisiere …",120000);
+async function syncDrive(quiet){if(syncing||offRun)return false;let ok=false;quiet=quiet===true;
+  if(!gdClient()){if(!quiet)gdSettings();return false;}
+  if(!navigator.onLine){if(!quiet)toast("Kein Internet – später synchronisieren",4000);return false;}
+  /* automatischer Abgleich: nie zur Anmeldeseite wechseln – ist die Anmeldung abgelaufen, zeigt der Abgleich-Knopf das an */
+  if(quiet&&!gdOk()){syncDot();return false;}
+  const tq=(t,ms)=>{if(!quiet)toast(t,ms);};
+  syncing=true;$("#syncBtn").classList.add("busy");tq("Synchronisiere …",120000);
   try{await gdRememberMail();const files=await gdList();const byName=Object.fromEntries(files.map(f=>[f.name,f]));
     let remote={points:[],trips:[]};
     if(byName[GD_DATA])remote=await(await gd(`drive/v3/files/${byName[GD_DATA].id}?alt=media`)).json();
@@ -2022,19 +2092,20 @@ async function syncDrive(){if(syncing)return false;let ok=false;
     Object.values(local).filter(p=>!p.deleted).forEach(p=>(p.photos||[]).forEach(id=>need.add(id)));
     let up=0,down=0,i=0;
     for(const id of need){const fn="foto_"+id+".jpg";i++;
-      if(have.has(id)&&!byName[fn]){const ph=await getOne("photos",id);if(ph){up++;toast(`Fotos hochladen … (${up})`,120000);await gdUpload(fn,ph.blob);}}
-      else if(!have.has(id)&&byName[fn]){toast(`Fotos herunterladen … (${down+1})`,120000);await put("photos",{id,blob:await(await gd(`drive/v3/files/${byName[fn].id}?alt=media`)).blob()});down++;}}
+      if(have.has(id)&&!byName[fn]){const ph=await getOne("photos",id);if(ph){up++;tq(`Fotos hochladen … (${up})`,120000);await gdUpload(fn,ph.blob);}}
+      else if(!have.has(id)&&byName[fn]){tq(`Fotos herunterladen … (${down+1})`,120000);await put("photos",{id,blob:await(await gd(`drive/v3/files/${byName[fn].id}?alt=media`)).blob()});down++;}}
     await gdUpload(GD_DATA,new Blob([JSON.stringify({app:"ibexmap",format:4,updated:Date.now(),trips,deletedTrips:delTrips,flags,flagDel,fam:famShared()||undefined,offShared:offSharedMerge(),devStatus:devAll(),points:Object.values(local)})],{type:"application/json"}),byName[GD_DATA]&&byName[GD_DATA].id);
     const gone=new Set(Object.values(local).flatMap(p=>p.photoDel||[]));
     for(const f of files){const id=f.name.slice(5,-4);if(/^foto_.+\.jpg$/.test(f.name)&&gone.has(id)&&!need.has(id))await gd(`drive/v3/files/${f.id}`,{method:"DELETE"}).catch(()=>{});}
     try{surfDriveSet(files);}catch(e){}
     try{tlDriveSet(files);}catch(e){}try{vecDriveSet(files);}catch(e){}
+    try{await trkSync(files);}catch(e){}
     try{poiDriveSet(files);await loadPoiOff();
-      for(const p of poiOff){const r=poiDrive().find(x=>x.cc===p.cc);if(!r||(p.loaded||0)>(r.loaded||0)+1000){toast(`POI ${countryName(p.cc)} auf Google Drive speichern …`,120000);await poiToDrive(p,r&&r.id);}}
+      for(const p of poiOff){const r=poiDrive().find(x=>x.cc===p.cc);if(!r||(p.loaded||0)>(r.loaded||0)+1000){tq(`POI ${countryName(p.cc)} auf Google Drive speichern …`,120000);await poiToDrive(p,r&&r.id);}}
       poiDriveSet(await gdList());}catch(e){}
     ls("rb_lastsync",String(Date.now()));await loadPoints();
-    toast(`Abgeglichen: ${nIn} Änderungen geholt, ${up} Fotos hoch-, ${down} heruntergeladen`,5000);ok=true;
-  }catch(e){toast("Abgleich fehlgeschlagen: "+e.message,7000);}
+    if(!quiet||nIn||down)toast(`Abgeglichen: ${nIn} Änderungen geholt, ${up} Fotos hoch-, ${down} heruntergeladen`,quiet?3000:5000);ok=true;
+  }catch(e){if(!quiet)toast("Abgleich fehlgeschlagen: "+e.message,7000);}
   finally{syncing=false;$("#syncBtn").classList.remove("busy");}
   return ok;}
 function gdSettings(){
@@ -2579,7 +2650,7 @@ async function famPublishNow(){const c=famCfg();
     const data={title:c.title||"Unsere Reise",updated:Date.now(),points:sp.map(p=>{const k=CATS[p.cat]||CATS.other;
       return {id:p.id,title:ptTitle(p),text:p.storyText||p.desc||"",date:p.visited||new Date(p.created||Date.now()).toISOString().slice(0,10),
         lat:p.lat,lon:p.lon,region:(p.region||"").split(/[,(]/)[0].trim(),country:p.country||"",cat:k.n,t:p.created||0,
-        to:STAY.includes(p.cat)&&p.visitedTo&&p.visitedTo>(p.visited||"")?p.visitedTo:undefined,icon:k.i,color:k.c,photos:(p.photos||[]).filter(id=>need.has(id+"_"+tag+".bin")).map(id=>id+"_"+tag)};})};
+        to:STAY.includes(p.cat)&&p.visitedTo&&p.visitedTo>(p.visited||"")?p.visitedTo:undefined,icon:k.i,color:k.c,photos:(p.photos||[]).filter(id=>need.has(id+"_"+tag+".bin")).map(id=>id+"_"+tag)};}),tracks:trkFamily(c.trip)};
     const enc=await famEnc(key,new TextEncoder().encode(JSON.stringify(data)));
     const file=new TextEncoder().encode(JSON.stringify({v:1,salt:c.salt,iter:FAM_ITER,data:b64(enc)}));
     const exD=await gh(c,"data.json","GET",null,true);
@@ -3114,6 +3185,104 @@ async function readyDialog(){openPanel(`<h2>Bereit für unterwegs?</h2><p class=
    <p class="muted" style="margin-top:12px">Am besten zu Hause im WLAN erledigen. Offline-Karten und Orte für die anderen Abschnitte der Reise gleich mitladen.</p>`);
   $("#panel").querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>rows[+b.dataset.r][3][1]());}
 /* ---------- Start ---------- */
+/* ---------- Fahrspur aufzeichnen ----------
+   Solange die App offen ist und GPS läuft (Bildschirm an, z. B. im Fahrmodus): alle ca. 30 m ein Punkt, pro Tag eine Spur.
+   Abgleich über Google Drive (eine Datei pro Tag), Anzeige auf der Karte und auf der Familienseite. */
+const trkOn=()=>ls("rb_trk")==="1";
+const dayKey=t=>{const d=new Date(t);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");};
+let trks=[],trkLast=null,trkSaveT=null,trkDrawT=null;
+const trkLayer=L.layerGroup().addTo(map);
+async function loadTracks(){try{trks=await getAll("tracks");}catch(e){trks=[];}
+  const t=trks.find(x=>x.id===dayKey(Date.now()));if(t&&t.pts.length){const p=t.pts[t.pts.length-1];trkLast={lat:p[0],lon:p[1],t:p[2]*1000};}drawTracks();}
+function trkKm(t){let k=0;for(let i=1;i<t.pts.length;i++)k+=distKm({lat:t.pts[i-1][0],lon:t.pts[i-1][1]},{lat:t.pts[i][0],lon:t.pts[i][1]});return k;}
+function drawTracks(){trkLayer.clearLayers();if(ls("rb_trkshow")==="0"||ADM)return;
+  for(const t of trks){if(t.del||t.pts.length<2)continue;if(mapTrip.length&&t.trip&&!mapTrip.includes(t.trip))continue;
+    const ll=t.pts.map(p=>[p[0],p[1]]);
+    L.polyline(ll,{color:"#fff",weight:7,opacity:.75,interactive:false}).addTo(trkLayer);
+    L.polyline(ll,{color:"#d84315",weight:3.5,opacity:.95}).addTo(trkLayer).on("click",ev=>{L.DomEvent.stopPropagation(ev);showTrack(t.id);});}}
+function trkAdd(lat,lon,acc){if(!trkOn()||!(acc<=60))return;const now=Date.now();
+  if(trkLast){const d=distKm(trkLast,{lat,lon})*1000,dt=now-trkLast.t;if(d<30)return;if(d>3000&&dt<30000)return;/* GPS-Sprung */}
+  const id=dayKey(now);let t=trks.find(x=>x.id===id);if(!t){t={id,trip:curTrip||"",pts:[],updated:now};trks.push(t);}
+  if(t.del){t.del=false;t.pts=[];}
+  t.pts.push([+lat.toFixed(5),+lon.toFixed(5),Math.round(now/1000)]);t.updated=now;trkLast={lat,lon,t:now};
+  clearTimeout(trkSaveT);trkSaveT=setTimeout(()=>{put("tracks",t).catch(()=>{});autoSyncSoon(120000);},4000);
+  clearTimeout(trkDrawT);trkDrawT=setTimeout(drawTracks,8000);driveInfo();}
+function trkToggle(on){ls("rb_trk",on?"1":"0");if(on){startGPS();trkLast=null;loadTracks();}
+  toast(on?"Fahrspur wird aufgezeichnet – solange die App offen ist":"Aufzeichnung beendet",4000);driveUI();}
+function trkGPX(t){const pts=t.pts.map(p=>`<trkpt lat="${p[0]}" lon="${p[1]}"><time>${new Date(p[2]*1000).toISOString()}</time></trkpt>`).join("");
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="IbexMap" xmlns="http://www.topografix.com/GPX/1/1"><trk><name>IbexMap ${t.id}</name><trkseg>${pts}</trkseg></trk></gpx>`;}
+function showTrack(id){const t=trks.find(x=>x.id===id);if(!t)return;const a=t.pts[0],b=t.pts[t.pts.length-1];
+  const dur=b&&a?Math.round((b[2]-a[2])/60):0;
+  openPanel(`<h2>${mi("route",22)} Fahrspur ${fmtD(new Date(t.id+"T12:00"))}</h2>
+   <div class="meta"><div class="mrow">${mi("ruler")}<span>${trkKm(t).toFixed(1)} km · ${fmtN(t.pts.length)} Punkte</span></div>
+   ${a?`<div class="mrow">${mi("cal")}<span>${new Date(a[2]*1000).toLocaleTimeString("de-CH",{hour:"2-digit",minute:"2-digit"})} – ${new Date(b[2]*1000).toLocaleTimeString("de-CH",{hour:"2-digit",minute:"2-digit"})} (${Math.floor(dur/60)} h ${dur%60} min)</span></div>`:""}
+   ${t.trip?`<div class="mrow">${mi("book")}<span>${esc(tripName(t.trip))}</span></div>`:""}</div>
+   <div class="actions"><button class="btn" id="tkGpx">${mi("download",18)} GPX</button><button class="btn sec" id="tkAll">Alle Fahrspuren</button><button class="btn sec" id="tkDel">${mi("trash",18)} Löschen</button></div>`);
+  $("#tkGpx").onclick=()=>download(`IbexMap_Spur_${t.id}.gpx`,new Blob([trkGPX(t)],{type:"application/gpx+xml"}));
+  $("#tkAll").onclick=tracksDialog;
+  $("#tkDel").onclick=()=>confirmBox(`Fahrspur vom ${fmtD(new Date(t.id+"T12:00"))} löschen (auf allen Geräten)?`,async()=>{t.del=true;t.pts=[];t.updated=Date.now();await put("tracks",t);drawTracks();autoSyncSoon(5000);tracksDialog();});}
+function tracksDialog(){const l=trks.filter(t=>!t.del&&t.pts.length>1).sort((a,b)=>b.id.localeCompare(a.id));const tot=l.reduce((s,t)=>s+trkKm(t),0);
+  openPanel(`<h2>${mi("route",22)} Fahrspuren</h2><p class="muted">${l.length} Tage · ${fmtN(Math.round(tot))} km · aufgezeichnet, solange die App offen ist (Fahrmodus hält den Bildschirm an).</p>
+   <div class="mgrp"><label class="mrow" style="cursor:pointer"><span class="mic">${mi("route",20)}</span><span class="mtx"><b>Fahrspur aufzeichnen</b><small>${trkOn()?"Ein":"Aus"}</small></span><input type="checkbox" id="tkOn" style="width:22px;height:22px" ${trkOn()?"checked":""}></label>
+    <label class="mrow" style="cursor:pointer"><span class="mic">${mi("eye",20)}</span><span class="mtx"><b>Auf der Karte zeigen</b></span><input type="checkbox" id="tkShow" style="width:22px;height:22px" ${ls("rb_trkshow")!=="0"?"checked":""}></label></div>
+   <div class="mgrp">${l.length?l.map(t=>`<button class="mrow" data-tk="${t.id}"><span class="mic">${mi("route",20)}</span><span class="mtx"><b>${fmtD(new Date(t.id+"T12:00"))}</b><small>${trkKm(t).toFixed(1)} km${t.trip?" · "+esc(tripName(t.trip)):""}</small></span><span class="mchev">${mi("chev",18)}</span></button>`).join(""):`<div class="mrow" style="cursor:default"><span class="mtx"><small>Noch keine Fahrspur aufgezeichnet.</small></span></div>`}</div>`);
+  $("#tkOn").onchange=e=>{trkToggle(e.target.checked);tracksDialog();};
+  $("#tkShow").onchange=e=>{ls("rb_trkshow",e.target.checked?"1":"0");drawTracks();};
+  $("#panel").querySelectorAll("[data-tk]").forEach(b=>b.onclick=()=>{const t=trks.find(x=>x.id===b.dataset.tk);if(t&&t.pts.length){map.fitBounds(L.latLngBounds(t.pts.map(p=>[p[0],p[1]])),{padding:[30,30]});}showTrack(b.dataset.tk);});}
+/* Abgleich der Fahrspuren: eine Datei pro Tag auf Google Drive; gleicher Tag von zwei Geräten wird zusammengeführt */
+async function trkSync(files){const rem={};files.forEach(f=>{const m=f.name.match(/^trk_(\d{4}-\d\d-\d\d)\.json$/);if(m)rem[m[1]]={id:f.id,upd:+((f.appProperties||{}).upd)||0};});
+  for(const [day,r] of Object.entries(rem)){const l=trks.find(t=>t.id===day);if(l&&(l.updated||0)>=r.upd)continue;
+    try{const d=await(await gd(`drive/v3/files/${r.id}?alt=media`)).json();if(!d||!Array.isArray(d.pts))continue;
+      let n;if(!l)n=d;else if(d.del&&(d.updated||0)>(l.updated||0))n=d;else{const m=new Map();[...l.pts,...d.pts].forEach(p=>m.set(p[2],p));n={...l,pts:[...m.values()].sort((a,b)=>a[2]-b[2]),updated:Math.max(l.updated||0,d.updated||0),del:false};}
+      n.synced=n.updated;trks=trks.filter(t=>t.id!==day);trks.push(n);await put("tracks",n);}catch(e){}}
+  for(const t of trks){const r=rem[t.id];if(r&&r.upd>=(t.updated||0))continue;if((t.synced||0)>=(t.updated||0)&&r)continue;
+    try{await gdUpload(`trk_${t.id}.json`,new Blob([JSON.stringify({id:t.id,trip:t.trip,pts:t.pts,updated:t.updated,del:!!t.del})],{type:"application/json"}),r&&r.id,{upd:String(t.updated||0)});
+      t.synced=t.updated;await put("tracks",t);}catch(e){}}
+  drawTracks();}
+/* vereinfachte Spur für die Familienseite (Punkte mind. ~150 m auseinander) */
+function trkFamily(trip){return trks.filter(t=>!t.del&&t.pts.length>1&&(!trip||t.trip===trip)).sort((a,b)=>a.id.localeCompare(b.id)).map(t=>{const o=[];let last=null;
+  t.pts.forEach((p,i)=>{if(!last||i===t.pts.length-1||distKm({lat:last[0],lon:last[1]},{lat:p[0],lon:p[1]})>0.15){o.push([+p[0].toFixed(4),+p[1].toFixed(4)]);last=p;}});return {day:t.id,pts:o};});}
+
+/* ---------- Fahrmodus ----------
+   Grosse Knöpfe für unterwegs: Karte folgt dem Standort, Bildschirm bleibt an, Punkt mit einem Tipp, Foto-Punkt, Fahne, Aufzeichnung. */
+let driveOn=false,driveWL=null;
+const QUICK=[["wild","Stellplatz"],["camp","Camping"],["water","Wasser"],["fuel","Tanken"],["shop","Einkauf"],["sight","Sehenswert"],["service","Auto"],["warn","Achtung"]];
+function driveUI(){let bar=$("#driveBar");
+  if(!driveOn){if(bar)bar.style.display="none";document.body.classList.remove("drive");return;}
+  document.body.classList.add("drive");
+  if(!bar){bar=document.createElement("div");bar.id="driveBar";$("#map").appendChild(bar);L.DomEvent.disableClickPropagation(bar);}
+  bar.style.display="flex";
+  bar.innerHTML=`<div class="dinfo" id="dInfo"></div>
+    <div class="dbtns">
+     <button class="dbtn main" id="dPt">${mi("pin",30)}<span>Punkt hier</span></button>
+     <button class="dbtn" id="dPh">${mi("photo",28)}<span>Foto-Punkt</span></button>
+     <button class="dbtn" id="dFl">${mi("flag",28)}<span>Fahne</span></button>
+     <button class="dbtn ${trkOn()?"rec":""}" id="dRec"><svg width="28" height="28" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="${trkOn()?4.5:3.5}" fill="${trkOn()?"#e53935":"currentColor"}"/></svg><span>${trkOn()?"Aufnahme ein":"Aufnahme aus"}</span></button>
+     <button class="dbtn" id="dEnd"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg><span>Beenden</span></button></div>`;
+  $("#dPt").onclick=()=>quickPoint(false);$("#dPh").onclick=()=>quickPoint(true);
+  $("#dFl").onclick=()=>{if(!me)return toast("Noch keine GPS-Position",3000);addFlag(me.lat,me.lon,"");};
+  $("#dRec").onclick=()=>trkToggle(!trkOn());$("#dEnd").onclick=()=>driveMode(false);driveInfo();}
+let lastSpd=null;
+function driveInfo(){const e=$("#dInfo");if(!e)return;const t=trks.find(x=>x.id===dayKey(Date.now()));
+  e.innerHTML=`<span><b>${lastSpd!=null?Math.round(lastSpd*3.6):"–"}</b> km/h</span><span><b>${t&&!t.del?trkKm(t).toFixed(1):"0.0"}</b> km heute</span><span>${me?`GPS ±${Math.round(me.acc)} m`:"GPS sucht …"}</span>${trkOn()?`<span class="recdot">● Aufnahme</span>`:""}`;}
+async function driveMode(on){driveOn=on;ls("rb_drive",on?"1":"0");
+  if(on){closePanel();startGPS();follow=true;$("#locBtn").classList.add("follow");if(me)map.setView([me.lat,me.lon],Math.max(map.getZoom(),15));
+    try{if("wakeLock" in navigator)driveWL=await navigator.wakeLock.request("screen");}catch(e){}}
+  else{try{if(driveWL)await driveWL.release();}catch(e){}driveWL=null;}
+  driveUI();}
+document.addEventListener("visibilitychange",async()=>{if(driveOn&&document.visibilityState==="visible"&&!driveWL){try{driveWL=await navigator.wakeLock.request("screen");}catch(e){}}});
+function quickPoint(photo){if(!me){toast("Noch keine GPS-Position – kurz warten",3500);startGPS();return;}
+  const pos={lat:me.lat,lon:me.lon};
+  openPanel(`<h2>${photo?"Foto-Punkt":"Punkt hier"}</h2><p class="muted">Am aktuellen Standort · Art antippen = gespeichert</p>
+   <div class="qgrid">${QUICK.map(([k,n])=>`<button class="qbtn" data-q="${k}">${icoBadge(k,(CATS[k]||CATS.other).c,44)}<span>${n}</span></button>`).join("")}</div>
+   <input type="file" id="qPh" accept="image/*" capture="environment" hidden>`);
+  let pick=null;
+  const save=async(cat,file)=>{const d=new Date();const p=newPoint(+pos.lat.toFixed(6),+pos.lon.toFixed(6),{title:`${(CATS[cat]||CATS.other).n} ${fmtDT(d)}`,cat,status:"besucht",visited:d.toISOString().slice(0,10)});
+    if(file){try{const b=await resize(file);const id=uid();await put("photos",{id,blob:b});p.photos=[id];}catch(e){toast("Foto: "+e.message,4000);}}
+    await put("points",p);await loadPoints();closePanel();toast(`${(CATS[cat]||CATS.other).n} gespeichert – Punkt antippen zum Ergänzen`,4000);};
+  $("#panel").querySelectorAll("[data-q]").forEach(b=>b.onclick=()=>{pick=b.dataset.q;if(photo){$("#qPh").click();}else save(pick);});
+  $("#qPh").onchange=e=>{const f=e.target.files[0];if(f&&pick)save(pick,f);};}
+
 (async()=>{
   try{db=await openDB();}catch(e){toast("Speicher nicht verfügbar – Daten werden nicht gesichert",6000);return;}
   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
@@ -3125,9 +3294,13 @@ async function readyDialog(){openPanel(`<h2>Bereit für unterwegs?</h2><p class=
   if(!localStorage.getItem("rb_view")&&points.length){const b=L.latLngBounds(points.map(p=>[p.lat,p.lon]));map.fitBounds(b,{padding:[30,30]});}
   map.on("moveend",()=>{const c=map.getCenter();try{localStorage.setItem("rb_view",JSON.stringify({lat:+c.lat.toFixed(5),lon:+c.lng.toFixed(5),z:map.getZoom()}));}catch(e){}});
   showHeaderTrip();$("#ver").textContent=VERSION;
-  await loadFlags();wakeAcquire();if(surfOn&&!ADM)surfLayer.addTo(map);await loadOffPacks();drawOffAreas();
+  await loadFlags();await loadTracks();wakeAcquire();if(surfOn&&!ADM)surfLayer.addTo(map);await loadOffPacks();drawOffAreas();
   if(!ADM)startGPS();
+  if(!ADM&&ls("rb_drive")==="1")driveMode(true);
+  $("#driveBtn").onclick=()=>driveMode(true);if(ADM)$("#driveBtn").style.display="none";nightApply();setInterval(nightApply,300000);
   if(_gdNew||sessionStorage.getItem("rb_after_login")){try{sessionStorage.removeItem("rb_after_login");}catch(e){}if(gdToken)setTimeout(()=>syncDrive(),400);}
+  else autoSyncSoon(4000);
+  setTimeout(vecAutoDefault,1500);
   setTimeout(handleShare,600);
   /* Alles Weitere erst, wenn die Karte steht – Schritt für Schritt, damit die App bedienbar bleibt */
   const idle=f=>new Promise(r=>setTimeout(()=>(window.requestIdleCallback||(c=>c()))(()=>{Promise.resolve().then(f).catch(()=>{}).then(r);},{timeout:1500}),50));
@@ -3146,7 +3319,6 @@ async function readyDialog(){openPanel(`<h2>Bereit für unterwegs?</h2><p class=
       if(n1||n2){await loadPoints();if(n1)toast(`${n1} OsmAnd-Orte wieder ohne Reise`,5000);if(n2)setTimeout(()=>toast(`${n2} Punkte «Tierbeobachtung» sind jetzt «Sehenswürdigkeit»`,5000),n1?5200:0);}});
     await idle(()=>trashPurgeOld());
   })();
-  if(!ADM)startGPS();
   if("serviceWorker" in navigator&&location.protocol==="https:"){
     const hadCtrl=!!navigator.serviceWorker.controller;let reloaded=false;
     navigator.serviceWorker.addEventListener("controllerchange",()=>{if(!hadCtrl||reloaded)return;reloaded=true;toast("Neue Version wird geladen …",3000);setTimeout(()=>location.reload(),600);});

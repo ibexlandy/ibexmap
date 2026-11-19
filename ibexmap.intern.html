@@ -158,9 +158,13 @@ function render(){
       "Topo":L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",{subdomains:"abc",maxZoom:17,attribution:"© OpenStreetMap, SRTM | © OpenTopoMap"})};
     base["Karte"].addTo(map);L.control.layers(base,null,{position:"topright"}).addTo(map);L.control.zoom({position:"bottomright"}).addTo(map);layer=L.layerGroup().addTo(map);}
   layer.clearLayers();marks={};
-  if(steps.length>1){const ll=steps.map(p=>[p.lat,p.lon]);L.polyline(ll,{color:"#fff",weight:7,opacity:.9}).addTo(layer);L.polyline(ll,{color:"#c8742c",weight:3.5,opacity:1}).addTo(layer);}
+  /* gefahrene Strecke (aufgezeichnete Fahrspur), sonst Verbindungslinie zwischen den Stationen */
+  const trk=(data.tracks||[]).filter(t=>t.pts&&t.pts.length>1);
+  trk.forEach(t=>{L.polyline(t.pts,{color:"#fff",weight:7,opacity:.85}).addTo(layer);L.polyline(t.pts,{color:"#c8742c",weight:3.5,opacity:1}).addTo(layer);});
+  if(steps.length>1&&!trk.length){const ll=steps.map(p=>[p.lat,p.lon]);L.polyline(ll,{color:"#fff",weight:7,opacity:.9}).addTo(layer);L.polyline(ll,{color:"#c8742c",weight:3.5,opacity:1}).addTo(layer);}
   steps.forEach((p,i)=>{const m=L.marker([p.lat,p.lon],{icon:L.divIcon({className:"",iconSize:[38,38],iconAnchor:[19,19],html:`<div class="mk" id="m_${p.id}">${i+1}</div>`}),riseOnHover:true}).addTo(layer).on("click",()=>go(p.id,true));marks[p.id]=m;});
-  if(steps.length)map.fitBounds(L.latLngBounds(steps.map(p=>[p.lat,p.lon])),{padding:[40,40],maxZoom:11});else map.setView([31.8,-6.5],5);
+  const allLL=[...steps.map(p=>[p.lat,p.lon]),...trk.flatMap(t=>t.pts)];
+  if(allLL.length)map.fitBounds(L.latLngBounds(allLL),{padding:[40,40],maxZoom:11});else map.setView([31.8,-6.5],5);
   setTimeout(()=>map.invalidateSize(),50);
   /* Fotos laden (Zeitleiste und Kartenpunkte) */
   (async()=>{for(const p of steps){const ids=p.photos||[];

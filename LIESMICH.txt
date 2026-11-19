@@ -1,4 +1,4 @@
-IbexMap – v6.5 (privates Projekt)
+IbexMap – v6.6 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -352,3 +352,12 @@ NEU IN v6.5
 - Offline-Daten-Übersicht pro Land: Vektorkarte · Höhenlinien · Strassenoberfläche · POI (Kartenbilder nur noch, falls zusätzlich gewählt). «Land hinzufügen» standardmässig ohne Kartenbilder.
 - «Bereit für unterwegs?» zählt Punkte mit Vektorkarte als offline vorhanden.
 - Prototyp-Seite vektor.html entfällt (kann auf GitHub gelöscht werden).
+
+NEU IN v6.6
+- Vektorkarte automatisch: Sobald auf einem Gerät eine Länderdatei liegt, schaltet die App einmal auf «Vektor (offline)» um; danach gilt die eigene Wahl.
+- Fahrmodus (Knopf unten links mit Lenkrad, oder Menü › Unterwegs): grosse Knöpfe «Punkt hier», «Foto-Punkt», «Fahne», «Aufnahme», «Beenden»; Karte folgt dem Standort, Bildschirm bleibt an; Anzeige km/h, km heute, GPS-Genauigkeit. «Punkt hier»: Art antippen = sofort gespeichert (Titel mit Datum/Zeit, später ergänzbar).
+- Fahrspur aufzeichnen: solange die App offen ist (im Fahrmodus), pro Tag eine Spur; auf der Karte orange, antippen für km, Zeit, GPX-Export, Löschen; Menü › Fahrspuren. Abgleich über Google Drive (eine Datei pro Tag, zwei Geräte am selben Tag werden zusammengeführt). Familienseite zeigt die gefahrene Strecke statt der Verbindungslinie.
+- Automatischer Abgleich: beim Start, 30 s nach Änderungen, alle 10 Minuten und beim Zurückkehren in die App – solange die Google-Anmeldung gültig ist. Abgelaufen: rotes «!» am Abgleich-Knopf, ein Tipp meldet neu an. Ausschalten: Menü › Unterwegs.
+- Suche: zusätzlich Fahnen und Notizen der Punkte; neue POI-Gruppe «Ortschaften» (Städte, Dörfer, Weiler) – nach dem Neuladen des POI-Overlays findet die Suche auch Orte offline.
+- Nachtmodus (Menü › Unterwegs): aus / ein / automatisch 20–6 Uhr; dunkle Bedienung, Kartenbilder abgedunkelt, Vektorkarte im dunklen Stil.
+- Datenbank-Version 3 (neuer Speicher für Fahrspuren).
