@@ -1,5 +1,5 @@
-const APP="reisebuch-app-v6.4",TILES="reisebuch-tiles-v4",OFFLINE="reisebuch-offline",DEM="reisebuch-dem",LIBS="reisebuch-libs",MAXTILES=3000;
-const SHELL=["./","index.html","vektor.html","topo.svg","manifest.webmanifest","icon-192.png","icon-512.png","icon-maskable-512.png","favicon.png",
+const APP="reisebuch-app-v6.5",TILES="reisebuch-tiles-v4",OFFLINE="reisebuch-offline",DEM="reisebuch-dem",LIBS="reisebuch-libs",MAXTILES=3000;
+const SHELL=["./","index.html","topo.svg","manifest.webmanifest","icon-192.png","icon-512.png","icon-maskable-512.png","favicon.png",
 "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css",
 "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(APP).then(c=>Promise.all(SHELL.map(u=>fetch(u,{cache:"no-store"}).then(r=>{if(r.ok)return c.put(u,r);})))).then(()=>self.skipWaiting()));});
@@ -16,7 +16,8 @@ self.addEventListener("fetch",e=>{const u=new URL(e.request.url);
  if(u.hostname==="unpkg.com"||u.hostname==="protomaps.github.io"){e.respondWith((async()=>{const c=await caches.open(LIBS);const hit=await c.match(e.request.url);if(hit)return hit;
    try{const r=await fetch(e.request);if(r.ok)c.put(e.request.url,r.clone());return r;}catch(err){return Response.error();}})());return;}
  /* Höhendaten für Höhenlinien und Relief: einmal gesehen = offline vorhanden */
- if(u.hostname==="s3.amazonaws.com"&&u.pathname.startsWith("/elevation-tiles-prod/")){e.respondWith((async()=>{const c=await caches.open(DEM);const hit=await c.match(e.request.url);if(hit)return hit;
+ if(u.hostname==="s3.amazonaws.com"&&u.pathname.startsWith("/elevation-tiles-prod/")){if(e.request.cache==="no-store")return;
+   e.respondWith((async()=>{const off=await (await caches.open(OFFLINE)).match(e.request.url);if(off)return off;const c=await caches.open(DEM);const hit=await c.match(e.request.url);if(hit)return hit;
    try{const r=await fetch(e.request.url,{mode:"cors",credentials:"omit"});if(r.ok)c.put(e.request.url,r.clone());return r;}catch(err){return Response.error();}})());return;}
  if(/server\.arcgisonline\.com$|tile\.opentopomap\.org$|wmts\.geo\.admin\.ch$/.test(u.hostname)){
   /* Offline-Download der App (cache:no-store): direkt ans Netz, ohne Umweg über den Zwischenspeicher – sonst doppelte Speicherung und langsamer */

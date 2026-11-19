@@ -1,4 +1,4 @@
-IbexMap – v6.4 (privates Projekt)
+IbexMap – v6.5 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -344,3 +344,11 @@ NEU IN v6.4
 - Höhere Detailstufen: ganzes Land bis Stufe 14 (Grenze 250'000 Bilder); rund um eure Punkte wählbar bis Stufe 14, 15 oder 16 mit Umkreis 5/10/20 km.
 - Satellit: in Gebieten ohne Esri-Bilder werden keine Platzhalter mehr gespeichert und nicht endlos nachgeladen.
 - NEU: Prototyp «Vektorkarte (Test)» (Menü › Karte, Datei vektor.html): Karte aus OpenStreetMap als eine Datei pro Land (Protomaps .pmtiles), scharf in jeder Zoomstufe; Höhenlinien und Relief aus Höhendaten; Pisten hervorgehoben; eigene Punkte; Satellit umschaltbar; GPS mit Blickrichtung, Karte drehbar. Ohne Kartendatei zeigt sie online die Weltkarte zum Ausprobieren; die Marokko-Datei wird einmal am PC mit dem Programm pmtiles erstellt (Anleitung auf der Seite) und dann auf jedem Gerät geladen. Die heutige Karte bleibt unverändert.
+
+NEU IN v6.5
+- Vektorkarte in der Hauptkarte: neue Kartenart «Vektor (offline)» (oben rechts oder Menü › Vektorkarte zeigen). Eine Datei pro Land (Protomaps aus OpenStreetMap, Marokko bis Stufe 15 ca. 540 MB), scharf in jeder Zoomstufe; Höhenlinien mit Meterangaben und Relief; Pisten braun gestrichelt. Punkte, Fahnen, Strassenoberfläche, POI und alles andere bleiben wie gewohnt.
+- Länderdatei über Google Drive: am PC einmal mit dem Programm pmtiles erstellen (Offline-Daten › Land › «Anleitung», Befehl mit den Landesgrenzen zum Kopieren), mit «Datei laden» einlesen – IbexMap legt sie in Stücken auf Google Drive. Handys und Tablet holen sie mit «Hier vervollständigen»; ein abgebrochener Download setzt dort fort, wo er aufgehört hat.
+- Höhenlinien offline: Höhendaten pro Land bis Stufe 11, gleicher Weg wie die Kartenpakete (PC lädt und stellt bereit, die anderen holen sie von Drive).
+- Offline-Daten-Übersicht pro Land: Vektorkarte · Höhenlinien · Strassenoberfläche · POI (Kartenbilder nur noch, falls zusätzlich gewählt). «Land hinzufügen» standardmässig ohne Kartenbilder.
+- «Bereit für unterwegs?» zählt Punkte mit Vektorkarte als offline vorhanden.
+- Prototyp-Seite vektor.html entfällt (kann auf GitHub gelöscht werden).
