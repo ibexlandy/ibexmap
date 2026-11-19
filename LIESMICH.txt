@@ -1,4 +1,4 @@
-IbexMap – v6.2 (privates Projekt)
+IbexMap – v6.3 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -330,3 +330,7 @@ NEU IN v6.2
 - Klare Erklärung, was wie geladen wird: Karte lädt jedes Gerät selbst; Strassenoberfläche und POI einmal laden (am besten am PC im Browser), danach holen die anderen Geräte sie von Google Drive.
 - Pro Land «Was hier fehlt» und Knopf «Hier vervollständigen»: lädt alles Fehlende auf diesem Gerät auf dem schnellsten Weg.
 - Unten: Land hinzufügen, Jetzt abgleichen, Details zu Offline-Karten und POI-Overlay.
+
+NEU IN v6.3
+- Schnellerer Start: Kartenbibliothek sofort aus dem Gerätespeicher (vorher zuerst übers Netz, hing bei schlechtem Empfang); kein langer Durchlauf aller Offline-Kartenbilder mehr nach Updates; Karte öffnet direkt in der letzten Ansicht; POI-Overlay, Ländergrenzen und Aufräumen laden erst danach im Hintergrund; POI-Daten werden nur noch einmal gelesen; alte Reparaturen laufen nur noch einmal.
+- Offline-Daten: Schalter «Kartenbilder auf diesem Gerät laden». Am PC standardmässig aus – der PC lädt pro Land nur Strassenoberfläche und POI (die über Google Drive an die anderen Geräte gehen). In der Übersicht steht bei der Karte des PCs «nicht nötig».

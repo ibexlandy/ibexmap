@@ -1,10 +1,11 @@
-const APP="reisebuch-app-v6.2",TILES="reisebuch-tiles-v4",OFFLINE="reisebuch-offline",MAXTILES=3000;
+const APP="reisebuch-app-v6.3",TILES="reisebuch-tiles-v4",OFFLINE="reisebuch-offline",MAXTILES=3000;
 const SHELL=["./","index.html","topo.svg","manifest.webmanifest","icon-192.png","icon-512.png","icon-maskable-512.png","favicon.png",
 "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css",
 "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(APP).then(c=>Promise.all(SHELL.map(u=>fetch(u,{cache:"no-store"}).then(r=>{if(r.ok)return c.put(u,r);})))).then(()=>self.skipWaiting()));});
+/* früheres Aufräumen ging beim Aktivieren durch alle Offline-Kacheln und blockierte den ersten Start nach jedem Update – entfernt */
 async function cleanOpaque(){try{const c=await caches.open(OFFLINE);for(const k of await c.keys()){const r=await c.match(k);if(r&&r.type==="opaque")await c.delete(k);}}catch(e){}}
-self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(n=>n!==APP&&n!==TILES&&n!==OFFLINE).map(n=>caches.delete(n)))).then(cleanOpaque).then(()=>self.clients.claim()));});
+self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(n=>n!==APP&&n!==TILES&&n!==OFFLINE).map(n=>caches.delete(n)))).then(()=>self.clients.claim()));});
 /* Zwischenspeicher nur jedes 50. Mal aufräumen (das Durchzählen ist langsam) */
 let putN=0;async function trim(){if(++putN%50)return;const c=await caches.open(TILES);const k=await c.keys();for(let i=0;i<k.length-MAXTILES;i++)await c.delete(k[i]);}
 self.addEventListener("fetch",e=>{const u=new URL(e.request.url);
@@ -28,6 +29,7 @@ self.addEventListener("fetch",e=>{const u=new URL(e.request.url);
   e.respondWith((async()=>{const hit=await caches.match(e.request,{ignoreSearch:true});
    if(hit){e.waitUntil(net.catch(()=>{}));return hit;}
    try{return await net;}catch(err){return (await caches.match("index.html"))||Response.error();}})());return;}
- e.respondWith(fetch(e.request).then(r=>{if(r.ok&&u.hostname==="cdnjs.cloudflare.com"){const cl=r.clone();caches.open(APP).then(c=>c.put(e.request,cl));}return r;})
-  .catch(()=>caches.match(e.request).then(m=>m||Response.error())));
+ /* Leaflet (Kartenbibliothek): sofort aus dem Speicher – früher wurde zuerst das Netz gefragt, bei schlechtem Empfang hing der Start */
+ if(u.hostname==="cdnjs.cloudflare.com"){e.respondWith(caches.match(e.request).then(m=>m||fetch(e.request).then(r=>{if(r.ok){const cl=r.clone();caches.open(APP).then(c=>c.put(e.request,cl));}return r;})));return;}
+ e.respondWith(fetch(e.request).catch(()=>caches.match(e.request).then(m=>m||Response.error())));
 });
