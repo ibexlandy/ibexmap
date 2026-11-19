@@ -1,4 +1,4 @@
-IbexMap – v6.7 (privates Projekt)
+IbexMap – v6.8 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -365,3 +365,6 @@ NEU IN v6.6
 NEU IN v6.7
 - Fehler behoben: «Vektorkarte: Cannot access 'ls' before initialization» beim Start mit gewählter Vektorkarte.
 - Unerwartete Fehler werden als Meldung «Fehler: … (Zeile …)» angezeigt statt still abzubrechen.
+
+NEU IN v6.8
+- Fehler behoben: «this._on is not a function» – die Vektorkarten-Ebene überschrieb einen internen Namen der Kartenbibliothek; das blockierte beim Start den Rest der App.

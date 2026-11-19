@@ -447,7 +447,7 @@ const ADM=(()=>{try{if(new URLSearchParams(location.search).has("admin")){sessio
   return sessionStorage.getItem("rb_admin")==="1"&&matchMedia("(min-width:900px)").matches;}catch(e){return false;}})();
 if(ADM)document.body.classList.add("adm");
 const GROUP="IbexMap";
-const VERSION="v6.7";
+const VERSION="v6.8";
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
 const MA_SECTORS=[
  {n:"A Norden",zeit:"5.–10. April",klima:"Frühling, grün; 15–22 °C, im Rif Regen möglich, Nächte kühl",info:"Tanger Med, Chefchaouen, Fès, Meknès – ankommen, Städte, einkaufen. Eher Campings.",box:[[33.8,-5.9,35.95,-1.0]]},
@@ -650,15 +650,15 @@ const nightMode=()=>ls("rb_night")||"off";
 const nightNow=()=>{const m=nightMode();if(m==="auto"){const h=new Date().getHours();return h>=20||h<6;}return m==="on";};
 let vecFlavor="";
 function nightApply(){const on=nightNow();document.body.classList.toggle("night",on);const mt=document.querySelector('meta[name="theme-color"]');if(mt)mt.content=on?"#1d251c":"#2f3b2f";
-  if(VEC._on&&vecFlavor&&vecFlavor!==(on?"dark":"light"))vecRefresh();}
-const VecLayer=L.Layer.extend({onAdd(m){this._m=m;this._on=true;document.body.classList.add("vecon");vecMount(this).catch(e=>{toast("Vektorkarte: "+e.message,7000);});},
-  onRemove(m){this._on=false;document.body.classList.remove("vecon");if(this._gl&&m.hasLayer(this._gl))m.removeLayer(this._gl);}});
+  if(VEC._vecOn&&vecFlavor&&vecFlavor!==(on?"dark":"light"))vecRefresh();}
+const VecLayer=L.Layer.extend({onAdd(m){this._vm=m;this._vecOn=true;document.body.classList.add("vecon");vecMount(this).catch(e=>{toast("Vektorkarte: "+e.message,7000);});},
+  onRemove(m){this._vecOn=false;document.body.classList.remove("vecon");if(this._vgl&&m.hasLayer(this._vgl))m.removeLayer(this._vgl);}});
 const VEC=new VecLayer();
-async function vecMount(v){await vecLibs();if(!v._on)return;const s=await vecStyle();if(!v._on)return;
-  if(!v._gl)v._gl=L.maplibreGL({style:s.style});else{try{v._gl.getMaplibreMap().setStyle(s.style);}catch(e){}}
-  if(!v._m.hasLayer(v._gl))v._gl.addTo(v._m);
+async function vecMount(v){await vecLibs();if(!v._vecOn)return;const s=await vecStyle();if(!v._vecOn)return;
+  if(!v._vgl)v._vgl=L.maplibreGL({style:s.style});else{try{v._vgl.getMaplibreMap().setStyle(s.style);}catch(e){}}
+  if(!v._vm.hasLayer(v._vgl))v._vgl.addTo(v._vm);
   if(!s.n)toast("Vektorkarte: auf diesem Gerät ist noch keine Länderdatei – Menü › Offline-Daten",7000);}
-async function vecRefresh(){if(VEC._on)try{await vecMount(VEC);}catch(e){}else vecAutoDefault();}
+async function vecRefresh(){if(VEC._vecOn)try{await vecMount(VEC);}catch(e){}else vecAutoDefault();}
 /* Sobald auf einem Gerät eine Länderdatei liegt: einmalig automatisch auf die Vektorkarte umschalten (danach gilt die eigene Wahl) */
 async function vecAutoDefault(){if(ADM||ls("rb_vecauto")==="1"||map.hasLayer(VEC))return;const fs=await vecFiles();
   if(Object.values(fs).some(v=>v.ok)){ls("rb_vecauto","1");setBase(VEC_NAME);toast("Vektorkarte eingeschaltet – andere Kartenarten oben rechts",5000);}}
