@@ -1,4 +1,4 @@
-IbexMap – v4.4 (privates Projekt)
+IbexMap – v6.1 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -317,3 +317,9 @@ NEU IN v4.4
 - Offline-Karten: Topo lädt mit 2 statt 4 gleichzeitigen Anfragen; bremst der Kartendienst oder fehlt die Verbindung, wartet die App kurz. Fehlende Kartenbilder werden am Ende in bis zu 3 Runden einzeln nachgeholt; die Anzeige nennt den Grund.
 - Strassenoberfläche: geduldiger Download wie bei den POIs (nur antwortende Server, max. 100 s pro Abfrage, Pause nach 3 Fehlschlägen, Nachversuche bis 6 Stunden), Anzeige mit Server/Wartezeit/Fehlern; in der Übersicht «Strassenoberfläche: x Felder fehlen – fortsetzen» lädt nur die fehlende Oberfläche nach.
 - Strassenoberfläche über Google Drive: fertige Felder werden pro Gebiet gepackt auf Drive gespeichert; andere Geräte holen sie zuerst dort und fragen nur Fehlendes bei Overpass an.
+
+NEU IN v6.1
+- Ganzes Land komplett wie bei OsmAnd: Karte, Strassenoberfläche und POI-Overlay in einem Durchgang (beide standardmässig angehakt). POI kommt zuerst von Google Drive, sonst von OpenStreetMap. Bestehende Länder sind auf «mit POI» umgestellt; «Fortsetzen» ergänzt, was fehlt.
+- Übersicht aller Geräte in den Offline-Karten: Tabelle Gebiet × Gerät mit Kartenbildern %, Strassenoberfläche % und POI ✓ (Stand des letzten Abgleichs). Jedes Gerät hat einen Namen (Stift zum Ändern).
+- Doppelte Länder-Gebiete werden automatisch zusammengefasst und nicht mehr doppelt angelegt.
+- Speicheranzeige (belegt, erlaubt, dauerhaft geschützt ja/nein); bei vollem Speicher klare Meldung «Speicher voll» statt endloser Versuche.

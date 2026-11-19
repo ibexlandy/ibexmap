@@ -416,7 +416,7 @@ const ADM=(()=>{try{if(new URLSearchParams(location.search).has("admin")){sessio
   return sessionStorage.getItem("rb_admin")==="1"&&matchMedia("(min-width:900px)").matches;}catch(e){return false;}})();
 if(ADM)document.body.classList.add("adm");
 const GROUP="IbexMap";
-const VERSION="v4.4";
+const VERSION="v6.1";
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
 const MA_SECTORS=[
  {n:"A Norden",zeit:"5.–10. April",klima:"Frühling, grün; 15–22 °C, im Rif Regen möglich, Nächte kühl",info:"Tanger Med, Chefchaouen, Fès, Meknès – ankommen, Städte, einkaufen. Eher Campings.",box:[[33.8,-5.9,35.95,-1.0]]},
@@ -1895,6 +1895,7 @@ async function syncDrive(){if(syncing)return false;let ok=false;
       await put("points",p);local[p.id]=p;nIn++;}
     if(remote.fam)famMerge(remote.fam);
     try{await loadOffPacks();offSharedMerge(remote.offShared);}catch(e){}
+    try{devMerge(remote.devStatus);await devStatusLocal();}catch(e){}
     if(Array.isArray(remote.flags)){mergeFlags(remote.flags,remote.flagDel);await saveFlags();}
     if(Array.isArray(remote.trips)){if(mergeTrips(remote.trips,remote.deletedTrips)){await saveTrips();showHeaderTrip();}}
     const have=new Set(await keysOf("photos"));const need=new Set();
@@ -1903,7 +1904,7 @@ async function syncDrive(){if(syncing)return false;let ok=false;
     for(const id of need){const fn="foto_"+id+".jpg";i++;
       if(have.has(id)&&!byName[fn]){const ph=await getOne("photos",id);if(ph){up++;toast(`Fotos hochladen … (${up})`,120000);await gdUpload(fn,ph.blob);}}
       else if(!have.has(id)&&byName[fn]){toast(`Fotos herunterladen … (${down+1})`,120000);await put("photos",{id,blob:await(await gd(`drive/v3/files/${byName[fn].id}?alt=media`)).blob()});down++;}}
-    await gdUpload(GD_DATA,new Blob([JSON.stringify({app:"ibexmap",format:4,updated:Date.now(),trips,deletedTrips:delTrips,flags,flagDel,fam:famShared()||undefined,offShared:offSharedMerge(),points:Object.values(local)})],{type:"application/json"}),byName[GD_DATA]&&byName[GD_DATA].id);
+    await gdUpload(GD_DATA,new Blob([JSON.stringify({app:"ibexmap",format:4,updated:Date.now(),trips,deletedTrips:delTrips,flags,flagDel,fam:famShared()||undefined,offShared:offSharedMerge(),devStatus:devAll(),points:Object.values(local)})],{type:"application/json"}),byName[GD_DATA]&&byName[GD_DATA].id);
     const gone=new Set(Object.values(local).flatMap(p=>p.photoDel||[]));
     for(const f of files){const id=f.name.slice(5,-4);if(/^foto_.+\.jpg$/.test(f.name)&&gone.has(id)&&!need.has(id))await gd(`drive/v3/files/${f.id}`,{method:"DELETE"}).catch(()=>{});}
     try{surfDriveSet(files);}catch(e){}
@@ -1952,15 +1953,36 @@ function offPlan(o){const lay=BASE[o.layer];const maxZ=Math.min(o.zmax,lay.optio
   tileKeys(areas,9,maxZ).forEach(k=>keys.add(k));return {lay,keys:[...keys],n:src.length};}
 /* ---------- Offline-Karten als Pakete (wie OsmAnd): Übersicht, bewusst herunterladen, einzeln löschen ---------- */
 let offPacks=[];const offLayer=L.layerGroup().addTo(map);let offShow=ls("rb_offshow")==="1";
-async function loadOffPacks(){try{const m=await getOne("meta","offpacks");offPacks=m?m.list||[]:[];}catch(e){offPacks=[];}}
+async function loadOffPacks(){try{const m=await getOne("meta","offpacks");offPacks=m?m.list||[]:[];}catch(e){offPacks=[];}
+  /* doppelte Länder-Gebiete (gleiches Land, gleiche Karte) zusammenfassen */
+  const seen={},keep=[];let ch=false;await loadPoiOff();
+  for(const p of offPacks){if(p.kind==="country"&&p.poi===undefined){p.poi=true;ch=true;}const k=p.kind==="country"?`${p.cc}|${p.layer}`:null;
+    if(k&&seen[k]){const a=seen[k];a.zmax=Math.max(a.zmax,p.zmax);a.surf=a.surf||p.surf;if(p.areas.length>a.areas.length)a.areas=p.areas;ch=true;continue;}
+    if(k)seen[k]=p;keep.push(p);}
+  if(ch){offPacks=keep;try{await saveOffPacks();}catch(e){}}}
+/* ---------- Übersicht aller Geräte: jedes Gerät meldet beim Abgleich, was es offline gespeichert hat ---------- */
+const devId=()=>{let d=ls("rb_devid");if(!d){d=uid();ls("rb_devid",d);}return d;};
+function devGuess(){const u=navigator.userAgent;if(/Android/.test(u))return /SM-X|SM-T|Tablet/i.test(u)||!/Mobile/.test(u)?"Tablet":"Handy";if(/iPad/.test(u))return "Tablet";if(/iPhone/.test(u))return "Handy";return "PC";}
+const devName=()=>ls("rb_devname")||devGuess();
+const devAll=()=>{try{return JSON.parse(ls("rb_devall")||"{}");}catch(e){return {};}};
+async function devStatusLocal(){await loadOffPacks();await loadPoiOff();const have=await offCacheURLs();const packs=[];
+  for(const pk of offPacks){const u=packURLs(pk);let n=0;u.forEach(x=>{if(have.has(x))n++;});
+    let sm=null;if(pk.surf){sm=0;for(const k of packCells(pk)){let h=null;try{h=await getOne("meta","surf_"+k);}catch(e){}if(!h)sm++;}pk.surfMiss=sm;}
+    packs.push({key:pk.kind==="country"?`${pk.cc}|${pk.layer}`:pk.id,name:pk.name,layer:pk.layer,zmax:pk.zmax,n,total:u.length,surf:!!pk.surf,surfCells:pk.surf?packCells(pk).length:0,surfMiss:sm});}
+  const st={name:devName(),t:Date.now(),packs,poi:poiOff.map(p=>({cc:p.cc,loaded:p.loaded}))};
+  const all=devAll();all[devId()]=st;ls("rb_devall",JSON.stringify(all));return st;}
+function devMerge(remote){const all=devAll();for(const [id,v] of Object.entries(remote||{})){if(id===devId())continue;if(!all[id]||(v.t||0)>(all[id].t||0))all[id]=v;}
+  ls("rb_devall",JSON.stringify(all));return all;}
 async function saveOffPacks(){await put("meta",{id:"offpacks",list:offPacks});}
 /* Liste der Offline-Gebiete aller Geräte (nur die Beschreibung, keine Kartenbilder) – über Google Drive abgeglichen */
 const offShared=()=>{try{return JSON.parse(ls("rb_offshared")||"[]");}catch(e){return [];}};
 const offHide=()=>{try{return JSON.parse(ls("rb_offhide")||"[]");}catch(e){return [];}};
-const offDef=pk=>({id:pk.id,name:pk.name,kind:pk.kind,layer:pk.layer,zmax:pk.zmax,areas:pk.areas,surf:!!pk.surf,date:pk.date,cc:pk.cc});
+const offDef=pk=>({id:pk.id,name:pk.name,kind:pk.kind,layer:pk.layer,zmax:pk.zmax,areas:pk.areas,surf:!!pk.surf,date:pk.date,cc:pk.cc,poi:!!pk.poi});
 function offSharedMerge(remote){const m=new Map();(remote||[]).concat(offShared()).forEach(d=>{if(d&&d.id&&!m.has(d.id))m.set(d.id,d);});
   offPacks.forEach(pk=>m.set(pk.id,offDef(pk)));const list=[...m.values()];ls("rb_offshared",JSON.stringify(list));return list;}
-const offOther=()=>{const mine=new Set(offPacks.map(p=>p.id)),hid=new Set(offHide());return offShared().filter(d=>!mine.has(d.id)&&!hid.has(d.id));};
+const offOther=()=>{const mine=new Set(offPacks.map(p=>p.id)),hid=new Set(offHide());
+  const key=d=>d.kind==="country"?`${d.cc}|${d.layer}`:d.id;const mk=new Set(offPacks.map(key)),seen=new Set();
+  return offShared().filter(d=>{const k=key(d);if(mine.has(d.id)||hid.has(d.id)||mk.has(k)||seen.has(k))return false;seen.add(k);return true;});};
 const layMaxZ=lay=>lay.options.maxZoom||19;
 function packKeys(pk){const lay=BASE[pk.layer];const set=new Set();if(!lay)return set;
   for(const a of pk.areas)tileKeys([a],a.z1,Math.min(a.z2,layMaxZ(lay))).forEach(k=>set.add(k));return set;}
@@ -1980,13 +2002,31 @@ async function offlineDialog(){
   const rows=offPacks.map(pk=>{const u=packURLs(pk);let n=0;u.forEach(x=>{used.add(x);if(have.has(x))n++;});return {pk,total:u.length,n};});
   const loose=[...have].filter(u=>!used.has(u)).length;
   const kindI={view:"map",section:"sec",points:"pin",country:"globe"};
+  /* Übersicht aller Geräte */
+  let devTab="";try{const me=await devStatusLocal();const all=devAll();const ids=[devId(),...Object.keys(all).filter(i=>i!==devId()).sort((a,b)=>(all[a].name||"").localeCompare(all[b].name||""))];
+    const rows=new Map();const pct=(n,t)=>t?Math.floor(n/t*100):0;
+    ids.forEach(id=>{const d=all[id];if(!d)return;(d.packs||[]).forEach(p=>{const lab=`${p.name} · ${p.layer} ${p.zmax}`;
+        if(!rows.has(lab))rows.set(lab,{});rows.get(lab)[id]=pct(p.n,p.total);
+        if(p.surf){const l2=`${p.name} · Strassenoberfläche`;if(!rows.has(l2))rows.set(l2,{});rows.get(l2)[id]=p.surfMiss==null?"?":pct(p.surfCells-p.surfMiss,p.surfCells);}});
+      (d.poi||[]).forEach(p=>{const l3=`POI ${countryName(p.cc)}`;if(!rows.has(l3))rows.set(l3,{});rows.get(l3)[id]="✓";});});
+    const cell=v=>v==null?`<td style="color:var(--muted);text-align:center">–</td>`:v==="✓"?`<td style="text-align:center;color:#2e7d32">✓</td>`:v==="?"?`<td style="text-align:center">?</td>`
+      :`<td style="text-align:center;color:${v>=100?"#2e7d32":"var(--accent2)"}">${v} %</td>`;
+    if(rows.size)devTab=`<div class="mgh">Übersicht aller Geräte</div><div style="overflow-x:auto;background:var(--card,#fff);border-radius:14px;padding:6px 8px">
+      <table style="border-collapse:collapse;font-size:13px;width:100%"><tr><th style="text-align:left;padding:4px 6px">Gebiet</th>${ids.filter(i=>all[i]).map(i=>`<th style="padding:4px 6px;white-space:nowrap">${esc(all[i].name||"?")}${i===devId()?" (hier)":""}<br><span style="font-weight:400;color:var(--muted);font-size:11px">${i===devId()?"jetzt":fmtDT(all[i].t)}</span></th>`).join("")}</tr>
+      ${[...rows.entries()].map(([lab,v])=>`<tr style="border-top:1px solid #0001"><td style="padding:4px 6px">${esc(lab)}</td>${ids.filter(i=>all[i]).map(i=>cell(v[i])).join("")}</tr>`).join("")}</table>
+      <p class="muted" style="font-size:12px;margin:6px 4px 2px">Andere Geräte: Stand ihres letzten Abgleichs.</p></div>`;}catch(e){}
+  const devRow=`<div class="mgrp"><div class="mrow" style="cursor:default"><span class="mic">${mi("pin",20)}</span><span class="mtx"><b>Dieses Gerät: ${esc(devName())}</b><small>Name für die Übersicht aller Geräte</small></span><span class="oact"><button id="oDev" title="Namen ändern">${mi("edit",18)}</button></span></div></div>`;
+  let stor="";try{const e=await navigator.storage.estimate();const pr=navigator.storage.persisted?await navigator.storage.persisted():false;
+    stor=`Speicher der App: ${fmtN(Math.round(e.usage/1048576))} MB belegt, erlaubt bis ca. ${fmtN(Math.round(e.quota/1048576))} MB · ${pr?"dauerhaft geschützt":"<span style=\"color:var(--accent2)\">nicht dauerhaft geschützt – Android kann die Karten bei Platzmangel löschen</span>"}`;}catch(e){}
   const st=r=>r.n>=r.total?`<span style="color:#2e7d32">vollständig</span>`:`<span style="color:var(--accent2)">${fmtN(r.n)} von ${fmtN(r.total)} – fortsetzen</span>`;
   openPanel(`<h2>Offline-Karten</h2>
    <p class="muted" style="margin-top:-6px">${offPacks.length} Gebiet${offPacks.length==1?"":"e"} · ${fmtN(have.size)} Kartenbilder · ca. ${fmtN(Math.round(have.size*0.022))} MB</p>
+   ${stor?`<p class="muted" style="font-size:13px;margin-top:-4px">${stor}</p>`:""}
+   ${devRow}${devTab}
    <div class="mgrp"><label class="mrow"><span class="mic">${mi("map",20)}</span><span class="mtx"><b>Gebiete auf der Karte zeigen</b><small>Farbige Rahmen um die gespeicherten Gebiete</small></span><input type="checkbox" class="msw" id="oShow" ${offShow?"checked":""}></label></div>
    <div class="mgh">Gespeicherte Gebiete</div>
    <div class="mgrp">${rows.length?rows.map((r,i)=>`<div class="mrow wrap" style="cursor:default"><span class="mic" style="background:${FLAG_COLORS[(i+1)%FLAG_COLORS.length]}22;color:${FLAG_COLORS[(i+1)%FLAG_COLORS.length]}">${mi(kindI[r.pk.kind]||"map",20)}</span>
-     <span class="mtx"><b>${esc(r.pk.name)}</b><small>${esc(r.pk.layer)} · Detail ${r.pk.zmax} · ${fmtD(r.pk.date)} · ${fmtN(r.total)} Bilder · ca. ${estMB(r.total,r.pk.layer)} MB${r.pk.surf?" · mit Strassenoberfläche":""}</small><small>${st(r)}${r.pk.surf&&r.pk.surfMiss?` · <span style="color:var(--accent2)">Strassenoberfläche: ${r.pk.surfMiss} Felder fehlen – fortsetzen</span>`:""}</small></span>
+     <span class="mtx"><b>${esc(r.pk.name)}</b><small>${esc(r.pk.layer)} · Detail ${r.pk.zmax} · ${fmtD(r.pk.date)} · ${fmtN(r.total)} Bilder · ca. ${estMB(r.total,r.pk.layer)} MB${r.pk.surf?" · mit Strassenoberfläche":""}${r.pk.poi?(poiOff.some(x=>x.cc===r.pk.cc)?" · POI ✓":` · <span style="color:var(--accent2)">POI fehlt</span>`):""}</small><small>${st(r)}${r.pk.surf&&r.pk.surfMiss?` · <span style="color:var(--accent2)">Strassenoberfläche: ${r.pk.surfMiss} Felder fehlen – fortsetzen</span>`:""}</small></span>
      <span class="oact"><button data-o="show" data-i="${i}" title="Auf der Karte zeigen">${mi("pin",18)}</button><button data-o="load" data-i="${i}" title="${r.n>=r.total&&!(r.pk.surf&&r.pk.surfMiss)?"Aktualisieren (alles neu laden)":"Fortsetzen"}">${mi(r.n>=r.total&&!(r.pk.surf&&r.pk.surfMiss)?"refresh":"download",18)}</button><button data-o="del" data-i="${i}" title="Löschen">${mi("trash",18)}</button></span></div>`).join("")
      :`<div class="mrow" style="cursor:default"><span class="mtx"><small>Noch keine Gebiete gespeichert.</small></span></div>`}
      ${loose?`<div class="mrow" style="cursor:default"><span class="mic">${mi("db",20)}</span><span class="mtx"><b>Ohne Gebiet</b><small>${fmtN(loose)} Kartenbilder aus früheren Versionen</small></span><span class="oact"><button data-o="loose" title="Löschen">${mi("trash",18)}</button></span></div>`:""}</div>
@@ -2002,14 +2042,16 @@ async function offlineDialog(){
    </div>
    <p class="muted" style="margin-top:14px">Am besten zu Hause im WLAN laden. Bilder, die mehrere Gebiete brauchen, werden nur einmal gespeichert und erst gelöscht, wenn kein Gebiet sie mehr braucht. Die Kartendienste sind für normale Nutzung gedacht – bitte nur laden, was ihr wirklich braucht.</p>`);
   $("#oShow").onchange=e=>{offShow=e.target.checked;ls("rb_offshow",offShow?"1":"0");drawOffAreas();};
+  $("#oDev").onclick=()=>{openPanel(`<h2>Name dieses Geräts</h2><input id="dvN" value="${esc(devName())}" placeholder="z. B. PC, Handy Lukas, Tablet"><p class="muted">Erscheint in der Übersicht aller Geräte (nach dem nächsten Abgleich auch auf den anderen).</p><div class="actions"><button class="btn" id="dvOk">Speichern</button><button class="btn sec" id="dvNo">Abbrechen</button></div>`);
+    $("#dvNo").onclick=offlineDialog;$("#dvOk").onclick=()=>{const v=$("#dvN").value.trim();if(v)ls("rb_devname",v);offlineDialog();};};
   $("#panel").querySelectorAll("[data-oo]").forEach(b=>b.onclick=async()=>{const d=offShared().find(x=>x.id===b.dataset.id);if(!d)return;
     if(b.dataset.oo==="hide"){ls("rb_offhide",JSON.stringify([...offHide(),d.id]));offlineDialog();return;}
-    const pk=Object.assign({},d,{date:Date.now()});offPacks.push(pk);await saveOffPacks();offRunPack(pk,false);});
+    if(offPacks.some(x=>x.id===d.id))return offlineDialog();const pk=Object.assign({},d,{date:Date.now()});offPacks.push(pk);await saveOffPacks();offRunPack(pk,false);});
   $("#oNewView").onclick=offPickView;$("#oNewCC").onclick=offCountryPick;$("#oNewSec").onclick=()=>offConfig({kind:"section"});$("#oNewPts").onclick=()=>offConfig({kind:"points"});
   $("#panel").querySelectorAll("[data-o]").forEach(b=>b.onclick=async()=>{const pk=offPacks[+b.dataset.i];const o=b.dataset.o;
     if(o==="show"){closePanel();drawOffAreas(pk);const bb=L.latLngBounds(pk.areas.flatMap(a=>[[a.s,a.w],[a.n,a.e]]));map.fitBounds(bb,{padding:[30,30]});
       if(BASE[pk.layer]&&!map.hasLayer(BASE[pk.layer])){Object.values(BASE).forEach(l=>map.removeLayer(l));BASE[pk.layer].addTo(map);}toast(`${pk.name} – ${pk.layer}`,3000);}
-    else if(o==="load"){const r=rows[+b.dataset.i];offRunPack(pk,r.n>=r.total&&!(pk.surf&&pk.surfMiss));}
+    else if(o==="load"){const r=rows[+b.dataset.i];offRunPack(pk,r.n>=r.total&&!(pk.surf&&pk.surfMiss)&&!(pk.poi&&!poiOff.some(x=>x.cc===pk.cc)));}
     else if(o==="del")openPanel(`<h2>«${esc(pk.name)}» löschen?</h2><p>Die Kartenbilder dieses Gebiets werden gelöscht, ausser sie gehören auch zu einem anderen Gebiet.</p>
        <div class="actions"><button class="btn warn" id="cYes">Löschen</button><button class="btn sec" id="cNo">Abbrechen</button></div>`)||(()=>{$("#cNo").onclick=offlineDialog;
        $("#cYes").onclick=async()=>{ls("rb_offhide",JSON.stringify([...offHide(),pk.id]));const keep=new Set();offPacks.filter(x=>x!==pk).forEach(x=>packURLs(x).forEach(u=>keep.add(u)));
@@ -2065,7 +2107,7 @@ function offConfig(o){
   o.zmax=o.zmax||(o.kind==="section"||o.kind==="country"?12:+ls("rb_offZ")||14);o.radius=o.radius||+ls("rb_offR")||10;o.only=o.only||ls("rb_offO")||"trip";
   if(o.kind==="section"&&!o.sec){const t=curTripObj();o.sec=(MA_SECTORS.find(x=>(t&&t.sections||[]).includes(x.n))||MA_SECTORS[0]).n;}
   if((o.kind==="section"||o.kind==="country")&&o.pts===undefined)o.pts=true;
-  if(o.kind==="country"&&!o._areas)o._areas=countryAreas(o.cc);if(o.surf===undefined)o.surf=o.kind==="country"?false:!/^(0|false)$/.test(ls("rb_offSurf"));
+  if(o.kind==="country"&&!o._areas)o._areas=countryAreas(o.cc);if(o.surf===undefined)o.surf=o.kind==="country"?true:!/^(0|false)$/.test(ls("rb_offSurf"));if(o.kind==="country"&&o.poi===undefined)o.poi=true;
   const build=()=>{const areas=[];let name="";
     if(o.kind==="view"){const b=o.box;areas.push(Object.assign({},b,{z1:Math.max(5,Math.min(o.z,o.zmax)-6),z2:o.zmax}));
       name=o.name||("Ausschnitt "+(countryName(countryOf((b.n+b.s)/2,(b.w+b.e)/2))||"")+" "+fmtD(Date.now())).replace(/\s+/g," ");}
@@ -2080,7 +2122,7 @@ function offConfig(o){
       areas.push(Object.assign({},box,{z1:5,z2:8}));
       const src=o.only==="all"?points:o.only==="fix"?src0.filter(p=>p.status!=="idee"):src0;src.forEach(p=>areas.push(Object.assign(ptBox(p,o.radius),{z1:9,z2:o.zmax})));
       name=o.name||(o.only==="all"?"Alle Punkte":"Punkte "+(curTripObj()?curTripObj().name:""))+` (${o.radius} km)`;o._n=src.length;}
-    return Object.assign({id:o.id||uid(),name,kind:o.kind,layer:o.layer,zmax:o.zmax,areas,date:Date.now(),surf:!!o.surf},o.cc?{cc:o.cc}:{});};
+    return Object.assign({id:o.id||uid(),name,kind:o.kind,layer:o.layer,zmax:o.zmax,areas,date:Date.now(),surf:!!o.surf},o.cc?{cc:o.cc,poi:!!o.poi}:{});};
   const draw=()=>{const pk=build();const est=tileEstimate(pk.areas,BASE[pk.layer]);const n=est>OFF_MAX*2?est:packKeys(pk).size;const big=o.kind==="section"||o.kind==="country";
     openPanel(`<h2>Neues Offline-Gebiet</h2>
      ${o.kind==="country"?`<label>Land</label><div style="display:flex;align-items:center;gap:10px;font-size:16px;margin:4px 0 2px"><b>${flagEmoji(o.cc)} ${esc(countryName(o.cc))}</b><button class="btn sec" id="cCC" style="padding:4px 12px;font-size:13px;min-height:0">Anderes Land</button></div>`:""}
@@ -2091,15 +2133,21 @@ function offConfig(o){
      <label>Karte</label><select id="cL">${Object.keys(BASE).map(k=>`<option ${k===o.layer?"selected":""}>${k}</option>`).join("")}</select>
      <label>Detailstufe${big?" für das ganze Gebiet":""}</label><select id="cZ">${[[10,"10 – grobe Übersicht"],[11,"11 – Übersicht"],[12,"12 – Ortschaften und Hauptstrassen"],[13,"13 – Strassen gut lesbar"],[14,"14 – Pisten und Wege"],[15,"15 – sehr detailliert"]].filter(([v])=>!big||v<=13).map(([v,t])=>`<option value="${v}" ${v===o.zmax?"selected":""}>${t}</option>`).join("")}</select>
      <label style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink);margin-top:12px"><input type="checkbox" id="cSf" style="width:auto;margin:0" ${o.surf?"checked":""}> Strassenoberfläche mitspeichern (${packCells(pk).length} Kartenstücke à 50 km)</label>
+     ${o.kind==="country"?`<label style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink);margin-top:8px"><input type="checkbox" id="cPoi" style="width:auto;margin:0" ${o.poi?"checked":""}> POI-Overlay für ${esc(countryName(o.cc))} mitladen (Camping, Wasser, Tankstellen …)</label>
+       <p class="muted" style="font-size:13px">Komplettes Land wie bei OsmAnd: Karte, Strassenoberfläche und POI in einem Durchgang. Die Strassenoberfläche und die POI kommen von den OpenStreetMap-Servern und brauchen bei Überlastung Geduld – am besten am PC laufen lassen; die anderen Geräte holen sie danach von Google Drive.</p>`:""}
      ${big?`<label class="rrow" style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink);margin-top:12px"><input type="checkbox" id="cP" style="width:auto;margin:0" ${o.pts?"checked":""}> Rund um eure Punkte ${o.kind==="country"?"im Land":"im Abschnitt"} zusätzlich bis Stufe 14 (${o.radius} km)</label>`:""}
      ${o.kind==="country"&&n>OFF_MAX?`<p class="muted" style="font-size:13px">Tipp: Für ein grosses Land Stufe 11 oder 12 wählen und Details nur rund um eure Punkte – oder einzelne Abschnitte bzw. Ausschnitte genauer laden.</p>`:""}
      <div class="ocalc ${n>OFF_MAX?"bad":""}"><b>${fmtN(n)} Kartenbilder</b> · ca. ${estMB(n,o.layer)} MB${o.kind==="points"?` · ${o._n} Punkte`:""}${n>OFF_MAX?`<br>Zu viel (max. ${fmtN(OFF_MAX)}) – bitte Detailstufe oder Gebiet verkleinern.`:""}</div>
      <div class="actions"><button class="btn" id="cGo" ${n>OFF_MAX||!n?"disabled":""}>Herunterladen</button><button class="btn sec" id="cBack">Zurück</button>${o.kind==="view"?`<button class="btn sec" id="cRe">Ausschnitt neu wählen</button>`:""}</div>`);
     const ch=(id,k,f,key)=>{const e=$(id);if(e)e.onchange=()=>{o[k]=f(e.type==="checkbox"?e.checked:e.value);if(key)ls(key,String(o[k]));draw();};};
-    ch("#cS","sec",String);ch("#cO","only",String,"rb_offO");ch("#cR","radius",Number,"rb_offR");ch("#cL","layer",String,"rb_offL");ch("#cZ","zmax",Number,big?null:"rb_offZ");ch("#cP","pts",Boolean);ch("#cSf","surf",Boolean,"rb_offSurf");
+    ch("#cS","sec",String);ch("#cO","only",String,"rb_offO");ch("#cR","radius",Number,"rb_offR");ch("#cL","layer",String,"rb_offL");ch("#cZ","zmax",Number,big?null:"rb_offZ");ch("#cP","pts",Boolean);ch("#cSf","surf",Boolean,o.kind==="country"?null:"rb_offSurf");ch("#cPoi","poi",Boolean);
     $("#cN").oninput=e=>{o.name=e.target.value;};
     $("#cBack").onclick=o.kind==="country"?offCountryPick:offlineDialog;const cc=$("#cCC");if(cc)cc.onclick=offCountryPick;const re=$("#cRe");if(re)re.onclick=offPickView;
-    $("#cGo").onclick=async()=>{const p2=build();p2.name=($("#cN").value||p2.name).trim();await loadOffPacks();offPacks.push(p2);await saveOffPacks();drawOffAreas();offRunPack(p2,false);};};
+    $("#cGo").onclick=async()=>{const p2=build();p2.name=($("#cN").value||p2.name).trim();await loadOffPacks();
+      /* dasselbe Land in derselben Karte nicht doppelt anlegen: bestehendes Gebiet ersetzen */
+      const dup=p2.kind==="country"?offPacks.findIndex(x=>x.kind==="country"&&x.cc===p2.cc&&x.layer===p2.layer):-1;
+      if(dup>=0){p2.id=offPacks[dup].id;offPacks[dup]=p2;toast(`${p2.name} (${p2.layer}) war schon vorhanden – Einstellungen übernommen, Download wird fortgesetzt`,4000);}else offPacks.push(p2);
+      await saveOffPacks();drawOffAreas();offRunPack(p2,false);};};
   draw();}
 /* Herunterladen mit Fortschritt (läuft weiter, auch wenn das Fenster zu ist) */
 async function offRunPack(pk,force){if(!navigator.onLine)return toast("Kein Internet",4000);if(offRun)return toast("Es läuft schon ein Download",3000);
@@ -2117,8 +2165,9 @@ async function offRunPack(pk,force){if(!navigator.onLine)return toast("Kein Inte
      dann kurz warten, gescheiterte Bilder sammeln und am Ende in bis zu 3 Runden langsamer nochmals versuchen */
   let retry=[];run.why="";
   const pass=async(list,n)=>{let idx=0;const worker=async()=>{while(!run.stop&&idx<list.length){const u=list[idx++];let st=0;
-      try{const r=await fetch(u,{mode:"cors",cache:force?"reload":"default"});st=r.status;if(r.ok){await c.put(u,r);done++;if(done%10===0||done===total)ui();continue;}}catch(e){st=-1;}
-      retry.push(u);fail=retry.length;run.why=st===429?"Kartendienst bremst (zu viele Anfragen)":st===-1?"keine Verbindung":"Server antwortet nicht ("+st+")";ui();
+      try{const r=await fetch(u,{mode:"cors",cache:force?"reload":"default"});st=r.status;
+        if(r.ok){try{await c.put(u,r);}catch(e){st=-2;run.stop=true;run.full=true;}if(st!==-2){done++;if(done%10===0||done===total)ui();continue;}}}catch(e){st=-1;}
+      retry.push(u);fail=retry.length;run.why=st===-2?"Speicher voll – das Gerät erlaubt der App keinen weiteren Speicher":st===429?"Kartendienst bremst (zu viele Anfragen)":st===-1?"keine Verbindung":"Server antwortet nicht ("+st+")";ui();
       await sleep(st===429||st===503||st===-1?15000:2000);}};
     await Promise.all(Array.from({length:n},worker));};
   await pass(todo,pk.layer==="Topo"?2:4);
@@ -2126,6 +2175,10 @@ async function offRunPack(pk,force){if(!navigator.onLine)return toast("Kein Inte
     await sleep(r*20000);await pass(list,1);}
   let sf=null;if(pk.surf&&!run.stop){sf=await surfSavePack(pk,(i,n,st)=>{pill.textContent=`⬇ ${pk.name}: Strassen ${i}/${n}${st&&st.wait?" · Pause":""}`;const t=$("#oPTxt");if(t)t.textContent=`Kartenbilder fertig · Strassenoberfläche ${i} von ${n}`+(st?(st.wait?` · ${st.wait}`:` · Server ${ovNow||"…"} · wartet ${Math.round((Date.now()-st.since)/1000)} s · Abfragen ${st.ok} ok, ${st.fail} gescheitert${st.why?` (zuletzt: ${st.why})`:""}`):"");},run);await saveOffPacks();if(surfOn)drawSurf();}
   offRun=null;pill.style.display="none";
+  /* komplettes Land: danach POI laden (falls noch nicht vorhanden) – zuerst von Google Drive, sonst über OpenStreetMap */
+  if(pk.poi&&pk.cc&&!run.stop&&!run.full){await loadPoiOff();if(!poiOff.some(p=>p.cc===pk.cc)){
+    if(poiDrive().some(r=>r.cc===pk.cc)){await poiFromDrive(pk.cc);}else poiDownload(pk.cc);}}
+  if(run.full){offRun=null;pill.style.display="none";openPanel(`<h2>Speicher voll</h2><p>Das Gerät erlaubt IbexMap keinen weiteren Speicher für Kartenbilder. Bisher gespeichert: ${fmtN(done)} Bilder.</p><p class="muted">Platz schaffen: auf dem Handy Fotos/Videos oder Apps auslagern, nicht benötigte Offline-Gebiete hier löschen, oder eine kleinere Detailstufe wählen. Danach «Fortsetzen».</p><div class="actions"><button class="btn" id="fullOk">Zur Übersicht</button></div>`);$("#fullOk").onclick=offlineDialog;return;}
   const msg=run.stop?`Angehalten – später in der Übersicht fortsetzen`:`Fertig: ${fmtN(done)} Kartenbilder gespeichert${retry.length?` · ${retry.length} fehlen noch (später in der Übersicht «Fortsetzen»)`:""}${sf?` · Strassen ${sf.n-sf.fail}/${sf.n}`:""}`;
   toast(msg,6000);if($("#oPBar"))offlineDialog();}
 
