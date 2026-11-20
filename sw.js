@@ -1,4 +1,4 @@
-const APP="reisebuch-app-v7.7",TILES="reisebuch-tiles-v4",OFFLINE="reisebuch-offline",DEM="reisebuch-dem",LIBS="reisebuch-libs",MAXTILES=3000;
+const APP="reisebuch-app-v7.8",TILES="reisebuch-tiles-v4",OFFLINE="reisebuch-offline",DEM="reisebuch-dem",LIBS="reisebuch-libs",MAXTILES=3000;
 const SHELL=["./","index.html","topo.svg","manifest.webmanifest","icon-192.png","icon-512.png","icon-maskable-512.png","favicon.png",
 "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css",
 "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"];
@@ -8,6 +8,7 @@ self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(k=>Promise.a
   .then(()=>caches.open(LIBS)).then(c=>c.keys().then(ks=>Promise.all(ks.filter(r=>{const u=new URL(r.url);return u.hostname==="unpkg.com"&&!/@\d+\.\d+\.\d+\//.test(u.pathname);}).map(r=>c.delete(r)))))
   .catch(()=>{}).then(()=>self.clients.claim()));});
 /* Zwischenspeicher nur jedes 50. Mal aufräumen (das Durchzählen ist langsam) */
+async function appHit(url){try{return await (await caches.open(APP)).match(url);}catch(e){return undefined;}}
 let putN=0;async function trim(){if(++putN%50)return;const c=await caches.open(TILES);const k=await c.keys();for(let i=0;i<k.length-MAXTILES;i++)await c.delete(k[i]);}
 self.addEventListener("fetch",e=>{const u=new URL(e.request.url);
  if(/googleapis\.com$|accounts\.google\.com$|overpass/.test(u.hostname))return;
@@ -34,14 +35,15 @@ self.addEventListener("fetch",e=>{const u=new URL(e.request.url);
   /* Schnellstart: App-Dateien sofort aus dem Speicher, im Hintergrund frisch vom Server holen.
      Neue Versionen kommen über das neue sw.js (Versionsnummer) und laden die App einmal neu. */
   /* ausdrücklich frische Anfragen (Update-Prüfung, Familienseite) gehen direkt ans Netz */
-  if(e.request.cache==="no-store"||e.request.cache==="reload"){e.respondWith(fetch(e.request).then(r=>{if(r.ok&&!r.redirected){const cl=r.clone();caches.open(APP).then(c=>c.put(e.request.url.split("?")[0],cl));}return r;}).catch(()=>caches.match(e.request,{ignoreSearch:true}).then(m=>m||Response.error())));return;}
+  if(e.request.cache==="no-store"||e.request.cache==="reload"){e.respondWith(fetch(e.request).then(r=>{if(r.ok&&!r.redirected){const cl=r.clone();caches.open(APP).then(c=>c.put(e.request.url.split("?")[0],cl));}return r;}).catch(()=>appHit(u.origin+u.pathname).then(m=>m||Response.error())));return;}
   const net=(async()=>{let r=await fetch(u.href,{cache:"no-cache",credentials:"same-origin"});
      if(r.redirected)r=new Response(await r.blob(),{status:r.status,statusText:r.statusText,headers:r.headers});
-     if(r.ok){const cl=r.clone();const c=await caches.open(APP);await c.put(e.request,cl);}return r;})();
-  e.respondWith((async()=>{const hit=await caches.match(e.request,{ignoreSearch:true});
+     if(r.ok){const cl=r.clone();const c=await caches.open(APP);await c.put(u.origin+u.pathname,cl);}return r;})();
+  /* nur im kleinen App-Speicher suchen, ohne ignoreSearch: eine Suche über alle Speicher (Tausende Offline-Kacheln) dauerte auf dem Handy bis 20 s */
+  e.respondWith((async()=>{const hit=await appHit(u.origin+u.pathname);
    if(hit){e.waitUntil(net.catch(()=>{}));return hit;}
-   try{return await net;}catch(err){return (await caches.match("index.html"))||Response.error();}})());return;}
+   try{return await net;}catch(err){return (await appHit(new URL("index.html",self.registration.scope).href))||Response.error();}})());return;}
  /* Leaflet (Kartenbibliothek): sofort aus dem Speicher – früher wurde zuerst das Netz gefragt, bei schlechtem Empfang hing der Start */
- if(u.hostname==="cdnjs.cloudflare.com"){e.respondWith(caches.match(e.request).then(m=>m||fetch(e.request).then(r=>{if(r.ok){const cl=r.clone();caches.open(APP).then(c=>c.put(e.request,cl));}return r;})));return;}
- e.respondWith(fetch(e.request).catch(()=>caches.match(e.request).then(m=>m||Response.error())));
+ if(u.hostname==="cdnjs.cloudflare.com"){e.respondWith(appHit(e.request.url).then(m=>m||fetch(e.request).then(r=>{if(r.ok){const cl=r.clone();caches.open(APP).then(c=>c.put(e.request,cl));}return r;})));return;}
+ e.respondWith(fetch(e.request).catch(()=>appHit(e.request.url).then(m=>m||Response.error())));
 });

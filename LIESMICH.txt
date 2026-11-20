@@ -1,4 +1,4 @@
-IbexMap – v7.7 (privates Projekt)
+IbexMap – v7.8 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -376,6 +376,11 @@ NEU IN v6.8
 NEU IN v7.1
 - Vektorkarte erstellen per Doppelklick: Offline-Daten › Land › «Karte erstellen (PC)» › «Startdatei herunterladen». Die Datei <Land>_laden.bat holt das Programm pmtiles, sucht die neueste Weltkarte von Protomaps und schneidet das Land heraus (Ordner IbexMap-Karten im Benutzerordner); danach in IbexMap «Datei laden». Kein cmd, kein Befehl, kein Datum mehr. Der Befehl von Hand bleibt unter «Von Hand (für Fortgeschrittene)».
 - Geprüft: Ganz in der App geht es nicht – der Protomaps-Server sperrt den Zugriff aus dem Browser (CORS).
+
+NEU IN v7.8
+- Lange auf die Karte drücken (am PC: Rechtsklick) → neu «Koordinaten kopieren»: kopiert Breite und Länge der Stelle (Dezimalgrad mit Punkt, z. B. «31.12345, -7.54321») in die Zwischenablage, zum Einfügen in OsmAnd, Google Maps, WhatsApp usw. Die Koordinaten stehen auch gleich sichtbar im Menü.
+- Schnellerer Start: Die App-Dateien wurden bisher in allen Zwischenspeichern gesucht, auch in den Tausenden Offline-Kacheln. Das dauerte auf dem Handy bis 20 s. Jetzt wird nur im kleinen App-Speicher gesucht (wenige Millisekunden).
+- «Startzeit» zeigt zusätzlich «App-Datei erhalten» und «Kartenbibliothek erhalten».
 
 NEU IN v7.7
 - Strassenoberfläche wird beim Abgleich automatisch auf Google Drive nachgeliefert, wenn sie dort fehlt oder älter ist (z. B. wenn beim Einlesen der Rohdaten kein Internet da war oder die Google-Anmeldung abgelaufen war). Das übernimmt das Gerät, auf dem die Rohdaten eingelesen wurden.

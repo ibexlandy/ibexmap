@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <!-- Sicherheitsregeln: Code nur von hier (Fingerabdruck), cdnjs und unpkg (mit Prüfsumme). Fingerabdruck setzt /home/claude/tools/csp.py -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-FSSkdYoygX728rG9nlBsFBkqn5kbZSwV0Gc+Keq4Xig=' https://cdnjs.cloudflare.com https://unpkg.com; worker-src 'self' blob:; child-src blob:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; font-src 'self' data: https:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-Sz+2mgkNoFNU3HNd4xJSVaWJsT+ud8m27imVZs/pMEQ=' https://cdnjs.cloudflare.com https://unpkg.com; worker-src 'self' blob:; child-src blob:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; font-src 'self' data: https:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#92b78c">
 <title>IbexMap</title>
@@ -542,7 +542,8 @@ const MI={
   undo:`<path d="M9 14 4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3"/>`,
   shield:`<path d="M12 3 5 6v6c0 4.5 3 8 7 9 4-1 7-4.5 7-9V6z"/><path d="M9 12l2 2 4-4"/>`,
   refresh:`<path d="M20 12a8 8 0 1 1-2.3-5.7L20 8.5M20 4v4.5h-4.5"/>`,
-  clock:`<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>`
+  clock:`<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>`,
+  copy:`<rect x="8.5" y="8.5" width="11" height="11" rx="2"/><path d="M15.5 8.5V6a1.5 1.5 0 0 0-1.5-1.5H6A1.5 1.5 0 0 0 4.5 6v8A1.5 1.5 0 0 0 6 15.5h2.5"/>`
 };
 const storyI=sz=>`<svg viewBox="0 0 24 24" width="${sz}" height="${sz}" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5C10 5 7 4.5 3.5 5v13c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5zM12 6.5v13"/></svg>`;
 const mi=(k,sz=17)=>`<svg viewBox="0 0 24 24" width="${sz}" height="${sz}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none;opacity:.75">${MI[k]}</svg>`;
@@ -577,7 +578,7 @@ const ADM=(()=>{try{if(new URLSearchParams(location.search).has("admin")){sessio
   return sessionStorage.getItem("rb_admin")==="1"&&matchMedia("(min-width:900px)").matches;}catch(e){return false;}})();
 if(ADM)document.body.classList.add("adm");
 const GROUP="IbexMap";
-const VERSION="v7.7";
+const VERSION="v7.8";
 /* Startzeit-Messung: Sekunden seit dem Öffnen der App (im Menü › Gerät › Startzeit) */
 const ST_MARKS=[];function stMark(t){if(ST_MARKS.some(m=>m.t===t))return;ST_MARKS.push({t,s:performance.now()/1000});}
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
@@ -1757,9 +1758,14 @@ $("#pbOk").onclick=e=>{e.stopPropagation();if(!cross)return;const ll=cross.getLa
   const p=newPoint(+ll.lat.toFixed(6),+ll.lng.toFixed(6),ex||{});if(ex&&ex.cat==="camp"&&!p.section)p.section=sectorOf(p.lat,p.lon);editPoint(p,true);};
 L.DomEvent.disableClickPropagation($("#placebar"));
 map.on("click",e=>{if(!placing)return;putCross(e.latlng);});
-map.on("contextmenu",e=>{if(placing)return;const ll=e.latlng;
-  const pop=L.popup({closeButton:false,offset:[0,-4]}).setLatLng(ll).setContent(`<div class="ctxbtns"><button class="btn" id="cxFlag">${flagI} Fahne setzen</button><button class="btn sec" id="cxPoint">＋ Punkt setzen</button></div>`).openOn(map);
-  setTimeout(()=>{$("#cxFlag").onclick=()=>{map.closePopup();startPlace(ll,"flag");};$("#cxPoint").onclick=()=>{map.closePopup();startPlace(ll,"point");};},30);});
+/* Text in die Zwischenablage – mit Rückfall für ältere Browser bzw. ohne Berechtigung */
+async function copyText(t){try{await navigator.clipboard.writeText(t);return true;}catch(e){}
+  try{const ta=document.createElement("textarea");ta.value=t;ta.setAttribute("readonly","");ta.style.cssText="position:fixed;left:-9999px";document.body.appendChild(ta);ta.select();const ok=document.execCommand("copy");ta.remove();return ok;}catch(e){return false;}}
+map.on("contextmenu",e=>{if(placing)return;const ll=e.latlng;const co=`${ll.lat.toFixed(5)}, ${ll.lng.toFixed(5)}`;
+  const pop=L.popup({closeButton:false,offset:[0,-4]}).setLatLng(ll).setContent(`<div class="ctxbtns"><button class="btn" id="cxFlag">${flagI} Fahne setzen</button><button class="btn sec" id="cxPoint">＋ Punkt setzen</button>
+    <button class="btn sec" id="cxCopy" title="Breite, Länge (Dezimalgrad, WGS84) kopieren">${mi("copy",16)} Koordinaten kopieren<small style="display:block;font-weight:400;font-variant-numeric:tabular-nums;opacity:.8">${co}</small></button></div>`).openOn(map);
+  setTimeout(()=>{$("#cxFlag").onclick=()=>{map.closePopup();startPlace(ll,"flag");};$("#cxPoint").onclick=()=>{map.closePopup();startPlace(ll,"point");};
+    $("#cxCopy").onclick=async()=>{map.closePopup();toast(await copyText(co)?`Koordinaten kopiert: ${co}`:`Kopieren nicht möglich – ${co}`,4000);};},30);});
 $("#navHere").onclick=()=>{
   const go=pos=>{const d=new Date();const t=`Stellplatz ${fmtDT(d)}`;
     editPoint(newPoint(+pos.lat.toFixed(6),+pos.lon.toFixed(6),{title:t,cat:"wild",status:"besucht",visited:d.toISOString().slice(0,10)}),true);};
@@ -3794,6 +3800,8 @@ function quickPoint(photo){if(!me){toast("Noch keine GPS-Position – kurz warte
   $("#qPh").onchange=e=>{const f=e.target.files[0];if(f&&pick)save(pick,f);};}
 
 (async()=>{
+  try{const n=performance.getEntriesByType("navigation")[0];if(n&&n.responseEnd)ST_MARKS.push({t:"App-Datei erhalten",s:n.responseEnd/1000});
+    const lf=performance.getEntriesByType("resource").find(r=>/leaflet\.min\.js/.test(r.name));if(lf&&lf.responseEnd)ST_MARKS.push({t:"Kartenbibliothek erhalten",s:lf.responseEnd/1000});}catch(e){}
   stMark("Programm geladen");
   try{db=await openDB();}catch(e){toast("Speicher nicht verfügbar – Daten werden nicht gesichert",6000);return;}
   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
