@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <!-- Sicherheitsregeln: Code nur von hier (Fingerabdruck), cdnjs und unpkg (mit Prüfsumme). Fingerabdruck setzt /home/claude/tools/csp.py -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-NWC18yy7/6ppt6OgflF4J7gtS0tdIIBn+4FvxX3fA/k=' https://cdnjs.cloudflare.com https://unpkg.com; worker-src 'self' blob:; child-src blob:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; font-src 'self' data: https:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-I6AyM9PXcpvnpmog8WenSSQbBlXb4Kr6lJAeQfsW1gA=' https://cdnjs.cloudflare.com https://unpkg.com; worker-src 'self' blob:; child-src blob:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; font-src 'self' data: https:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#92b78c">
 <title>IbexMap</title>
@@ -108,7 +108,7 @@ body #admTools .acount{color:#334231}
 .placebar .muted{color:#2c3a2a}
 /* Hintergrund wie im Logo: Grün mit Höhenlinien */
 /* Hintergrund Seitenleiste/Blatt: Steinbock aus Höhenlinien (oben und unten passend erweitert); bleibt beim Scrollen stehen */
-.panel{background:#97b693 url(ibex-bg.webp) center/cover no-repeat;--muted:#334231;--line:#86a780}
+.panel{background:#97b591 url(ibex-bg.webp) center/cover no-repeat;--muted:#334231;--line:#86a780}
 .panel .ptop{background:rgba(159,192,153,.94);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);border-bottom-color:#86a780}
 .panel .ptop .pgrab{background:#5f7f5a}
 .panel h2,.panel h3,.panel .mgh{text-shadow:0 0 6px #9fc099,0 0 2px #9fc099}
@@ -583,7 +583,7 @@ const ADM=(()=>{try{if(new URLSearchParams(location.search).has("admin")){sessio
   return sessionStorage.getItem("rb_admin")==="1"&&matchMedia("(min-width:900px)").matches;}catch(e){return false;}})();
 if(ADM)document.body.classList.add("adm");
 const GROUP="IbexMap";
-const VERSION="v7.12";
+const VERSION="v7.13";
 /* Startzeit-Messung: Sekunden seit dem Öffnen der App (im Menü › Gerät › Startzeit) */
 const ST_MARKS=[];function stMark(t){if(ST_MARKS.some(m=>m.t===t))return;ST_MARKS.push({t,s:performance.now()/1000});}
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
