@@ -1,4 +1,4 @@
-IbexMap – v6.8 (privates Projekt)
+IbexMap – v6.9 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -368,3 +368,7 @@ NEU IN v6.7
 
 NEU IN v6.8
 - Fehler behoben: «this._on is not a function» – die Vektorkarten-Ebene überschrieb einen internen Namen der Kartenbibliothek; das blockierte beim Start den Rest der App.
+
+NEU IN v6.9
+- Vektorkarte erstellen per Doppelklick: Offline-Daten › Land › «Karte erstellen (PC)» › «Startdatei herunterladen». Die Datei <Land>_laden.bat holt das Programm pmtiles, sucht die neueste Weltkarte von Protomaps und schneidet das Land heraus (Ordner IbexMap-Karten im Benutzerordner); danach in IbexMap «Datei laden». Kein cmd, kein Befehl, kein Datum mehr. Der Befehl von Hand bleibt unter «Von Hand (für Fortgeschrittene)».
+- Geprüft: Ganz in der App geht es nicht – der Protomaps-Server sperrt den Zugriff aus dem Browser (CORS).

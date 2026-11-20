@@ -447,7 +447,7 @@ const ADM=(()=>{try{if(new URLSearchParams(location.search).has("admin")){sessio
   return sessionStorage.getItem("rb_admin")==="1"&&matchMedia("(min-width:900px)").matches;}catch(e){return false;}})();
 if(ADM)document.body.classList.add("adm");
 const GROUP="IbexMap";
-const VERSION="v6.8";
+const VERSION="v6.9";
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
 const MA_SECTORS=[
  {n:"A Norden",zeit:"5.–10. April",klima:"Frühling, grün; 15–22 °C, im Rif Regen möglich, Nächte kühl",info:"Tanger Med, Chefchaouen, Fès, Meknès – ankommen, Städte, einkaufen. Eher Campings.",box:[[33.8,-5.9,35.95,-1.0]]},
@@ -702,18 +702,74 @@ async function vecDownload(cc,run,onp){const dr=vecDrive()[cc];if(!dr)throw new 
   onp&&onp(n,dr.size);if(n>=dr.size){await vecRefresh();return "ok";}return "teil";}
 async function vecDelete(cc){const fs=await vecFiles();const v=fs[cc];if(v)try{await(await opfs()).removeEntry(v.name);}catch(e){}const m=vecMeta();delete m[cc];vecMetaSet(m);await vecRefresh();}
 /* Befehl für den PC: Datei mit dem Programm «pmtiles» aus der Protomaps-Weltkarte schneiden */
-function vecCmd(cc){const f=(countryData||[]).find(x=>x.c===cc);const b=f&&f.b?f.b:[-17.2,20.7,-0.9,36.0];const p=v=>(+v).toFixed(2);
-  const d=new Date(Date.now()-864e5).toISOString().slice(0,10).replace(/-/g,"");
-  return `pmtiles extract https://build.protomaps.com/${d}.pmtiles vec_${cc}.pmtiles --bbox=${p(b[0]-0.1)},${p(b[1]-0.1)},${p(b[2]+0.1)},${p(b[3]+0.1)} --maxzoom=15`;}
-function vecHelp(cc,back){openPanel(`<h2>Vektorkarte ${esc(countryName(cc))} erstellen</h2>
-  <p class="muted">Einmal am PC (Windows). Danach verteilt IbexMap die Datei über Google Drive an alle Geräte.</p>
-  <ol style="padding-left:20px;font-size:14.5px;line-height:1.45">
-   <li>Programm holen: <b>github.com/protomaps/go-pmtiles/releases</b> › Datei <b>…_Windows_x86_64.zip</b> (nicht «Darwin») › entpacken.</li>
-   <li>Im entpackten Ordner in die Adresszeile <b>cmd</b> tippen, Enter.</li>
-   <li>Auf <b>maps.protomaps.com/builds</b> das neueste Datum ablesen und im Befehl unten ersetzen (gibt es «404», ein Datum früher nehmen).</li>
-   <li>Befehl einfügen und ausführen (mit <code>--dry-run</code> am Schluss zeigt er nur die Grösse):<br><textarea readonly style="width:100%;height:84px;font-size:12.5px;margin-top:4px">${esc(vecCmd(cc))}</textarea></li>
-   <li>Hier in den Offline-Daten bei ${esc(countryName(cc))} <b>«Datei laden»</b> und <code>vec_${cc}.pmtiles</code> wählen.</li></ol>
-  <div class="actions"><button class="btn" id="vhCopy">Befehl kopieren</button><button class="btn sec" id="vhBack">Zurück</button></div>`);
+function vecBox(cc){const f=(countryData||[]).find(x=>x.c===cc);const b=f&&f.b?f.b:[-17.2,20.7,-0.9,36.0];const p=v=>(+v).toFixed(2);return `${p(b[0]-0.1)},${p(b[1]-0.1)},${p(b[2]+0.1)},${p(b[3]+0.1)}`;}
+function vecCmd(cc){const d=new Date(Date.now()-864e5).toISOString().slice(0,10).replace(/-/g,"");
+  return `pmtiles extract https://build.protomaps.com/${d}.pmtiles vec_${cc}.pmtiles --bbox=${vecBox(cc)} --maxzoom=15`;}
+/* Startdatei für Windows: holt das Programm, sucht die neueste Weltkarte, schneidet das Land heraus – alles per Doppelklick */
+function vecBat(cc){const n=countryName(cc).normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9 ]/g,"");
+  const L=[
+"@echo off",
+"setlocal enabledelayedexpansion",
+`title IbexMap - Vektorkarte ${n}`,
+"echo.",
+`echo   IbexMap - Vektorkarte ${n} erstellen`,
+"echo   ==========================================",
+"echo.",
+'set "DIR=%USERPROFILE%\\IbexMap-Karten"',
+'if not exist "%DIR%" mkdir "%DIR%"',
+'cd /d "%DIR%"',
+"if not exist pmtiles.exe (",
+"  echo   1/3  Programm pmtiles wird geholt ...",
+"  curl -s -L -o pmtiles.zip https://github.com/protomaps/go-pmtiles/releases/download/v1.31.2/go-pmtiles_1.31.2_Windows_x86_64.zip",
+"  if errorlevel 1 goto err",
+"  tar -xf pmtiles.zip pmtiles.exe",
+"  if errorlevel 1 goto err",
+"  del pmtiles.zip",
+") else (",
+"  echo   1/3  Programm pmtiles ist schon da.",
+")",
+"echo   2/3  Neueste Weltkarte von Protomaps suchen ...",
+'set "BUILD="',
+"for /L %%i in (0,1,20) do (",
+"  if not defined BUILD (",
+`    for /f %%d in ('powershell -NoProfile -Command "(Get-Date).AddDays(-%%i).ToString('yyyyMMdd')"') do set "D=%%d"`,
+`    for /f %%c in ('curl -s -o nul -r 0-0 -w "%%{http_code}" https://build.protomaps.com/!D!.pmtiles') do set "C=%%c"`,
+'    if "!C!"=="206" set "BUILD=!D!"',
+'    if "!C!"=="200" set "BUILD=!D!"',
+"  )",
+")",
+"if not defined BUILD goto err",
+"echo        gefunden: Stand !BUILD!",
+`echo   3/3  Karte ${n} herausschneiden (einige Minuten) ...`,
+`if exist vec_${cc}.pmtiles del vec_${cc}.pmtiles`,
+`pmtiles.exe extract https://build.protomaps.com/!BUILD!.pmtiles vec_${cc}.pmtiles --bbox=${vecBox(cc)} --maxzoom=15`,
+"if errorlevel 1 goto err",
+"echo.",
+`echo   FERTIG: %DIR%\\vec_${cc}.pmtiles`,
+"echo   Jetzt in IbexMap: Offline-Daten, beim Land auf Datei laden tippen und diese Datei waehlen.",
+`explorer /select,"%DIR%\\vec_${cc}.pmtiles"`,
+"echo.",
+"pause",
+"exit /b 0",
+":err",
+"echo.",
+"echo   FEHLER - bitte Internetverbindung pruefen und nochmals doppelklicken.",
+"echo   (Falls es wieder nicht geht: Screenshot dieses Fensters an Claude schicken.)",
+"pause",
+"exit /b 1"];
+  return L.join("\r\n")+"\r\n";}
+async function vecHelp(cc,back){await loadGeo();const n=countryName(cc);openPanel(`<h2>Vektorkarte ${esc(n)} erstellen</h2>
+  <p class="muted">Einmal pro Land am PC (Windows). Danach verteilt IbexMap die Karte über Google Drive an alle Geräte.</p>
+  <ol style="padding-left:20px;font-size:15px;line-height:1.5">
+   <li><b>«Startdatei herunterladen»</b> antippen (unten). Fragt der Browser, ob die Datei behalten werden soll: <b>Behalten</b>.</li>
+   <li>Die Datei <b>${esc(n.replace(/[^A-Za-zÀ-ÿ0-9 ]/g,""))}_laden.bat</b> doppelklicken. Erscheint «Der Computer wurde durch Windows geschützt»: <b>Weitere Informationen › Trotzdem ausführen</b>.<br><span class="muted" style="font-size:13px">Sie holt das Programm, sucht die neueste Weltkarte und schneidet ${esc(n)} heraus (einige Minuten). Am Schluss öffnet sich der Ordner mit der Datei <code>vec_${cc}.pmtiles</code>.</span></li>
+   <li>Hier in den Offline-Daten bei ${esc(n)} <b>«Datei laden»</b> und <code>vec_${cc}.pmtiles</code> wählen (Ordner <code>IbexMap-Karten</code> in deinem Benutzerordner).</li></ol>
+  <div class="actions"><button class="btn" id="vhBat">${mi("download",18)} Startdatei herunterladen</button><button class="btn sec" id="vhBack">Zurück</button></div>
+  <details style="margin-top:14px"><summary class="muted" style="cursor:pointer">Von Hand (für Fortgeschrittene)</summary>
+   <p style="font-size:13.5px">Programm von <b>github.com/protomaps/go-pmtiles/releases</b> (…_Windows_x86_64.zip), Datum von <b>maps.protomaps.com/builds</b> einsetzen:</p>
+   <textarea readonly style="width:100%;height:80px;font-size:12.5px">${esc(vecCmd(cc))}</textarea>
+   <button class="btn sec" id="vhCopy" style="margin-top:6px">Befehl kopieren</button></details>`);
+  $("#vhBat").onclick=()=>{download(`${n.normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9]/g,"")}_laden.bat`,new Blob([vecBat(cc)],{type:"application/octet-stream"}));toast("Startdatei heruntergeladen – am PC doppelklicken",5000);};
   $("#vhCopy").onclick=()=>{try{navigator.clipboard.writeText(vecCmd(cc));toast("Befehl kopiert",2500);}catch(e){}};$("#vhBack").onclick=back||offOverview;}
 let baseName="Strassen";try{baseName=localStorage.getItem("rb_base")||"Strassen";}catch(e){}
 function setBase(name){const l=name===VEC_NAME?VEC:BASE[name];if(!l||map.hasLayer(l))return;[VEC,...Object.values(BASE)].forEach(x=>{if(map.hasLayer(x))map.removeLayer(x);});l.addTo(map);map.fire("baselayerchange",{layer:l,name});try{layCtl._update();}catch(e){}}
@@ -2184,7 +2240,7 @@ async function offOverview(){openPanel(`<h2>Offline-Daten</h2><p class="muted">W
       if(mine.dem==null||mine.dem<100)todo.push("Höhenlinien"+(dd.pc>=100?" (von Drive)":""));}
     if(mine.surf==null||mine.surf<100)todo.push("Strassenoberfläche"+(sd?" (von Drive)":" (OpenStreetMap)"));if(!mine.poi)todo.push("POI"+(pd?" (von Drive)":" (OpenStreetMap)"));
     if(showMap&&mapsHere()&&rasterDef&&(mine.map==null||mine.map<100))todo.push("Kartenbilder "+rasterDef.layer);
-    const vbtn=`<div style="margin-top:4px;display:flex;gap:6px;flex-wrap:wrap">${!vdr||!(lv&&lv.ok)?`<button class="btn sec ovb" data-vimp="${cc}">Datei laden</button>`:""}${lv&&lv.ok&&!vdr&&gdClient()?`<button class="btn sec ovb" data-vup="${cc}">Auf Drive stellen</button>`:""}${!vdr?`<button class="btn sec ovb" data-vhelp="${cc}">Anleitung</button>`:""}</div>`;
+    const vbtn=`<div style="margin-top:4px;display:flex;gap:6px;flex-wrap:wrap">${!vdr||!(lv&&lv.ok)?`<button class="btn sec ovb" data-vimp="${cc}">Datei laden</button>`:""}${lv&&lv.ok&&!vdr&&gdClient()?`<button class="btn sec ovb" data-vup="${cc}">Auf Drive stellen</button>`:""}${!vdr?`<button class="btn sec ovb" data-vhelp="${cc}">Karte erstellen (PC)</button>`:""}</div>`;
     return `<div class="mgrp" style="padding:12px 14px;margin-bottom:12px">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><b style="font-size:17px">${flagEmoji(cc)} ${esc(countryName(cc))}</b>
         <span style="margin-left:auto">${todo.length?`<button class="btn" data-ov="${cc}" style="padding:6px 12px;min-height:0;font-size:13px">Hier vervollständigen</button>`:`<span style="color:#1f6b2a;font-size:13px;font-weight:600">auf diesem Gerät komplett ✓</span>`}</span></div>
@@ -2201,7 +2257,7 @@ async function offOverview(){openPanel(`<h2>Offline-Daten</h2><p class="muted">W
   const others=offPacks.filter(p=>p.kind!=="country");
   openPanel(`<h2>Offline-Daten</h2>
     <p class="muted" style="margin-top:-6px">Pro Land: was jedes Gerät hat (andere Geräte: Stand ihres letzten Abgleichs). Grün = komplett, orange = unvollständig, grau = fehlt.</p>
-    <div style="font-size:12.5px;background:#ffffff80;border-radius:10px;padding:8px 10px;margin-bottom:12px"><b>So geht es am schnellsten:</b> Am <b>PC</b> pro Land einmal die <b>Vektorkarte</b> erstellen («Anleitung») und mit «Datei laden» einlesen – IbexMap legt sie auf <b>Google Drive</b>. Dann am PC «Hier vervollständigen» (Höhenlinien, Strassenoberfläche, POI – auch das kommt auf Drive). Auf Handys und Tablet danach im WLAN «Hier vervollständigen»: alles kommt in Minuten von Drive. Auf der Karte oben rechts die Kartenart <b>«${VEC_NAME}»</b> wählen.</div>
+    <div style="font-size:12.5px;background:#ffffff80;border-radius:10px;padding:8px 10px;margin-bottom:12px"><b>So geht es am schnellsten:</b> Am <b>PC</b> pro Land einmal die <b>Vektorkarte</b> erstellen («Karte erstellen (PC)» – Startdatei doppelklicken) und mit «Datei laden» einlesen – IbexMap legt sie auf <b>Google Drive</b>. Dann am PC «Hier vervollständigen» (Höhenlinien, Strassenoberfläche, POI – auch das kommt auf Drive). Auf Handys und Tablet danach im WLAN «Hier vervollständigen»: alles kommt in Minuten von Drive. Auf der Karte oben rechts die Kartenart <b>«${VEC_NAME}»</b> wählen.</div>
     <div class="mgrp" style="margin-bottom:12px"><div class="mrow" style="cursor:default"><span class="mic">${mi("pin",20)}</span><span class="mtx"><b>Dieses Gerät: ${esc(devName())}</b><small>${esc(stor)}</small></span><span class="oact"><button id="ovDev" title="Namen ändern">${mi("edit",18)}</button></span></div>
       <label class="mrow" style="cursor:pointer;gap:10px"><span class="mic">${mi("mapdl",20)}</span><span class="mtx"><b>Karten auf diesem Gerät</b><small>${mapsHere()?"Ein – Vektorkarte und Höhenlinien offline auf diesem Gerät":"Aus – nur Strassenoberfläche und POI"}</small></span><input type="checkbox" id="ovMapsHere" style="width:22px;height:22px;margin:0 4px" ${mapsHere()?"checked":""}></label>
       <label class="mrow" style="cursor:pointer;gap:10px"><span class="mic">${mi("sync",20)}</span><span class="mtx"><b>Für die anderen Geräte auf Google Drive bereitstellen</b><small>${tlShareOn()?"Ein – Höhendaten und Kartenbilder werden gepackt auf Drive gelegt (ideal am PC, im WLAN)":"Aus – dieses Gerät holt nur ab"}</small></span><input type="checkbox" id="ovShare" style="width:22px;height:22px;margin:0 4px" ${tlShareOn()?"checked":""}></label></div>
