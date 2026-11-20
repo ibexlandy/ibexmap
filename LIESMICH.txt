@@ -1,4 +1,4 @@
-IbexMap – v7.13 (privates Projekt)
+IbexMap – v7.14 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -376,6 +376,14 @@ NEU IN v6.8
 NEU IN v7.1
 - Vektorkarte erstellen per Doppelklick: Offline-Daten › Land › «Karte erstellen (PC)» › «Startdatei herunterladen». Die Datei <Land>_laden.bat holt das Programm pmtiles, sucht die neueste Weltkarte von Protomaps und schneidet das Land heraus (Ordner IbexMap-Karten im Benutzerordner); danach in IbexMap «Datei laden». Kein cmd, kein Befehl, kein Datum mehr. Der Befehl von Hand bleibt unter «Von Hand (für Fortgeschrittene)».
 - Geprüft: Ganz in der App geht es nicht – der Protomaps-Server sperrt den Zugriff aus dem Browser (CORS).
+
+NEU IN v7.14
+- Menüführung: «‹ Zurück» oben links, die Knöpfe «Zurück» und die Zurück-Geste des Handys gehen jetzt immer eine Seite zurück (z. B. Kartenbilder-Details → Offline-Daten → Bereit für unterwegs? → Menü), statt direkt ins Menü oder auf die Karte. Oben links steht, wohin es zurückgeht. Erst auf der obersten Seite schliesst «Zurück» die Leiste.
+- Am PC gibt es wieder die Kartenart «Strassen (online)» (Esri-Strassenkarte) zum Planen – lädt schneller als Topo. Auf Handy und Tablet bleibt sie ausgeblendet.
+- POI-Overlay: Hotels, Riads und Auberges sind nicht mehr Teil von «Camping und Übernachten». Eigener Schalter «Hotels / Riads» (zuerst aus, violettes Symbol). Wer Camping einschaltet, sieht nur Campingplätze, Stellplätze, Hütten und Unterstände. Kein neues Herunterladen nötig.
+- POI: eigenes Symbol pro Art (Farbe = Gruppe, Symbol = genaue Art), z. B. Café, Bäckerei, Apotheke, Reifen, Stellplatz, Hütte, Moschee, Kasbah … – auf der Karte ab Zoomstufe 14, in Suche und Detail immer.
+- Wasser genauer: Trinkwasser, Wasserhahn, Wasserstelle (zum Tank füllen), Ziehbrunnen, Zierbrunnen, Quelle. Rotes Zeichen, wenn in OSM «kein Trinkwasser» eingetragen ist; im Detail «Trinkwasser: ja / nein».
+- Suche: Beim Öffnen mit der Lupe ist das Suchfeld leer. Nur beim Zurückgehen aus einem Suchergebnis bleibt der Begriff stehen.
 
 NEU IN v7.13
 - Hintergrund der Seitenleiste: neue Version des Steinbock-Bilds (ibex-bg.webp).
