@@ -1,4 +1,4 @@
-IbexMap – v7.2 (privates Projekt)
+IbexMap – v7.3 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -72,6 +72,8 @@ NEU IN v10
 - Familienseite (verschlüsselt): Punkte als "Storypoint" markieren, Menü → Familienseite einrichten /
   Storypoints veröffentlichen. Die Datei ibexmap.intern.html ist die Seite für die Familie (wird automatisch
   ins Familien-Repository hochgeladen). Verschlüsselung AES-256-GCM, Schlüssel aus Passwort (PBKDF2, 250 000 Runden).
+- Land nach der Reise entfernen: Offline-Daten › Papierkorb beim Land › «Überall entfernen» löscht die Kartendaten des Landes auf diesem Gerät und auf Google Drive (Vektorkarte, Höhendaten, POI, Strassenoberfläche); Handys und Tablet löschen es beim nächsten Abgleich selbst. «Nur von diesem Gerät» lässt Drive und die anderen Geräte unverändert. Punkte, Fotos und Fahrspuren bleiben immer. Am PC erscheint danach in den Offline-Daten eine «Aufräum-Datei (PC)», die per Doppelklick die Dateien des Landes im Ordner IbexMap-Karten löscht (pmtiles.exe bleibt). Wird das Land später wieder hinzugefügt, gilt es überall wieder als aktiv.
+- Kartenarten aufgeräumt: «Vektor (offline)» steht zuoberst, dann «Topo (online)» (weltweit mit Höhenlinien – für Planung und Länder ohne Länderdatei), «Satellit» und «swisstopo (Schweiz)». «Strassen» entfällt (die Vektorkarte ersetzt sie); wer «Strassen» eingestellt hatte, sieht neu die Vektorkarte bzw. Topo. Kartenbilder offline laden nur noch für Satellit und swisstopo; alte Strassen-Kartenbilder schlägt «Speicher prüfen» zum Löschen vor.
 - Neues App-Logo (Steinbock mit Kartenpin) für Startbildschirm, Kopfzeile und Browser-Tab.
 
 NEU IN v11
@@ -372,6 +374,16 @@ NEU IN v6.8
 NEU IN v7.1
 - Vektorkarte erstellen per Doppelklick: Offline-Daten › Land › «Karte erstellen (PC)» › «Startdatei herunterladen». Die Datei <Land>_laden.bat holt das Programm pmtiles, sucht die neueste Weltkarte von Protomaps und schneidet das Land heraus (Ordner IbexMap-Karten im Benutzerordner); danach in IbexMap «Datei laden». Kein cmd, kein Befehl, kein Datum mehr. Der Befehl von Hand bleibt unter «Von Hand (für Fortgeschrittene)».
 - Geprüft: Ganz in der App geht es nicht – der Protomaps-Server sperrt den Zugriff aus dem Browser (CORS).
+
+NEU IN v7.3
+- Höhenlinien und Relief aus einer einzigen Datei pro Land (wie die Vektorkarte): Die Startdatei erstellt jetzt zusätzlich dem_XX.pmtiles aus Mapterhorn (Copernicus-Höhenmodell 30 m, Kacheln 512 px bis Stufe 11 = volle Genauigkeit der Daten). Ersetzt die tausenden einzelnen Höhendaten-Bilder vom AWS-Server. Startdatei zeigt jetzt 5 Schritte; bereits vorhandene Dateien werden nicht nochmals geladen (Vektorkarte bis 7 Tage alt, Rohdaten neu bis 30 Tage alt statt 1 Tag, Höhendaten unbegrenzt).
+- «Dateien laden (PC)»: alle drei Dateien wählen (vec_XX.pmtiles, dem_XX.pmtiles, XX-rohdaten.osm.pbf). Die Höhendaten-Datei kommt wie die Vektorkarte auf Google Drive (Upload und Download setzen nach Abbruch fort); Handys und Tablet holen sie mit «Hier vervollständigen».
+- Offline-Daten: Zeile «Höhenlinien» zeigt die Datei pro Gerät und auf Drive. «Speicher prüfen» wählt alte Höhendaten-Bilder und alte Höhendaten-Pakete auf Drive zum Löschen vor, sobald die neue Datei da ist. «Land entfernen» löscht auch die Höhendaten-Datei.
+- Ohne Höhendaten-Datei zeigt die Vektorkarte Höhenlinien wie bisher online.
+- Schnellerer Start am Handy: Abgleich mit Google Drive erst nach 30 s (statt 4 s); POI der Länder (zehntausende Orte) werden erst geladen, wenn das POI-Overlay eingeschaltet ist oder Suche/Filter geöffnet wird.
+- Menü › Gerät › «Startzeit»: zeigt, nach wie vielen Sekunden Programm, Punkte, Karte, Vektorkarte und POI bereit waren.
+- Aufgeräumt: alte, doppelt vorhandene Speicher-Anzeige entfernt.
+- Neues App-Logo «IBEX MAP» (Schrift auf grünem Höhenlinien-Hintergrund) für App-Symbol, Kopfzeile und Familienseite. Auf Handys erscheint das neue Symbol meist erst nach Neuinstallation der App oder nach einiger Zeit.
 
 NEU IN v7.2
 - POI, Ortschaften und Strassenoberfläche ohne Overpass – wie bei OsmAnd: Die Startdatei (Offline-Daten › Land › «Startdatei (PC)») lädt zusätzlich zur Vektorkarte die Rohdaten des Landes als eine Datei von Geofabrik (<Land>-rohdaten.osm.pbf, Download setzt nach Abbruch fort; Vektorkarte wird bei erneutem Start nicht nochmals erstellt, wenn sie jünger als 7 Tage ist).

@@ -520,7 +520,8 @@ const MI={
   check:`<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.8 2.8L16.5 9"/>`,
   undo:`<path d="M9 14 4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3"/>`,
   shield:`<path d="M12 3 5 6v6c0 4.5 3 8 7 9 4-1 7-4.5 7-9V6z"/><path d="M9 12l2 2 4-4"/>`,
-  refresh:`<path d="M20 12a8 8 0 1 1-2.3-5.7L20 8.5M20 4v4.5h-4.5"/>`
+  refresh:`<path d="M20 12a8 8 0 1 1-2.3-5.7L20 8.5M20 4v4.5h-4.5"/>`,
+  clock:`<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>`
 };
 const storyI=sz=>`<svg viewBox="0 0 24 24" width="${sz}" height="${sz}" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5C10 5 7 4.5 3.5 5v13c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5zM12 6.5v13"/></svg>`;
 const mi=(k,sz=17)=>`<svg viewBox="0 0 24 24" width="${sz}" height="${sz}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none;opacity:.75">${MI[k]}</svg>`;
@@ -555,7 +556,9 @@ const ADM=(()=>{try{if(new URLSearchParams(location.search).has("admin")){sessio
   return sessionStorage.getItem("rb_admin")==="1"&&matchMedia("(min-width:900px)").matches;}catch(e){return false;}})();
 if(ADM)document.body.classList.add("adm");
 const GROUP="IbexMap";
-const VERSION="v7.2";
+const VERSION="v7.3";
+/* Startzeit-Messung: Sekunden seit dem Öffnen der App (im Menü › Gerät › Startzeit) */
+const ST_MARKS=[];function stMark(t){if(ST_MARKS.some(m=>m.t===t))return;ST_MARKS.push({t,s:performance.now()/1000});}
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
 const MA_SECTORS=[
  {n:"A Norden",zeit:"5.–10. April",klima:"Frühling, grün; 15–22 °C, im Rif Regen möglich, Nächte kühl",info:"Tanger Med, Chefchaouen, Fès, Meknès – ankommen, Städte, einkaufen. Eher Campings.",box:[[33.8,-5.9,35.95,-1.0]]},
@@ -694,6 +697,8 @@ const BASE={
   "Topo":L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",{subdomains:"abc",maxZoom:17,crossOrigin:"anonymous",attribution:"© OpenStreetMap-Mitwirkende, SRTM | © OpenTopoMap (CC-BY-SA)"}),
   "swisstopo (Schweiz)":L.tileLayer("https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg",{maxZoom:19,minZoom:6,crossOrigin:"anonymous",bounds:[[45.6,5.8],[47.95,10.65]],attribution:"© swisstopo"})
 };
+/* Kartenbilder offline laden: nur noch Satellit und swisstopo – Strassen und Topo ersetzt offline die Vektorkarte */
+const OFF_LAYERS=["Satellit","swisstopo (Schweiz)"];
 /* Fehlt eine Kachel in dieser Zoomstufe (z. B. Esri in abgelegenen Gebieten, oder offline nicht gespeichert),
    wird die nächstgröbere vorhandene Kachel vergrössert angezeigt statt einer grauen Fläche */
 function tileFallback(e){const lay=e.target,t=e.tile,c=e.coords;if(!t||t.dataset.fb)return;t.dataset.fb="1";
@@ -719,7 +724,7 @@ function vecLibs(){return vecLibP||(vecLibP=(async()=>{
   if(!document.querySelector("link[data-vec]")){const l=document.createElement("link");l.rel="stylesheet";l.href=VEC_CSS;l.dataset.vec="1";document.head.appendChild(l);}
   for(const u of VEC_LIBS)await new Promise((res,rej)=>{const s=document.createElement("script");s.src=u;s.onload=res;s.onerror=()=>rej(new Error(`Kartenbaustein «${u.split("/").slice(3,-2).join("/")||u}» nicht ladbar (beim ersten Mal ist Internet nötig)`));document.head.appendChild(s);});
   vecProto=new pmtiles.Protocol();maplibregl.addProtocol("pmtiles",vecProto.tile);
-  vecDem=new mlcontour.DemSource({url:DEM_URL,encoding:"terrarium",maxzoom:DEM_MAXZ,worker:true});vecDem.setupMaplibre(maplibregl);
+  vecDem=new mlcontour.DemSource({url:DEM_URL,encoding:"terrarium",maxzoom:DEM_MAXZ,worker:true,id:"dem"});vecDem.setupMaplibre(maplibregl);
   vecPrefetch();})().catch(e=>{vecLibP=null;throw e;}));}
 /* Schriften und Symbole einmal vorausladen, damit Beschriftungen auch offline erscheinen */
 let vecPre=false;function vecPrefetch(){if(vecPre||!navigator.onLine)return;vecPre=true;
@@ -727,12 +732,30 @@ let vecPre=false;function vecPrefetch(){if(vecPre||!navigator.onLine)return;vecP
   ["Noto Sans Regular","Noto Sans Medium","Noto Sans Italic"].forEach(f=>["0-255","256-511","512-767","768-1023","1024-1279","1536-1791","1792-2047","8192-8447","8448-8703"].forEach(r=>urls.push(VEC_GLYPHS.replace("{fontstack}",encodeURIComponent(f)).replace("{range}",r))));
   urls.forEach((u,i)=>setTimeout(()=>fetch(u).catch(()=>{}),i*60));}
 async function opfs(){return await navigator.storage.getDirectory();}
-const vecMeta=()=>{try{return JSON.parse(ls("rb_vecmeta")||"{}");}catch(e){return {};}};
-const vecMetaSet=m=>ls("rb_vecmeta",JSON.stringify(m));
+/* Länderdateien: «vec» = Vektorkarte (Protomaps), «dem» = Höhendaten (Mapterhorn) – gleiche Behandlung */
+const KIND_N={vec:"Vektorkarte",dem:"Höhendaten"};
+const vecMeta=(k="vec")=>{try{return JSON.parse(ls(`rb_${k}meta`)||"{}");}catch(e){return {};}};
+const vecMetaSet=(m,k="vec")=>ls(`rb_${k}meta`,JSON.stringify(m));
 const VEC_ALIAS={"marokko.pmtiles":"MA","spanien.pmtiles":"ES"};/* Dateien aus dem Prototyp */
-async function vecFiles(){const out={};try{const d=await opfs();const meta=vecMeta();
-  for await(const [n,h] of d.entries()){if(h.kind!=="file")continue;const m=n.match(/^vec_([A-Z]{2})\.pmtiles$/);const cc=m?m[1]:VEC_ALIAS[n.toLowerCase()];if(!cc||(out[cc]&&out[cc].ok))continue;
+async function vecFiles(k="vec"){const out={};try{const d=await opfs();const meta=vecMeta(k);const re=new RegExp(`^${k}_([A-Z]{2})\\.pmtiles$`);
+  for await(const [n,h] of d.entries()){if(h.kind!=="file")continue;const m=n.match(re);const cc=m?m[1]:k==="vec"?VEC_ALIAS[n.toLowerCase()]:null;if(!cc||(out[cc]&&out[cc].ok))continue;
     const f=await h.getFile();const want=(meta[cc]||{}).size||f.size;out[cc]={name:n,file:f,size:f.size,want,ok:f.size>0&&f.size>=want,pc:want?Math.floor(f.size/want*100):0};}}catch(e){}return out;}
+/* Höhendaten aus den Länderdateien (Mapterhorn: Copernicus 30 m, Terrarium, 512-px-Kacheln).
+   Stufe 11 mit 512 px = ca. 38 m pro Bildpunkt, also schon die volle Genauigkeit der Daten; Stufe 12 wäre 4× grösser ohne Gewinn.
+   Ohne Datei: wie bisher die Höhendaten von AWS (online bzw. aus früheren Paketen). */
+const DEMF_MAXZ=11;let demSrcs=[],demFileDem=null,demReady=false,demKey="";
+async function demTile(u){const m=String(u).match(/demfile:\/\/(\d+)\/(\d+)\/(\d+)/);if(!m)return null;
+  for(const s of demSrcs){try{const r=await s.getZxy(+m[1],+m[2],+m[3]);if(r&&r.data)return new Uint8Array(r.data);}catch(e){}}return null;}
+async function demPrepare(){const fs=await vecFiles("dem");const ok=Object.values(fs).filter(v=>v.ok);
+  const key=ok.map(v=>v.name+":"+v.size+":"+v.file.lastModified).join("|");
+  if(key!==demKey){demKey=key;demSrcs=ok.map(v=>new pmtiles.PMTiles(new pmtiles.FileSource(v.file)));}
+  if(demSrcs.length&&!demReady){demReady=true;
+    maplibregl.addProtocol("demfile",async params=>{const b=await demTile(params.url);if(!b)throw new Error("keine Höhendaten");return {data:b};});
+    /* die Höhenlinien-Berechnung holt ihre Kacheln mit fetch – Adressen «demfile://» kommen direkt aus der Datei */
+    const of=window.fetch;window.fetch=function(u,o){const a=typeof u==="string"?u:(u&&u.url)||"";
+      if(a.startsWith("demfile://"))return demTile(a).then(b=>b?new Response(b,{headers:{"Content-Type":"image/webp"}}):new Response(null,{status:404}));return of.apply(this,arguments);};
+    demFileDem=new mlcontour.DemSource({url:"demfile://{z}/{x}/{y}",encoding:"terrarium",maxzoom:DEMF_MAXZ,worker:false,id:"demfile"});demFileDem.setupMaplibre(maplibregl);}
+  return demSrcs.length>0;}
 /* Kartenstil: pro Land eine Quelle; Höhenlinien und Relief unter die Strassen; Pisten (OSM «track») braun gestrichelt */
 async function vecStyle(){const fs=await vecFiles();const sources={},layers=[],per=[];let bg=null;const dark=nightNow();vecFlavor=dark?"dark":"light";
   for(const [cc,v] of Object.entries(fs)){if(!v.ok)continue;const sid="v_"+cc;
@@ -743,8 +766,9 @@ async function vecStyle(){const fs=await vecFiles();const sources={},layers=[],p
       paint:{"line-color":"#9a4a00","line-width":["interpolate",["linear"],["zoom"],10,0.8,14,2.2,17,4],"line-dasharray":[3,1.5]}});per.push(own);}
   /* mehrere Länder: Ebenen gleicher Art nebeneinander, damit Relief und Höhenlinien überall unter den Strassen liegen */
   for(let i=0;i<Math.max(0,...per.map(o=>o.length));i++)per.forEach(o=>{if(o[i])layers.push(o[i]);});
-  sources.hill={type:"raster-dem",tiles:[vecDem.sharedDemProtocolUrl],encoding:"terrarium",tileSize:256,maxzoom:DEM_MAXZ};
-  sources.cont={type:"vector",tiles:[vecDem.contourProtocolUrl({multiplier:1,thresholds:{9:[200,1000],10:[100,500],11:[50,250],12:[20,100],13:[20,100],14:[10,50],15:[10,50],16:[10,50]},elevationKey:"ele",levelKey:"level",contourLayer:"contours"})],maxzoom:16};
+  const useFile=await demPrepare(),DS=useFile?demFileDem:vecDem;
+  sources.hill={type:"raster-dem",tiles:[DS.sharedDemProtocolUrl],encoding:"terrarium",tileSize:useFile?512:256,maxzoom:useFile?DEMF_MAXZ:DEM_MAXZ};
+  sources.cont={type:"vector",tiles:[DS.contourProtocolUrl({multiplier:1,thresholds:{9:[200,1000],10:[100,500],11:[50,250],12:[20,100],13:[20,100],14:[10,50],15:[10,50],16:[10,50]},elevationKey:"ele",levelKey:"level",contourLayer:"contours"})],maxzoom:16};
   const terrain=[{id:"hill",type:"hillshade",source:"hill",paint:{"hillshade-exaggeration":0.35,"hillshade-shadow-color":"#5a4a3a","hillshade-highlight-color":"#ffffff"}},
     {id:"cont",type:"line",source:"cont","source-layer":"contours",minzoom:9,paint:{"line-color":dark?"#c9a77a":"#a0784a","line-opacity":["match",["get","level"],1,0.75,0.4],"line-width":["match",["get","level"],1,1.1,0.6]}},
     {id:"cont-l",type:"symbol",source:"cont","source-layer":"contours",minzoom:11,filter:[">",["get","level"],0],
@@ -765,26 +789,28 @@ const VEC=new VecLayer();
 async function vecMount(v){await vecLibs();if(!v._vecOn)return;const s=await vecStyle();if(!v._vecOn)return;
   if(!v._vgl)v._vgl=L.maplibreGL({style:s.style});else{try{v._vgl.getMaplibreMap().setStyle(s.style);}catch(e){}}
   if(!v._vm.hasLayer(v._vgl))v._vgl.addTo(v._vm);
+  try{const mm=v._vgl.getMaplibreMap();if(mm&&!ST_MARKS.some(x=>x.t==="Vektorkarte gezeichnet"))mm.once("idle",()=>stMark("Vektorkarte gezeichnet"));}catch(e){}
   if(!s.n)toast("Vektorkarte: auf diesem Gerät ist noch keine Länderdatei – Menü › Offline-Daten",7000);}
 async function vecRefresh(){if(VEC._vecOn)try{await vecMount(VEC);}catch(e){}else vecAutoDefault();}
 /* Sobald auf einem Gerät eine Länderdatei liegt: einmalig automatisch auf die Vektorkarte umschalten (danach gilt die eigene Wahl) */
 async function vecAutoDefault(){if(ADM||ls("rb_vecauto")==="1"||map.hasLayer(VEC))return;const fs=await vecFiles();
   if(Object.values(fs).some(v=>v.ok)){ls("rb_vecauto","1");setBase(VEC_NAME);toast("Vektorkarte eingeschaltet – andere Kartenarten oben rechts",5000);}}
 /* Länderdateien auf Google Drive (eine pro Land) */
-const vecDrive=()=>{try{return JSON.parse(ls("rb_vecdrive")||"{}");}catch(e){return {};}};
-function vecDriveSet(files){const m={};files.forEach(f=>{const x=f.name.match(/^vec_([A-Z]{2})\.pmtiles$/);if(x){const p=f.appProperties||{};m[x[1]]={id:f.id,size:+p.size||+f.size||0,build:p.build||""};}});ls("rb_vecdrive",JSON.stringify(m));return m;}
+const vecDrive=(k="vec")=>{try{return JSON.parse(ls(`rb_${k}drive`)||"{}");}catch(e){return {};}};
+function vecDriveSet(files){const out={vec:{},dem:{}};files.forEach(f=>{const x=f.name.match(/^(vec|dem)_([A-Z]{2})\.pmtiles$/);if(x){const p=f.appProperties||{};out[x[1]][x[2]]={id:f.id,size:+p.size||+f.size||0,build:p.build||""};}});
+  ls("rb_vecdrive",JSON.stringify(out.vec));ls("rb_demdrive",JSON.stringify(out.dem));return out.vec;}
 /* Datei vom PC einlesen (in den Gerätespeicher) */
-async function vecImport(cc,file,onp){const d=await opfs();const name=`vec_${cc}.pmtiles`;
+async function vecImport(cc,file,onp,k="vec"){const d=await opfs();const name=`${k}_${cc}.pmtiles`;
   const h=await d.getFileHandle(name,{create:true});const w=await h.createWritable();const rd=file.stream().getReader();let n=0,t=0;
   try{for(;;){const {done,value}=await rd.read();if(done)break;await w.write(value);n+=value.length;if(Date.now()-t>300){t=Date.now();onp&&onp(n,file.size);}}await w.close();}
   catch(e){try{await w.abort();}catch(x){}throw new Error(e&&e.name==="QuotaExceededError"?"zu wenig Speicher auf diesem Gerät":(e.message||String(e)));}
-  const m=vecMeta();m[cc]={size:file.size,build:String(file.lastModified||Date.now())+"_"+file.size};vecMetaSet(m);
-  for(const [a,c] of Object.entries(VEC_ALIAS))if(c===cc){try{await d.removeEntry(a);}catch(e){}}
+  const m=vecMeta(k);m[cc]={size:file.size,build:String(file.lastModified||Date.now())+"_"+file.size};vecMetaSet(m,k);
+  if(k==="vec")for(const [a,c] of Object.entries(VEC_ALIAS))if(c===cc){try{await d.removeEntry(a);}catch(e){}}
   onp&&onp(file.size,file.size);await vecRefresh();}
 /* auf Google Drive hochladen – in Stücken à 32 MB (grosse Datei) */
-async function vecUpload(cc,onp){const fs=await vecFiles();const v=fs[cc];if(!v||!v.ok)throw new Error("keine vollständige Datei auf diesem Gerät");
-  const file=v.file,dr=vecDrive()[cc],build=(vecMeta()[cc]||{}).build||String(file.lastModified)+"_"+file.size;
-  const props={cc,size:String(file.size),build};const md=dr?{appProperties:props}:{name:`vec_${cc}.pmtiles`,parents:["appDataFolder"],appProperties:props};
+async function vecUpload(cc,onp,k="vec"){const fs=await vecFiles(k);const v=fs[cc];if(!v||!v.ok)throw new Error("keine vollständige Datei auf diesem Gerät");
+  const file=v.file,dr=vecDrive(k)[cc],build=(vecMeta(k)[cc]||{}).build||String(file.lastModified)+"_"+file.size;
+  const props={cc,size:String(file.size),build};const md=dr?{appProperties:props}:{name:`${k}_${cc}.pmtiles`,parents:["appDataFolder"],appProperties:props};
   const r=await fetch(`https://www.googleapis.com/upload/drive/v3/files${dr?"/"+dr.id:""}?uploadType=resumable`,{method:dr?"PATCH":"POST",
     headers:{Authorization:"Bearer "+gdToken,"Content-Type":"application/json; charset=UTF-8","X-Upload-Content-Type":"application/octet-stream","X-Upload-Content-Length":String(file.size)},body:JSON.stringify(md)});
   if(r.status===401)throw new Error("auth");if(!r.ok)throw new Error("Google Drive "+r.status);
@@ -794,9 +820,9 @@ async function vecUpload(cc,onp){const fs=await vecFiles();const v=fs[cc];if(!v|
     if(r2.status===401)throw new Error("auth");if(!(r2.ok||r2.status===308))throw new Error("Google Drive "+r2.status);onp&&onp(e,file.size);}
   try{vecDriveSet(await gdList());}catch(e){}}
 /* von Google Drive holen – setzt nach einem Abbruch dort fort, wo es aufgehört hat (alle 64 MB wird gesichert) */
-async function vecDownload(cc,run,onp){const dr=vecDrive()[cc];if(!dr)throw new Error("auf Google Drive noch nicht vorhanden");
-  const d=await opfs();const name=`vec_${cc}.pmtiles`;const h=await d.getFileHandle(name,{create:true});const m=vecMeta();
-  let have=(await h.getFile()).size;if(!m[cc]||m[cc].build!==dr.build){have=0;m[cc]={size:dr.size,build:dr.build};vecMetaSet(m);}
+async function vecDownload(cc,run,onp,k="vec"){const dr=vecDrive(k)[cc];if(!dr)throw new Error("auf Google Drive noch nicht vorhanden");
+  const d=await opfs();const name=`${k}_${cc}.pmtiles`;const h=await d.getFileHandle(name,{create:true});const m=vecMeta(k);
+  let have=(await h.getFile()).size;if(!m[cc]||m[cc].build!==dr.build){have=0;m[cc]={size:dr.size,build:dr.build};vecMetaSet(m,k);}
   if(have>=dr.size&&have>0)return "ok";
   const r=await fetch(`https://www.googleapis.com/drive/v3/files/${dr.id}?alt=media`,{headers:Object.assign({Authorization:"Bearer "+gdToken},have?{Range:`bytes=${have}-`}:{})});
   if(r.status===401)throw new Error("auth");if(!r.ok)throw new Error("Google Drive "+r.status);if(have&&r.status!==206)have=0;
@@ -817,27 +843,27 @@ function vecBat(cc){const gf=GEOFABRIK[cc]?`https://download.geofabrik.de/${GEOF
   const L=[
 "@echo off",
 "setlocal enabledelayedexpansion",
-`title IbexMap - Vektorkarte ${n}`,
+`title IbexMap - Karten ${n}`,
 "echo.",
-`echo   IbexMap - Vektorkarte ${n} erstellen`,
+`echo   IbexMap - Karten ${n} erstellen`,
 "echo   ==========================================",
 "echo.",
 'set "DIR=%USERPROFILE%\\IbexMap-Karten"',
 'if not exist "%DIR%" mkdir "%DIR%"',
 'cd /d "%DIR%"',
 "if not exist pmtiles.exe (",
-"  echo   1/4  Programm pmtiles wird geholt ...",
+"  echo   1/5  Programm pmtiles wird geholt ...",
 "  curl -s -L -o pmtiles.zip https://github.com/protomaps/go-pmtiles/releases/download/v1.31.2/go-pmtiles_1.31.2_Windows_x86_64.zip",
 "  if errorlevel 1 goto err",
 "  tar -xf pmtiles.zip pmtiles.exe",
 "  if errorlevel 1 goto err",
 "  del pmtiles.zip",
 ") else (",
-"  echo   1/4  Programm pmtiles ist schon da.",
+"  echo   1/5  Programm pmtiles ist schon da.",
 ")",
 `forfiles /m vec_${cc}.pmtiles /d -7 >nul 2>&1 && del vec_${cc}.ok 2>nul`,
-`if exist vec_${cc}.ok if exist vec_${cc}.pmtiles (echo   2/4  Vektorkarte ist schon aktuell vorhanden.& goto raw)`,
-"echo   2/4  Neueste Weltkarte von Protomaps suchen ...",
+`if exist vec_${cc}.ok if exist vec_${cc}.pmtiles (echo   2/5  Vektorkarte ist schon aktuell vorhanden.& goto raw)`,
+"echo   2/5  Neueste Weltkarte von Protomaps suchen ...",
 'set "BUILD="',
 "for /L %%i in (0,1,20) do (",
 "  if not defined BUILD (",
@@ -849,26 +875,34 @@ function vecBat(cc){const gf=GEOFABRIK[cc]?`https://download.geofabrik.de/${GEOF
 ")",
 "if not defined BUILD goto err",
 "echo        gefunden: Stand !BUILD!",
-`echo   3/4  Vektorkarte ${n} herausschneiden (einige Minuten) ...`,
+`echo   3/5  Vektorkarte ${n} herausschneiden (einige Minuten) ...`,
 `if exist vec_${cc}.pmtiles del vec_${cc}.pmtiles`,
 `pmtiles.exe extract https://build.protomaps.com/!BUILD!.pmtiles vec_${cc}.pmtiles --bbox=${vecBox(cc)} --maxzoom=15`,
 "if errorlevel 1 goto err",
 `echo ok> vec_${cc}.ok`,
 ":raw",
-`echo   4/4  Rohdaten ${n} von Geofabrik (POI, Ortschaften, Strassenbelag) ...`,
+`if exist dem_${cc}.ok if exist dem_${cc}.pmtiles (echo   4/5  Hoehendaten sind schon vorhanden.& goto pbf)`,
+`echo   4/5  Hoehendaten ${n} von Mapterhorn herausschneiden (Hoehenlinien und Relief, einige Minuten) ...`,
+`if exist dem_${cc}.pmtiles del dem_${cc}.pmtiles`,
+`pmtiles.exe extract https://download.mapterhorn.com/planet.pmtiles dem_${cc}.pmtiles --bbox=${vecBox(cc)} --maxzoom=${DEMF_MAXZ}`,
+"if errorlevel 1 goto err",
+`echo ok> dem_${cc}.ok`,
+":pbf",
+`echo   5/5  Rohdaten ${n} von Geofabrik (POI, Ortschaften, Strassenbelag) ...`,
 gf?`set "PBF=${gf}"`:`for /f "usebackq delims=" %%u in (\`powershell -NoProfile -Command "$j=Invoke-RestMethod 'https://download.geofabrik.de/index-v1-nogeom.json'; $f=$j.features.Where({$_.properties.'iso3166-1:alpha2' -contains '${cc}' -and $_.properties.id -notlike '*island*'}); if($f){$f[0].properties.urls.pbf}"\`) do set "PBF=%%u"`,
 "if not defined PBF goto err",
-`forfiles /m ${raw} /d -1 >nul 2>&1 && (del ${raw} & del ${cc}-rohdaten.ok 2>nul)`,
+`forfiles /m ${raw} /d -30 >nul 2>&1 && (del ${raw} & del ${cc}-rohdaten.ok 2>nul)`,
 `if exist ${cc}-rohdaten.ok if not exist ${raw} del ${cc}-rohdaten.ok`,
-`if exist ${cc}-rohdaten.ok echo        schon aktuell vorhanden.`,
+`if exist ${cc}-rohdaten.ok echo        schon vorhanden (bis 30 Tage alt) - wird nicht nochmals geladen.`,
 `if not exist ${cc}-rohdaten.ok (`,
 `  curl -L -C - -o ${raw} "!PBF!"`,
 "  if errorlevel 1 goto err",
 `  echo ok> ${cc}-rohdaten.ok`,
 ")",
 "echo.",
-`echo   FERTIG:  %DIR%\\vec_${cc}.pmtiles  und  %DIR%\\${raw}`,
-"echo   Jetzt in IbexMap: Offline-Daten, beim Land auf  Dateien laden (PC)  tippen und BEIDE Dateien waehlen.",
+"echo   FERTIG - im Ordner %DIR% liegen jetzt:",
+`echo      vec_${cc}.pmtiles   dem_${cc}.pmtiles   ${raw}`,
+"echo   Jetzt in IbexMap: Offline-Daten, beim Land auf  Dateien laden (PC)  tippen und ALLE DREI Dateien waehlen.",
 `explorer /select,"%DIR%\\vec_${cc}.pmtiles"`,
 "echo.",
 "pause",
@@ -881,11 +915,11 @@ gf?`set "PBF=${gf}"`:`for /f "usebackq delims=" %%u in (\`powershell -NoProfile 
 "exit /b 1"];
   return L.join("\r\n")+"\r\n";}
 async function vecHelp(cc,back){await loadGeo();const n=countryName(cc);openPanel(`<h2>${esc(n)} für alle Geräte vorbereiten</h2>
-  <p class="muted">Einmal pro Land am PC (Windows). Danach verteilt IbexMap Vektorkarte, POI, Ortschaften und Strassenoberfläche über Google Drive an alle Geräte – ohne die überlasteten OpenStreetMap-Server.</p>
+  <p class="muted">Einmal pro Land am PC (Windows). Danach verteilt IbexMap Vektorkarte, Höhenlinien, POI, Ortschaften und Strassenoberfläche über Google Drive an alle Geräte – ohne die überlasteten OpenStreetMap-Server.</p>
   <ol style="padding-left:20px;font-size:15px;line-height:1.5">
    <li><b>«Startdatei herunterladen»</b> antippen (unten). Fragt der Browser, ob die Datei behalten werden soll: <b>Behalten</b>.</li>
    <li>Die Datei <b>${esc(n.replace(/[^A-Za-zÀ-ÿ0-9 ]/g,""))}_laden.bat</b> doppelklicken. Erscheint «Der Computer wurde durch Windows geschützt»: <b>Weitere Informationen › Trotzdem ausführen</b>.<br><span class="muted" style="font-size:13px">Sie schneidet die Vektorkarte ${esc(n)} aus der Protomaps-Weltkarte und lädt die Rohdaten von Geofabrik (POI, Ortschaften, Strassenbelag). Bricht etwas ab: nochmals doppelklicken – sie setzt fort. Am Schluss öffnet sich der Ordner <code>IbexMap-Karten</code>.</span></li>
-   <li>Hier in den Offline-Daten bei ${esc(n)} <b>«Dateien laden (PC)»</b> und <b>beide</b> Dateien wählen: <code>vec_${cc}.pmtiles</code> und <code>${cc}-rohdaten.osm.pbf</code>. IbexMap liest sie ein und stellt alles auf Google Drive.</li>
+   <li>Hier in den Offline-Daten bei ${esc(n)} <b>«Dateien laden (PC)»</b> und <b>alle drei</b> Dateien wählen: <code>vec_${cc}.pmtiles</code>, <code>dem_${cc}.pmtiles</code> und <code>${cc}-rohdaten.osm.pbf</code>. IbexMap liest sie ein und stellt alles auf Google Drive.</li>
    <li>Handys und Tablet: im WLAN bei ${esc(n)} <b>«Hier vervollständigen»</b>.</li></ol>
   <div class="actions"><button class="btn" id="vhBat">${mi("download",18)} Startdatei herunterladen</button><button class="btn sec" id="vhBack">Zurück</button></div>
   <details style="margin-top:14px"><summary class="muted" style="cursor:pointer">Von Hand (für Fortgeschrittene)</summary>
@@ -894,14 +928,18 @@ async function vecHelp(cc,back){await loadGeo();const n=countryName(cc);openPane
    <button class="btn sec" id="vhCopy" style="margin-top:6px">Befehl kopieren</button></details>`);
   $("#vhBat").onclick=()=>{download(`${n.normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9]/g,"")}_laden.bat`,new Blob([vecBat(cc)],{type:"application/octet-stream"}));toast("Startdatei heruntergeladen – am PC doppelklicken",5000);};
   $("#vhCopy").onclick=()=>{try{navigator.clipboard.writeText(vecCmd(cc));toast("Befehl kopiert",2500);}catch(e){}};$("#vhBack").onclick=back||offOverview;}
-let baseName="Strassen";try{baseName=localStorage.getItem("rb_base")||"Strassen";}catch(e){}
+/* Kartenarten: Vektorkarte (offline, Hauptkarte), Topo (online, für Gebiete ohne Länderdatei), Satellit, swisstopo.
+   «Strassen» (Esri) ist nicht mehr wählbar – die Vektorkarte ersetzt sie; alte Einstellung wird umgestellt. */
+const BASE_LABEL={"Topo":"Topo (online)"};const baseKey=lbl=>Object.keys(BASE).find(k=>(BASE_LABEL[k]||k)===lbl)||lbl;
+let baseName="Topo";try{baseName=localStorage.getItem("rb_base")||"";}catch(e){}
+baseName=baseKey(baseName);if(!baseName||baseName==="Strassen")baseName=ls("rb_vecauto")==="1"?VEC_NAME:"Topo";
 function setBase(name){const l=name===VEC_NAME?VEC:BASE[name];if(!l||map.hasLayer(l))return;[VEC,...Object.values(BASE)].forEach(x=>{if(map.hasLayer(x))map.removeLayer(x);});l.addTo(map);map.fire("baselayerchange",{layer:l,name});try{layCtl._update();}catch(e){}}
-(baseName===VEC_NAME?VEC:(BASE[baseName]||BASE["Strassen"])).addTo(map);
-const layCtl=L.control.layers(BASE,null,{position:"topright"}).addTo(map);layCtl.addBaseLayer(VEC,VEC_NAME);
+(baseName===VEC_NAME?VEC:(BASE[baseName]||BASE["Topo"])).addTo(map);
+const layCtl=L.control.layers({[VEC_NAME]:VEC,...Object.fromEntries(Object.entries(BASE).filter(([k])=>k!=="Strassen").map(([k,l])=>[BASE_LABEL[k]||k,l]))},null,{position:"topright"}).addTo(map);
 /* Kartenwahl nur per Klick öffnen (nicht schon beim Darüberfahren mit der Maus); nach Auswahl wieder schliessen */
 try{L.DomEvent.off(layCtl.getContainer(),{mouseenter:layCtl._expandSafely||layCtl.expand,mouseleave:layCtl.collapse},layCtl);}catch(e){}
 map.on("baselayerchange",()=>setTimeout(()=>layCtl.collapse(),150));
-map.on("baselayerchange",e=>{try{localStorage.setItem("rb_base",e.name);}catch(err){}});
+map.on("baselayerchange",e=>{try{localStorage.setItem("rb_base",baseKey(e.name));}catch(err){}});
 const layer=L.layerGroup().addTo(map);
 let points=[];const thumbs={};
 
@@ -1261,7 +1299,7 @@ function showSearch(){
   /* passende Art (deutscher Name) zu einem Treffer finden: Bedingungen der Abfrage mit den Tags vergleichen */
   const selOk=(sel,t)=>sel.split(";").some(one=>{const cs=[...one.matchAll(/\["([^"]+)"(?:(=|~)"([^"]*)")?\]/g)];return cs.length&&cs.every(([,k,op,v])=>t[k]!=null&&(!op||(op==="="?t[k]===v:new RegExp(v).test(t[k]))));});
   const itemOf=(g,t)=>{const it=g&&g.items.find(x=>{try{return selOk(x[2],t);}catch(e){return false;}});return it?it[0]:"";};
-  const catSearch=async(label,sel,g,all)=>{
+  const catSearch=async(label,sel,g,all)=>{await loadPoiOff();
     const ctr=me?{lat:me.lat,lon:me.lon}:{lat:map.getCenter().lat,lon:map.getCenter().lng};
     const head=`<button class="pback" id="sBackCat" style="border:0;background:none;color:var(--accent);font-weight:600;font-size:15px;padding:6px 0">‹ ${esc(g?g.g:"Kategorien")}</button><h3>${esc(label)} in der Nähe</h3>`;
     const bind=()=>{const b=$("#sBackCat");if(b)b.onclick=()=>g?catGroup(g):catList();};
@@ -1323,7 +1361,8 @@ function showSearch(){
       +(worldList.length?`<h3>Weitere Orte</h3>`+worldList.map((x,i)=>row(x,i,"w")).join(""):"")
       +(!nearList.length&&!worldList.length?`<p class="muted">Nichts gefunden. Tipp: anderen Begriff versuchen oder Karte an den Zielort schieben.</p>`:"");
     $("#sWeb").querySelectorAll("[data-g]").forEach(e=>e.onclick=()=>{const x=(e.dataset.g==="n"?nearList:worldList)[+e.dataset.i];goTo(x.lat,x.lon,x.z||15,x.name||x.kind);});};
-  q.oninput=local;q.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();web();q.blur();}};$("#sGo").onclick=web;local();}
+  q.oninput=local;q.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();web();q.blur();}};$("#sGo").onclick=web;local();
+  if(!poiOffDone)loadPoiOff().then(()=>{if($("#sQ")===q)local();});}
 $("#searchBtn").onclick=showSearch;
 
 /* ---------- Von Google Maps übernehmen: Teilen-Ziel und Google-Takeout-Import ---------- */
@@ -1449,6 +1488,7 @@ function mergeFlags(rl,rd){const del=new Set([...flagDel,...(rd||[])].map(x=>x.i
 /* ---------- Kartenfilter ---------- */
 $("#filtBtn").onclick=showMapFilter;
 function showMapFilter(){
+  if(!poiOffDone)loadPoiOff().then(()=>{if($("#mfClose"))showMapFilter();});
   /* beim Neuzeichnen (an-/abwählen) die Scrollposition halten */
   const keepSc=isPanelOpen()&&$("#mfClose")?$("#panel").scrollTop:0;setTimeout(()=>{if($("#mfClose"))$("#panel").scrollTop=keepSc;},0);
   const cnt=k=>points.filter(p=>(p.cat in CATS?p.cat:"other")===k).length;
@@ -1761,11 +1801,16 @@ $("#navMenu").onclick=async()=>{
    ${grp("Gerät",
      ("wakeLock" in navigator?`<label class="mrow"><span class="mic">${mi("screen",20)}</span><span class="mtx"><b>Bildschirm eingeschaltet lassen</b><small>Solange IbexMap offen ist</small></span><input type="checkbox" class="msw" id="mWake" ${wakeOn()?"checked":""}></label>`:"")
      +row("mStore","db","Speicher",mb?mb+" · anzeigen und aufräumen":"Anzeigen und aufräumen")
+     +row("mStart","clock","Startzeit",ST_MARKS.length?`Karte nach ${ST_MARKS.find(m=>m.t==="Karte bereit")?ST_MARKS.find(m=>m.t==="Karte bereit").s.toFixed(1):"?"} s bereit`:"Messung läuft",{act:"Details"})
      +row("mUpd","refresh","App-Version","Installiert: "+VERSION,{act:"Update suchen"}))}`);
   $("#mSec").onclick=manageSections;
   $("#mReg").onclick=async()=>{toast("Lade Regionsgrenzen …",8000);try{const d=await downloadRegions();toast(`Geladen: ${d.prov.length} Provinzen, ${d.reg.length} Regionen`);$("#navMenu").onclick();}catch(e){toast("Laden fehlgeschlagen – Internet?",5000);}};
   const ra=$("#mRegAll");if(ra)ra.onclick=async()=>{let n=0;for(const p of points){const r=regionOf(p.lat,p.lon);if(r&&r!==p.region){p.region=r;p.updated=Date.now();await put("points",p);n++;}}await loadPoints();toast(`${n} Punkte aktualisiert`);};
   $("#mUpd").onclick=checkUpdate;
+  $("#mStart").onclick=()=>openPanel(`<h2>Startzeit</h2><p class="muted">Sekunden seit dem Öffnen von IbexMap (dieser Start, ${esc(devName())}).</p>
+    <div class="mgrp">${ST_MARKS.map(m=>`<div class="mrow" style="cursor:default"><span class="mtx"><b>${esc(m.t)}</b></span><span style="font-variant-numeric:tabular-nums">${m.s.toFixed(1)} s</span></div>`).join("")}</div>
+    <p class="muted" style="font-size:12.5px">Abgleich mit Google Drive startet erst nach 30 s, POI der Länder werden erst geladen, wenn das Overlay, die Suche oder der Filter sie braucht.</p>
+    <div class="actions"><button class="btn sec" id="stmBack">Zurück</button></div>`)||($("#stmBack").onclick=()=>$("#navMenu").onclick());
   const ma=$("#mAdm");if(ma)ma.onclick=()=>{location.href=location.pathname+"?admin";};
   const mw=$("#mWake");if(mw)mw.onchange=()=>{ls("rb_wake",mw.checked?"1":"0");if(mw.checked){wakeAcquire();toast("Bildschirm bleibt eingeschaltet",2500);}else{wakeRelease();toast("Bildschirm schaltet normal ab",2500);}};
   $("#mStore").onclick=storageDialog;
@@ -2032,7 +2077,7 @@ function wizOpen(){let w=$("#wiz");if(!w){w=document.createElement("div");w.id="
   w.style.display="flex";document.body.classList.add("wzopen");{const fn=()=>wizClose(true);/* den Verlaufseintrag des offenen Fensters übernehmen (kein zweites «Zurück») */
     if(wzKeep){const co=wzKeep;wzKeep=false;co();if(ovl.length)ovl[ovl.length-1]=fn;else ovlPush(fn);toast("",1);}
     else if(isPanelOpen()&&panelHist){panelHist=false;hidePanel();ovl.push(fn);}else{if(isPanelOpen())hidePanel();ovlPush(fn);}}
-  const m=L.map("wzMap",{zoomControl:true});const lay=BASE[baseName]||BASE["Strassen"];
+  const m=L.map("wzMap",{zoomControl:true});const lay=BASE[baseName]||BASE["Topo"];
   L.tileLayer(lay._url,Object.assign({},lay.options)).addTo(m);wz.map=m;wz.mk=null;
   m.on("click",e=>{const g=wz.groups[wz.i];g.ll=[e.latlng.lat,e.latlng.lng];wizMarker();wizNear();});
   $("#wzX").onclick=()=>wizClose();$("#wzP").onclick=()=>{if(wz.i>0){wz.i--;wizShow();}};$("#wzS").onclick=()=>wizNext();
@@ -2264,6 +2309,7 @@ async function syncDrive(quiet){if(syncing||offRun)return false;let ok=false;qui
       if(p.trip===undefined&&!p.deleted)p.trip=MIG_TRIP;
       await put("points",p);local[p.id]=p;nIn++;}
     if(remote.fam)famMerge(remote.fam);
+    try{await ccGoneMerge(remote.ccGone);}catch(e){}
     try{await loadOffPacks();offSharedMerge(remote.offShared);}catch(e){}
     try{devMerge(remote.devStatus);await devStatusLocal();}catch(e){}
     if(Array.isArray(remote.flags)){mergeFlags(remote.flags,remote.flagDel);await saveFlags();}
@@ -2274,7 +2320,7 @@ async function syncDrive(quiet){if(syncing||offRun)return false;let ok=false;qui
     for(const id of need){const fn="foto_"+id+".jpg";i++;
       if(have.has(id)&&!byName[fn]){const ph=await getOne("photos",id);if(ph){up++;tq(`Fotos hochladen … (${up})`,120000);await gdUpload(fn,ph.blob);}}
       else if(!have.has(id)&&byName[fn]){tq(`Fotos herunterladen … (${down+1})`,120000);await put("photos",{id,blob:await(await gd(`drive/v3/files/${byName[fn].id}?alt=media`)).blob()});down++;}}
-    await gdUpload(GD_DATA,new Blob([JSON.stringify({app:"ibexmap",format:4,updated:Date.now(),trips,deletedTrips:delTrips,flags,flagDel,fam:famShared()||undefined,offShared:offSharedMerge(),devStatus:devAll(),points:Object.values(local)})],{type:"application/json"}),byName[GD_DATA]&&byName[GD_DATA].id);
+    await gdUpload(GD_DATA,new Blob([JSON.stringify({app:"ibexmap",format:4,updated:Date.now(),trips,deletedTrips:delTrips,flags,flagDel,fam:famShared()||undefined,offShared:offSharedMerge(),ccGone:ccGone(),devStatus:devAll(),points:Object.values(local)})],{type:"application/json"}),byName[GD_DATA]&&byName[GD_DATA].id);
     const gone=new Set(Object.values(local).flatMap(p=>p.photoDel||[]));
     for(const f of files){const id=f.name.slice(5,-4);if(/^foto_.+\.jpg$/.test(f.name)&&gone.has(id)&&!need.has(id))await gd(`drive/v3/files/${f.id}`,{method:"DELETE"}).catch(()=>{});}
     try{surfDriveSet(files);}catch(e){}
@@ -2340,7 +2386,7 @@ async function offOverview(){openPanel(`<h2>Offline-Daten</h2><p class="muted">W
   const me=await devStatusLocal();const all=devAll();const myId=devId();
   const ids=[myId,...Object.keys(all).filter(i=>i!==myId).sort((a,b)=>(all[a].name||"").localeCompare(all[b].name||""))].filter(i=>all[i]);
   const defs=[...offPacks,...offShared()];const surfOnDrive=cc=>surfDrive().some(r=>{const d=defs.find(x=>x.id===r.pid);return d&&d.cc===cc;});
-  const poiOnDrive=cc=>poiDrive().some(r=>r.cc===cc);const vd=vecDrive();const vfs=await vecFiles();
+  const poiOnDrive=cc=>poiDrive().some(r=>r.cc===cc);const vd=vecDrive();const vfs=await vecFiles();const dfs=await vecFiles("dem");
   /* alle Länder, die irgendwo vorkommen */
   const ccs=new Set();ids.forEach(i=>{(all[i].packs||[]).forEach(p=>{const c=(p.key||"").split("|");if(c.length===2&&/^[A-Z]{2}$/.test(c[0]))ccs.add(c[0]);});(all[i].poi||[]).forEach(p=>ccs.add(p.cc));Object.keys(all[i].vec||{}).forEach(c=>ccs.add(c));});
   offShared().forEach(d=>{if(d.kind==="country"&&d.cc)ccs.add(d.cc);});poiDrive().forEach(r=>ccs.add(r.cc));Object.keys(vd).forEach(c=>ccs.add(c));Object.keys(vfs).forEach(c=>ccs.add(c));
@@ -2355,20 +2401,20 @@ async function offOverview(){openPanel(`<h2>Offline-Daten</h2><p class="muted">W
     const per=ids.map(i=>{const d=all[i];const rp=(d.packs||[]).find(p=>p.key&&p.key.startsWith(cc+"|")&&p.total>0);const sp=(d.packs||[]).find(p=>p.key&&p.key.startsWith(cc+"|")&&p.surf);
       return {i,vec:d.noMap?"aus":(d.vec||{})[cc]??null,dem:d.noMap?"aus":(d.dem||{})[cc]??null,map:d.noMap?"aus":rp?pc(rp.n,rp.total):null,hasMap:!!rp,
         surf:sp?(sp.surfMiss==null?0:pc(sp.surfCells-sp.surfMiss,sp.surfCells)):null,poi:(d.poi||[]).some(p=>p.cc===cc)?"✓":null};});
-    const mine=per.find(x=>x.i===myId)||{};const sd=surfOnDrive(cc),pd=poiOnDrive(cc),vdr=vd[cc],dd=def?tlDriveShare(demPack(def)):{pc:0,mb:0};
+    const mine=per.find(x=>x.i===myId)||{};const sd=surfOnDrive(cc),pd=poiOnDrive(cc),vdr=vd[cc],ddr=vecDrive("dem")[cc],ldem=dfs[cc];
     const rasterDef=defs.find(d=>d.kind==="country"&&d.cc===cc&&TSRC(d.layer));const md=rasterDef?tlDriveShare(rasterDef):{pc:0,mb:0};const showMap=per.some(x=>x.hasMap);
     const lv=vfs[cc];const todo=[];
     if(mapsHere()){if(!(lv&&lv.ok))todo.push("Vektorkarte"+(vdr?" (von Drive)":" (zuerst am PC erstellen)"));
-      if(mine.dem==null||mine.dem<100)todo.push("Höhenlinien"+(dd.pc>=100?" (von Drive)":""));}
+      if(!(ldem&&ldem.ok))todo.push("Höhenlinien"+(ddr?" (von Drive)":" (zuerst am PC erstellen)"));}
     if(mine.surf==null||mine.surf<100)todo.push("Strassenoberfläche"+(sd?" (von Drive)":" (zuerst am PC aus den Rohdaten)"));if(!mine.poi)todo.push("POI"+(pd?" (von Drive)":" (zuerst am PC aus den Rohdaten)"));
     if(showMap&&mapsHere()&&rasterDef&&(mine.map==null||mine.map<100))todo.push("Kartenbilder "+rasterDef.layer);
-    const vbtn=`<div style="margin-top:4px;display:flex;gap:6px;flex-wrap:wrap">${!ADM&&(devGuess()==="PC"||!vdr||!(lv&&lv.ok))?`<button class="btn sec ovb" data-vimp="${cc}">Dateien laden (PC)</button>`:""}${lv&&lv.ok&&!vdr&&gdClient()?`<button class="btn sec ovb" data-vup="${cc}">Auf Drive stellen</button>`:""}${devGuess()==="PC"||!vdr?`<button class="btn sec ovb" data-vhelp="${cc}">Startdatei (PC)</button>`:""}</div>`;
+    const vbtn=`<div style="margin-top:4px;display:flex;gap:6px;flex-wrap:wrap">${!ADM&&(devGuess()==="PC"||!vdr||!ddr||!(lv&&lv.ok))?`<button class="btn sec ovb" data-vimp="${cc}">Dateien laden (PC)</button>`:""}${lv&&lv.ok&&!vdr&&gdClient()?`<button class="btn sec ovb" data-vup="${cc}">Auf Drive stellen</button>`:""}${devGuess()==="PC"||!vdr||!ddr?`<button class="btn sec ovb" data-vhelp="${cc}">Startdatei (PC)</button>`:""}</div>`;
     return `<div class="mgrp" style="padding:12px 14px;margin-bottom:12px">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><b style="font-size:17px">${flagEmoji(cc)} ${esc(countryName(cc))}</b><button class="ovx" data-ovdel="${cc}" title="Land von diesem Gerät entfernen">${mi("trash",16)}</button>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><b style="font-size:17px">${flagEmoji(cc)} ${esc(countryName(cc))}</b><button class="ovx" data-ovdel="${cc}" title="Land entfernen (nur hier oder überall)">${mi("trash",16)}</button>
         <span style="margin-left:auto">${todo.length?`<button class="btn" data-ov="${cc}" style="padding:6px 12px;min-height:0;font-size:13px">Hier vervollständigen</button>`:`<span style="color:#1f6b2a;font-size:13px;font-weight:600">auf diesem Gerät komplett ✓</span>`}</span></div>
       <table style="width:100%;border-collapse:collapse;font-size:13.5px">
         ${row("Vektorkarte","scharf in jeder Zoomstufe · 1 Datei",per.map(x=>chip(x.vec,lab(x.i))).join(""),drv(!!vdr,vdr?`vorhanden ✓ (${fmtN(Math.round(vdr.size/1048576))} MB)`:"noch nicht")+vbtn)}
-        ${row("Höhenlinien","Relief und Höhenlinien",per.map(x=>chip(x.dem,lab(x.i))).join(""),drv(dd.pc>=100,dd.pc>=100?`vorhanden ✓ (${fmtN(dd.mb)} MB)`:dd.pc>0?`${dd.pc} %`:"noch nicht"))}
+        ${row("Höhenlinien","Relief und Höhenlinien · 1 Datei",per.map(x=>chip(x.dem,lab(x.i))).join(""),drv(!!ddr,ddr?`vorhanden ✓ (${fmtN(Math.round(ddr.size/1048576))} MB)`:"noch nicht"))}
         ${row("Strassenoberfläche","Asphalt, Piste, Sand …",per.map(x=>chip(x.surf,lab(x.i))).join(""),drv(sd,sd?"vorhanden ✓":"noch nicht"))}
         ${row("POI-Overlay","Camping, Wasser, Tanken …",per.map(x=>chip(x.poi,lab(x.i))).join(""),drv(pd,pd?"vorhanden ✓":"noch nicht"))}
         ${showMap?row("Kartenbilder",rasterDef?esc(rasterDef.layer)+" (zusätzlich)":"zusätzlich",per.map(x=>chip(x.hasMap||x.map==="aus"?x.map:null,lab(x.i))).join(""),drv(md.pc>=100,md.pc>=100?`vorhanden ✓ (${fmtN(md.mb)} MB)`:md.pc>0?`${md.pc} %`:"noch nicht")):""}
@@ -2379,13 +2425,14 @@ async function offOverview(){openPanel(`<h2>Offline-Daten</h2><p class="muted">W
   const others=offPacks.filter(p=>p.kind!=="country");
   openPanel(`<h2>Offline-Daten</h2>
     <p class="muted" style="margin-top:-6px">Pro Land: was jedes Gerät hat (andere Geräte: Stand ihres letzten Abgleichs). Grün = komplett, orange = unvollständig, grau = fehlt.</p>
-    <div style="font-size:12.5px;background:#ffffff80;border-radius:10px;padding:8px 10px;margin-bottom:12px"><b>So geht es am schnellsten:</b> <b>1.</b> Am <b>PC</b> pro Land einmal «Startdatei (PC)» herunterladen und doppelklicken. <b>2.</b> Danach «Dateien laden (PC)» und beide Dateien wählen – IbexMap stellt Vektorkarte, POI und Strassenoberfläche auf <b>Google Drive</b>. <b>3.</b> Am PC «Hier vervollständigen» (Höhenlinien). <b>4.</b> Auf Handys und Tablet im WLAN «Hier vervollständigen» – alles kommt in Minuten von Drive. Kartenart oben rechts: <b>«${VEC_NAME}»</b>.</div>
+    <div style="font-size:12.5px;background:#ffffff80;border-radius:10px;padding:8px 10px;margin-bottom:12px"><b>So geht es am schnellsten:</b> <b>1.</b> Am <b>PC</b> pro Land einmal «Startdatei (PC)» herunterladen und doppelklicken. <b>2.</b> Danach «Dateien laden (PC)» und alle drei Dateien wählen – IbexMap stellt Vektorkarte, Höhenlinien, POI und Strassenoberfläche auf <b>Google Drive</b>. <b>3.</b> Auf Handys und Tablet im WLAN «Hier vervollständigen» – alles kommt in Minuten von Drive. Kartenart oben rechts: <b>«${VEC_NAME}»</b>.</div>
     <div class="mgrp" style="margin-bottom:12px"><div class="mrow" style="cursor:default"><span class="mic">${mi("pin",20)}</span><span class="mtx"><b>Dieses Gerät: ${esc(devName())}</b><small>${esc(stor)}</small></span><span class="oact"><button id="ovDev" title="Namen ändern">${mi("edit",18)}</button></span></div>
       <label class="mrow" style="cursor:pointer;gap:10px"><span class="mic">${mi("mapdl",20)}</span><span class="mtx"><b>Karten auf diesem Gerät</b><small>${mapsHere()?"Ein – Vektorkarte und Höhenlinien offline auf diesem Gerät":"Aus – nur Strassenoberfläche und POI"}</small></span><input type="checkbox" id="ovMapsHere" style="width:22px;height:22px;margin:0 4px" ${mapsHere()?"checked":""}></label>
       <label class="mrow" style="cursor:pointer;gap:10px"><span class="mic">${mi("sync",20)}</span><span class="mtx"><b>Für die anderen Geräte auf Google Drive bereitstellen</b><small>${tlShareOn()?"Ein – Höhendaten und Kartenbilder werden gepackt auf Drive gelegt (ideal am PC, im WLAN)":"Aus – dieses Gerät holt nur ab"}</small></span><input type="checkbox" id="ovShare" style="width:22px;height:22px;margin:0 4px" ${tlShareOn()?"checked":""}></label></div>
     ${ids.length<2?`<p style="font-size:13px;background:#fff8e1;border-radius:10px;padding:8px 10px">Noch keine anderen Geräte sichtbar: Auf jedem Gerät die neue Version öffnen, Gerätenamen setzen und abgleichen (Kreispfeil). Danach hier nochmals abgleichen.</p>`:""}
     ${list.length?list.map(card).join(""):`<p class="muted">Noch kein Land offline gespeichert.</p>`}
     <input type="file" id="ovVecIn" accept=".pmtiles,.pbf" multiple style="display:none">
+    ${goneBox()}
     <div class="mgrp"><button class="mrow main" id="ovAdd"><span class="mic">${mi("globe",20)}</span><span class="mtx"><b>Land hinzufügen</b><small>Vektorkarte, Höhenlinien, Strassenoberfläche und POI</small></span><span class="mchev">${mi("chev",18)}</span></button>
       <button class="mrow" id="ovSync"><span class="mic">${mi("sync",20)}</span><span class="mtx"><b>Jetzt abgleichen</b><small>Stand dieses Geräts melden, andere Geräte aktualisieren</small></span><span class="mchev">${mi("chev",18)}</span></button>
       <button class="mrow" id="ovMaps"><span class="mic">${mi("mapdl",20)}</span><span class="mtx"><b>Details: Kartenbilder</b><small>${offPacks.length} Gebiete auf diesem Gerät${others.length?` (davon ${others.length} Ausschnitte/Abschnitte)`:""}, Satellit, Ausschnitte, löschen</small></span><span class="mchev">${mi("chev",18)}</span></button>
@@ -2395,28 +2442,31 @@ async function offOverview(){openPanel(`<h2>Offline-Daten</h2><p class="muted">W
     $("#dvNo").onclick=offOverview;$("#dvOk").onclick=()=>{const v=$("#dvN").value.trim();if(v)ls("rb_devname",v);offOverview();};};
   $("#ovMapsHere").onchange=e=>{ls("rb_maps",e.target.checked?"1":"0");toast(e.target.checked?"Karten werden auf diesem Gerät geladen":"Auf diesem Gerät: nur Strassenoberfläche und POI",3500);offOverview();};
   $("#ovShare").onchange=e=>{ls("rb_tlshare",e.target.checked?"1":"0");toast(e.target.checked?"Dieses Gerät stellt Daten auf Google Drive bereit":"Dieses Gerät holt Daten nur ab",3500);offOverview();};
+  $("#panel").querySelectorAll("[data-gbat]").forEach(b=>b.onclick=()=>{const cc=b.dataset.gbat;download(`${countryName(cc).normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9]/g,"")}_aufraeumen.bat`,new Blob([cleanBat(cc)],{type:"application/octet-stream"}));
+    const m=JSON.parse(ls("rb_gbatdone")||"{}");m[cc]=Date.now();ls("rb_gbatdone",JSON.stringify(m));toast("Aufräum-Datei heruntergeladen – am PC doppelklicken",5000);});
+  $("#panel").querySelectorAll("[data-gok]").forEach(b=>b.onclick=()=>{const m=JSON.parse(ls("rb_gbatdone")||"{}");m[b.dataset.gok]=Date.now();ls("rb_gbatdone",JSON.stringify(m));offOverview();});
   $("#ovAdd").onclick=offCountryPick;$("#ovMaps").onclick=offlineDialog;$("#ovPoi").onclick=poiOffDialog;$("#ovStor").onclick=storageDialog;
   $("#ovSync").onclick=async()=>{if(!gdClient())return gdSettings();await syncDrive();offOverview();};
   $("#panel").querySelectorAll("[data-ov]").forEach(b=>b.onclick=()=>runCountry(b.dataset.ov));
-  $("#panel").querySelectorAll("[data-ovdel]").forEach(b=>b.onclick=()=>{const cc=b.dataset.ovdel;confirmBox(`${esc(countryName(cc))} von diesem Gerät entfernen?<br><span style="font-weight:400">Gelöscht werden hier Vektorkarte, Höhendaten, Kartenbilder, Strassenoberfläche und POI dieses Landes. Deine Punkte, Fotos und Fahrspuren bleiben. Auf Google Drive bleibt alles – andere Geräte sind nicht betroffen.</span>`,async()=>{openPanel(`<h2>${esc(countryName(cc))} wird entfernt …</h2>`);await countryRemove(cc);toast(`${countryName(cc)} entfernt`,3000);offOverview();});});
+  $("#panel").querySelectorAll("[data-ovdel]").forEach(b=>b.onclick=()=>countryRemoveUI(b.dataset.ovdel));
   $("#panel").querySelectorAll("[data-vhelp]").forEach(b=>b.onclick=()=>vecHelp(b.dataset.vhelp));
   $("#panel").querySelectorAll("[data-vup]").forEach(b=>b.onclick=()=>vecShareUI(b.dataset.vup));
   $("#panel").querySelectorAll("[data-vimp]").forEach(b=>b.onclick=()=>{const inp=$("#ovVecIn");inp.value="";inp.onchange=e=>{const fs=[...e.target.files];if(fs.length)landFilesUI(b.dataset.vimp,fs);};inp.click();});}
 /* Datei einlesen mit Fortschritt, danach auf Google Drive bereitstellen */
-async function vecImportUI(cc,f,more){if(!/\.pmtiles$/i.test(f.name))return toast("Bitte die .pmtiles-Datei wählen",4000);
-  openPanel(`<h2>Vektorkarte ${esc(countryName(cc))}</h2><p class="muted">${esc(f.name)} · ${fmtN(Math.round(f.size/1048576))} MB</p><p id="viPh" style="font-weight:600">In den Gerätespeicher einlesen …</p><div class="bar" style="height:14px"><div id="viBar"></div></div><p id="viTxt"></p>`);
-  try{await vecImport(cc,f,(n,t)=>{$("#viBar").style.width=Math.floor(n/t*100)+"%";$("#viTxt").textContent=`${fmtN(Math.round(n/1048576))} von ${fmtN(Math.round(t/1048576))} MB`;});}
+async function vecImportUI(cc,f,more,k="vec"){if(!/\.pmtiles$/i.test(f.name))return toast("Bitte die .pmtiles-Datei wählen",4000);
+  openPanel(`<h2>${KIND_N[k]} ${esc(countryName(cc))}</h2><p class="muted">${esc(f.name)} · ${fmtN(Math.round(f.size/1048576))} MB</p><p id="viPh" style="font-weight:600">In den Gerätespeicher einlesen …</p><div class="bar" style="height:14px"><div id="viBar"></div></div><p id="viTxt"></p>`);
+  try{await vecImport(cc,f,(n,t)=>{$("#viBar").style.width=Math.floor(n/t*100)+"%";$("#viTxt").textContent=`${fmtN(Math.round(n/1048576))} von ${fmtN(Math.round(t/1048576))} MB`;},k);}
   catch(e){$("#viPh").textContent="Einlesen fehlgeschlagen: "+e.message;return;}
   await loadOffPacks();if(!offPacks.some(p=>p.kind==="country"&&p.cc===cc)){const areas=countryAreas(cc).map(b=>Object.assign({},b,{z1:5,z2:12}));
     offPacks.push({id:uid(),name:countryName(cc),kind:"country",cc,layer:"keine",zmax:12,areas,date:Date.now(),surf:true,poi:true,vec:true,dem:true});await saveOffPacks();}
-  if(gdClient())await vecShareUI(cc,more);else{toast("Vektorkarte gespeichert – für die anderen Geräte Google Drive einrichten",6000);if(!more)offOverview();}}
-async function vecShareUI(cc,more){if(!gdOk()){openPanel(`<h2>Auf Google Drive stellen</h2><p>Dafür ist eine frische Google-Anmeldung nötig. Danach in den Offline-Daten bei ${esc(countryName(cc))} «Auf Drive stellen» tippen.</p><div class="actions"><button class="btn" id="vsLog">Anmelden</button><button class="btn sec" id="vsNo">Später</button></div>`);$("#vsLog").onclick=()=>gdAuth();$("#vsNo").onclick=offOverview;return;}
-  openPanel(`<h2>Vektorkarte ${esc(countryName(cc))}</h2><p id="viPh" style="font-weight:600">Auf Google Drive hochladen …</p><div class="bar" style="height:14px"><div id="viBar"></div></div><p id="viTxt"></p><p class="muted">App offen lassen. Danach holen die anderen Geräte die Karte mit «Hier vervollständigen».</p>`);
+  if(gdClient())await vecShareUI(cc,more,k);else{toast(`${KIND_N[k]} gespeichert – für die anderen Geräte Google Drive einrichten`,6000);if(!more)offOverview();}}
+async function vecShareUI(cc,more,k="vec"){if(!gdOk()){openPanel(`<h2>Auf Google Drive stellen</h2><p>Dafür ist eine frische Google-Anmeldung nötig. Danach in den Offline-Daten bei ${esc(countryName(cc))} «Auf Drive stellen» tippen.</p><div class="actions"><button class="btn" id="vsLog">Anmelden</button><button class="btn sec" id="vsNo">Später</button></div>`);$("#vsLog").onclick=()=>gdAuth();$("#vsNo").onclick=offOverview;return;}
+  openPanel(`<h2>${KIND_N[k]} ${esc(countryName(cc))}</h2><p id="viPh" style="font-weight:600">Auf Google Drive hochladen …</p><div class="bar" style="height:14px"><div id="viBar"></div></div><p id="viTxt"></p><p class="muted">App offen lassen. Danach holen die anderen Geräte die Karte mit «Hier vervollständigen».</p>`);
   let wl=null;try{if("wakeLock" in navigator)wl=await navigator.wakeLock.request("screen");}catch(e){}
   try{try{vecDriveSet(await gdList());}catch(e){}
-    const free=await gdFree();const v=(await vecFiles())[cc];if(v&&v.size>free&&!vecDrive()[cc])throw new Error(`zu wenig Platz auf Google Drive (frei ${fmtN(Math.round(free/1048576))} MB)`);
-    await vecUpload(cc,(n,t)=>{$("#viBar").style.width=Math.floor(n/t*100)+"%";$("#viTxt").textContent=`${fmtN(Math.round(n/1048576))} von ${fmtN(Math.round(t/1048576))} MB`;});
-    toast(`Vektorkarte ${countryName(cc)} liegt auf Google Drive ✓`,5000);if(!more)offOverview();}
+    const free=await gdFree();const v=(await vecFiles(k))[cc];if(v&&v.size>free&&!vecDrive(k)[cc])throw new Error(`zu wenig Platz auf Google Drive (frei ${fmtN(Math.round(free/1048576))} MB)`);
+    await vecUpload(cc,(n,t)=>{$("#viBar").style.width=Math.floor(n/t*100)+"%";$("#viTxt").textContent=`${fmtN(Math.round(n/1048576))} von ${fmtN(Math.round(t/1048576))} MB`;},k);
+    toast(`${KIND_N[k]} ${countryName(cc)} liegt auf Google Drive ✓`,5000);if(!more)offOverview();}
   catch(e){$("#viPh").textContent="Hochladen fehlgeschlagen: "+(e.message==="auth"?"Google-Anmeldung abgelaufen – neu anmelden und nochmals «Auf Drive stellen»":e.message);}
   finally{try{if(wl)await wl.release();}catch(e){}}}
 /* ---------- Übersicht aller Geräte: jedes Gerät meldet beim Abgleich, was es offline gespeichert hat ---------- */
@@ -2431,7 +2481,7 @@ async function devStatusLocal(){await loadOffPacks();await loadPoiOff();const pa
     let sm=null;if(pk.surf){sm=0;for(const k of packCells(pk)){let h=null;try{h=await getOne("meta","surf_"+k);}catch(e){}if(!h)sm++;}pk.surfMiss=sm;}
     packs.push({key:pk.kind==="country"?`${pk.cc}|${pk.layer}`:pk.id,name:pk.name,layer:pk.layer,zmax:pk.zmax,n,total:u.length,surf:!!pk.surf,surfCells:pk.surf?packCells(pk).length:0,surfMiss:sm});}
   const vec={},dem={};const fs=await vecFiles();Object.entries(fs).forEach(([cc,v])=>vec[cc]=v.ok?100:v.pc);
-  if(mapsHere())for(const pk of offPacks)if(pk.kind==="country"&&pk.dem&&pk.cc){const r=await offPackCount(demPack(pk));dem[pk.cc]=r.total?Math.floor(r.n/r.total*100):0;}
+  Object.entries(await vecFiles("dem")).forEach(([cc,v])=>dem[cc]=v.ok?100:v.pc);
   const st={name:devName(),t:Date.now(),noMap:!mapsHere(),packs,vec,dem,poi:poiOff.map(p=>({cc:p.cc,loaded:p.loaded}))};
   const all=devAll();all[devId()]=st;ls("rb_devall",JSON.stringify(all));return st;}
 function devMerge(remote){const all=devAll();for(const [id,v] of Object.entries(remote||{})){if(id===devId())continue;if(!all[id]||(v.t||0)>(all[id].t||0))all[id]=v;}
@@ -2441,7 +2491,16 @@ async function saveOffPacks(){await put("meta",{id:"offpacks",list:offPacks});}
 const offShared=()=>{try{return JSON.parse(ls("rb_offshared")||"[]");}catch(e){return [];}};
 const offHide=()=>{try{return JSON.parse(ls("rb_offhide")||"[]");}catch(e){return [];}};
 const offDef=pk=>({id:pk.id,name:pk.name,kind:pk.kind,layer:pk.layer,zmax:pk.zmax,areas:pk.areas,surf:!!pk.surf,date:pk.date,cc:pk.cc,poi:!!pk.poi,vec:!!pk.vec,dem:!!pk.dem});
-function offSharedMerge(remote){const m=new Map();(remote||[]).concat(offShared()).forEach(d=>{if(d&&d.id&&!m.has(d.id))m.set(d.id,d);});
+/* «Land überall entfernen»: wird mit dem Abgleich verteilt; je Land gilt der neueste Eintrag (entfernt bzw. wieder hinzugefügt) */
+const ccGone=()=>{try{return JSON.parse(ls("rb_ccgone")||"{}");}catch(e){return {};}};
+const isGone=cc=>!!(cc&&(ccGone()[cc]||{}).g);
+function ccGoneSet(cc,g){const m=ccGone();if(!g&&!m[cc])return;m[cc]={t:Date.now(),g:g?1:0};ls("rb_ccgone",JSON.stringify(m));}
+async function ccGoneMerge(remote){const m=ccGone();let ch=false;Object.entries(remote||{}).forEach(([cc,r])=>{if(r&&(!m[cc]||r.t>m[cc].t)){m[cc]=r;ch=true;}});ls("rb_ccgone",JSON.stringify(m));
+  const done=[];for(const [cc,r] of Object.entries(m)){if(!r.g)continue;if(await countryHasLocal(cc)){await countryRemove(cc);done.push(countryName(cc));}}
+  if(done.length)toast(`${done.join(", ")}: auf einem anderen Gerät überall entfernt – hier ebenfalls gelöscht`,7000);return ch;}
+async function countryHasLocal(cc){await loadOffPacks();if(offPacks.some(p=>p.cc===cc))return true;if((await vecFiles())[cc]||(await vecFiles("dem"))[cc])return true;
+  await loadPoiOff();return poiOff.some(p=>p.cc===cc);}
+function offSharedMerge(remote){const m=new Map();(remote||[]).concat(offShared()).forEach(d=>{if(d&&d.id&&!m.has(d.id)&&!isGone(d.cc))m.set(d.id,d);});
   offPacks.forEach(pk=>m.set(pk.id,offDef(pk)));const list=[...m.values()];ls("rb_offshared",JSON.stringify(list));return list;}
 const offOther=()=>{const mine=new Set(offPacks.map(p=>p.id)),hid=new Set(offHide());
   const key=d=>d.kind==="country"?`${d.cc}|${d.layer}`:d.id;const mk=new Set(offPacks.map(key)),seen=new Set();
@@ -2577,7 +2636,7 @@ function offPickView(){closePanel();let bar=$("#offbar");
 /* Einstellungen für ein neues Gebiet */
 function offConfig(o){
   if(o.kind==="country"){if(o.vec===undefined)o.vec=true;if(o.dem===undefined)o.dem=true;if(!o.layer)o.layer="keine";}
-  o.layer=o.layer||ls("rb_offL")||(map.hasLayer(BASE["Topo"])?"Topo":map.hasLayer(BASE["Satellit"])?"Satellit":"Strassen");
+  o.layer=o.layer||(OFF_LAYERS.includes(ls("rb_offL"))?ls("rb_offL"):"Satellit");
   o.zmax=o.zmax||(o.kind==="section"||o.kind==="country"?12:+ls("rb_offZ")||14);o.radius=o.radius||+ls("rb_offR")||10;o.only=o.only||ls("rb_offO")||"trip";
   if(o.kind==="section"&&!o.sec){const t=curTripObj();o.sec=(MA_SECTORS.find(x=>(t&&t.sections||[]).includes(x.n))||MA_SECTORS[0]).n;}
   if((o.kind==="section"||o.kind==="country")&&o.pts===undefined)o.pts=true;
@@ -2607,7 +2666,7 @@ function offConfig(o){
      ${!mapsHere()?`<p style="font-size:13px;background:#fff8e1;border-radius:10px;padding:8px 10px;margin:10px 0 0">Auf diesem Gerät werden <b>keine Kartenbilder</b> geladen – nur ${o.kind==="country"?"Strassenoberfläche und POI":"die Strassenoberfläche"}. Karte und Detailstufe gelten für die anderen Geräte (dort «Hier vervollständigen»). Ändern: Offline-Daten › «Karten auf diesem Gerät».</p>`:""}
      ${o.kind==="country"?`<label style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink);margin-top:12px"><input type="checkbox" id="cVec" style="width:auto;margin:0" ${o.vec?"checked":""}> <span><b>Vektorkarte</b> – scharf in jeder Zoomstufe, eine Datei (am PC erstellen, dann über Google Drive)</span></label>
        <label style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink);margin-top:8px"><input type="checkbox" id="cDem" style="width:auto;margin:0" ${o.dem?"checked":""}> <span><b>Höhenlinien und Relief</b> (Höhendaten bis Stufe ${DEM_MAXZ})</span></label>`:""}
-     <label>${o.kind==="country"?"Zusätzlich Kartenbilder (nicht nötig mit Vektorkarte)":"Karte"}</label><select id="cL">${o.kind==="country"?`<option value="keine" ${o.layer==="keine"?"selected":""}>keine – nur Vektorkarte</option>`:""}${Object.keys(BASE).map(k=>`<option ${k===o.layer?"selected":""}>${k}</option>`).join("")}</select>
+     <label>${o.kind==="country"?"Zusätzlich Kartenbilder (nicht nötig mit Vektorkarte)":"Karte"}</label><select id="cL">${o.kind==="country"?`<option value="keine" ${o.layer==="keine"?"selected":""}>keine – nur Vektorkarte</option>`:""}${OFF_LAYERS.concat(OFF_LAYERS.includes(o.layer)||o.layer==="keine"||!BASE[o.layer]?[]:[o.layer]).map(k=>`<option ${k===o.layer?"selected":""}>${k}</option>`).join("")}</select>
      ${rlay?`<label>Detailstufe${big?" für das ganze Gebiet":""}</label><select id="cZ">${[[10,"10 – grobe Übersicht"],[11,"11 – Übersicht"],[12,"12 – Ortschaften und Hauptstrassen"],[13,"13 – Strassen gut lesbar"],[14,"14 – Pisten und Wege"],[15,"15 – sehr detailliert"]].filter(([v])=>!big||v<=14).map(([v,t])=>`<option value="${v}" ${v===o.zmax?"selected":""}>${t}</option>`).join("")}</select>`:""}
      <label style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink);margin-top:12px"><input type="checkbox" id="cSf" style="width:auto;margin:0" ${o.surf?"checked":""}> Strassenoberfläche mitspeichern (${packCells(pk).length} Kartenstücke à 50 km)</label>
      ${o.kind==="country"?`<label style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink);margin-top:8px"><input type="checkbox" id="cPoi" style="width:auto;margin:0" ${o.poi?"checked":""}> POI-Overlay für ${esc(countryName(o.cc))} mitladen (Camping, Wasser, Tankstellen …)</label>
@@ -2623,7 +2682,7 @@ function offConfig(o){
     ch("#cS","sec",String);ch("#cO","only",String,"rb_offO");ch("#cR","radius",Number,"rb_offR");ch("#cL","layer",String,"rb_offL");ch("#cZ","zmax",Number,big?null:"rb_offZ");ch("#cP","pts",Boolean);ch("#cVec","vec",Boolean);ch("#cDem","dem",Boolean);ch("#cPz","pz",Number);ch("#cPr","radius",Number);ch("#cSf","surf",Boolean,o.kind==="country"?null:"rb_offSurf");ch("#cPoi","poi",Boolean);
     $("#cN").oninput=e=>{o.name=e.target.value;};
     $("#cBack").onclick=o.kind==="country"?offCountryPick:offlineDialog;const cc=$("#cCC");if(cc)cc.onclick=offCountryPick;const re=$("#cRe");if(re)re.onclick=offPickView;
-    $("#cGo").onclick=async()=>{const p2=build();p2.name=($("#cN").value||p2.name).trim();await loadOffPacks();if(p2.cc)ls("rb_cchide",JSON.stringify(ccHidden().filter(c=>c!==p2.cc)));
+    $("#cGo").onclick=async()=>{const p2=build();p2.name=($("#cN").value||p2.name).trim();await loadOffPacks();if(p2.cc){ls("rb_cchide",JSON.stringify(ccHidden().filter(c=>c!==p2.cc)));ccGoneSet(p2.cc,0);}
       /* dasselbe Land in derselben Karte nicht doppelt anlegen: bestehendes Gebiet ersetzen */
       const dup=p2.kind==="country"?offPacks.findIndex(x=>x.kind==="country"&&x.cc===p2.cc&&x.layer===p2.layer):-1;
       if(dup>=0){p2.id=offPacks[dup].id;offPacks[dup]=p2;toast(`${p2.name} (${p2.layer}) war schon vorhanden – Einstellungen übernommen, Download wird fortgesetzt`,4000);}else offPacks.push(p2);
@@ -2680,7 +2739,7 @@ async function offRunPack(pk,force){if(!navigator.onLine)return toast("Kein Inte
     const b=$("#oPBar");if(!b)return;b.style.width=(noMap?0:pc)+"%";
     $("#oPPh").textContent=phase;
     $("#oPTxt").innerHTML=noMap?`Kartenbilder: auf diesem Gerät ausgeschaltet – nur Strassenoberfläche${pk.poi&&pk.cc?" und POI":""}.`
-      :`${vecTxt?`<b>${esc(vecTxt)}</b><br>`:""}${total?`<b>${fmtN(done)} von ${fmtN(total)} ${pk._isDem?"Höhendaten-Bildern":"Kartenbildern"} (${pc} %)</b>`:""}${fromDrive?`<br>${fmtN(fromDrive)} von Google Drive`:""}${fromSrv?`<br>${fmtN(fromSrv)} vom Kartendienst`:""}${fail?`<br><span style="color:#9a4a00">${fmtN(fail)} noch offen – ${esc(run.why||"")}</span>`:""}${shareN?`<br>Für die anderen Geräte auf Google Drive: ${shared} von ${shareN} Paketen`:""}${run.note?`<br><span style="color:#9a4a00">${esc(run.note)}</span>`:""}`;};
+      :`${vecTxt?`<b>${esc(vecTxt).replace(/ · /g,"<br>")}</b><br>`:""}${total?`<b>${fmtN(done)} von ${fmtN(total)} ${pk._isDem?"Höhendaten-Bildern":"Kartenbildern"} (${pc} %)</b>`:""}${fromDrive?`<br>${fmtN(fromDrive)} von Google Drive`:""}${fromSrv?`<br>${fmtN(fromSrv)} vom Kartendienst`:""}${fail?`<br><span style="color:#9a4a00">${fmtN(fail)} noch offen – ${esc(run.why||"")}</span>`:""}${shareN?`<br>Für die anderen Geräte auf Google Drive: ${shared} von ${shareN} Paketen`:""}${run.note?`<br><span style="color:#9a4a00">${esc(run.note)}</span>`:""}`;};
   const showP=()=>{openPanel(`<h2>${esc(pk.name)}</h2><p class="muted">${noMap?"Nur Strassenoberfläche"+(pk.poi&&pk.cc?" und POI":"")+" (Kartenbilder auf diesem Gerät aus)":pk._isDem?"Höhendaten für Höhenlinien und Relief · bis Stufe "+pk.zmax:[pk.vec?"Vektorkarte":"",TSRC(pk.layer)?esc(pk.layer)+" Stufe "+pk.zmax:"",pk.dem?"Höhenlinien":"",pk.surf?"Strassenoberfläche":"",pk.poi?"POI":""].filter(Boolean).join(" · ")}</p>
     <p id="oPPh" style="font-weight:600;margin:6px 0"></p><div class="bar" style="height:14px"><div id="oPBar"></div></div><p id="oPTxt" style="font-size:15px"></p>
     <p class="muted">Läuft weiter, auch wenn du dieses Fenster schliesst (App offen lassen, Bildschirm an). Oben auf der Karte siehst du den Stand.</p>
@@ -2689,15 +2748,15 @@ async function offRunPack(pk,force){if(!navigator.onLine)return toast("Kein Inte
   pill.onclick=showP;showP();
   /* Bildschirm während des Downloads anlassen – sonst hält Android die App an und der Download steht */
   let wl=null;try{if("wakeLock" in navigator)wl=await navigator.wakeLock.request("screen");}catch(e){}
-  /* 0. Vektorkarte (eine Datei pro Land): von Google Drive holen, falls hier noch nicht vorhanden */
-  if(pk.vec&&pk.cc&&!noMap){const v=(await vecFiles())[pk.cc];
-    if(v&&v.ok)vecTxt="Vektorkarte: vorhanden ✓";
-    else if(vecDrive()[pk.cc]&&gdOk()&&!offNoDrive){phase="Vektorkarte von Google Drive …";ui();
-      try{const r=await vecDownload(pk.cc,run,(n,t)=>{vecTxt=`Vektorkarte: ${fmtN(Math.round(n/1048576))} von ${fmtN(Math.round(t/1048576))} MB`;ui();});
-        vecTxt=r==="ok"?"Vektorkarte: fertig ✓":r==="stop"?"Vektorkarte: angehalten":"Vektorkarte: unvollständig – nochmals «Hier vervollständigen»";}
-      catch(e){vecTxt=e.message==="auth"?"Vektorkarte: Google-Anmeldung abgelaufen – neu anmelden und fortsetzen":"Vektorkarte: "+e.message;}}
-    else vecTxt=vecDrive()[pk.cc]?"Vektorkarte: liegt auf Google Drive – dafür bei Google anmelden":"Vektorkarte: noch nicht vorhanden – am PC «Startdatei (PC)» und «Dateien laden (PC)»";
-    ui();}
+  /* 0. Länderdateien (Vektorkarte, Höhendaten): von Google Drive holen, falls hier noch nicht vorhanden */
+  for(const k of ["vec","dem"]){if(!(k==="vec"?pk.vec:pk.dem)||!pk.cc||noMap||run.stop)continue;const N=KIND_N[k];const v=(await vecFiles(k))[pk.cc];let txt="";const base=vecTxt;
+    if(v&&v.ok)txt=`${N}: vorhanden ✓`;
+    else if(vecDrive(k)[pk.cc]&&gdOk()&&!offNoDrive){phase=`${N} von Google Drive …`;ui();
+      try{const r=await vecDownload(pk.cc,run,(n,t)=>{vecTxt=(base?base+" · ":"")+`${N}: ${fmtN(Math.round(n/1048576))} von ${fmtN(Math.round(t/1048576))} MB`;ui();},k);
+        txt=r==="ok"?`${N}: fertig ✓`:r==="stop"?`${N}: angehalten`:`${N}: unvollständig – nochmals «Hier vervollständigen»`;}
+      catch(e){txt=e.message==="auth"?`${N}: Google-Anmeldung abgelaufen – neu anmelden und fortsetzen`:`${N}: `+e.message;}}
+    else txt=vecDrive(k)[pk.cc]?`${N}: liegt auf Google Drive – dafür bei Google anmelden`:`${N}: noch nicht vorhanden – am PC «Startdatei (PC)» und «Dateien laden (PC)»`;
+    vecTxt=(base?base+" · ":"")+txt;ui();}
   let missing=[];
   if(!noMap&&lay){
     /* 1. Was ist schon da? Jedes Bild direkt im Speicher nachschauen (das Auflisten aller Bilder versagt auf Android bei grossen Mengen) */
@@ -2767,9 +2826,8 @@ async function offRunPack(pk,force){if(!navigator.onLine)return toast("Kein Inte
   const msg=run.stop?`Angehalten – später in der Übersicht fortsetzen`:noMap?`Fertig${sf?`: Strassen ${sf.n-sf.fail}/${sf.n}`:""}${pk.poi&&pk.cc?" · POI folgen":""}`
     :`Fertig: ${fmtN(done)} von ${fmtN(total)} ${pk._isDem?"Höhendaten-Bildern":"Kartenbildern"}${fromDrive?` (${fmtN(fromDrive)} von Google Drive)`:""}${retry.length?` · ${fmtN(retry.length)} fehlen noch («Fortsetzen»)`:""}${shareN?` · auf Drive bereitgestellt: ${shared}/${shareN} Pakete`:""}${sf?` · Strassen ${sf.n-sf.fail}/${sf.n}`:""}`;
   toast(vecTxt&&!total?vecTxt+" · "+msg:msg,8000);if(run.note&&!run.stop)setTimeout(()=>toast(run.note,8000),8200);
-  /* danach die Höhendaten (für Höhenlinien und Relief) – gleicher Weg: Google Drive, sonst Höhendaten-Server */
-  if(pk.dem&&pk.cc&&!pk._isDem&&!noMap&&!run.stop&&!run.full){const r=await offRunPack(demPack(pk),force);return r;}
   if($("#oPBar"))offOverview();return run.stop?"stop":"ok";}
+/* alte Höhendaten-Kacheln (vor v7.3, nur noch zum Erkennen und Aufräumen) */
 function demPack(pk){return {id:pk.id+"~dem",kind:"dem",_isDem:true,cc:pk.cc,name:`${pk.name} – Höhenlinien`,layer:"Höhendaten",zmax:DEM_MAXZ,
   areas:pk.areas.filter(a=>a.z1<=DEM_MAXZ).map(a=>({s:a.s,w:a.w,n:a.n,e:a.e,z1:Math.max(5,a.z1),z2:DEM_MAXZ}))};}
 /* alles für ein Land auf diesem Gerät vervollständigen (alle Gebiete des Landes nacheinander) */
@@ -2882,26 +2940,6 @@ function famSettings(){const c=famCfg();const owner=c.owner||location.hostname.s
 
 /* ---------- Speicher anzeigen und aufräumen ---------- */
 const MB=b=>b<1048576?(b/1024).toFixed(0)+" KB":(b/1048576).toFixed(1)+" MB";
-async function cacheInfo(name){try{if(!(await caches.has(name)))return {n:0,b:0};const c=await caches.open(name);const ks=await c.keys();let b=0,i=0;
-  for(const k of ks){if(i++>3000){b=b/3000*ks.length;break;}const r=await c.match(k);const l=+r.headers.get("content-length");b+=l>0?l:15000;}return {n:ks.length,b};}catch(e){return {n:0,b:0};}}
-async function storageDialog(){
-  openPanel(`<h2>Speicher</h2><p class="muted">Wird berechnet …</p>`);
-  let photoB=0,photoN=0;try{for(const ph of await getAll("photos")){photoB+=ph.blob?ph.blob.size:0;photoN++;}}catch(e){}
-  let ptsB=0;try{ptsB=JSON.stringify(await getAll("points")).length;}catch(e){}
-  let metaB=0;try{metaB=JSON.stringify(await getAll("meta")).length;}catch(e){}
-  const tiles=await cacheInfo(TILECACHE),off=await cacheInfo("reisebuch-offline");
-  let est={};try{est=await navigator.storage.estimate();}catch(e){}
-  const persisted=navigator.storage&&navigator.storage.persisted?await navigator.storage.persisted():false;
-  openPanel(`<h2>Speicher</h2>
-   <div class="item" style="cursor:default"><div style="flex:1"><div class="t">Punkte (${points.length})</div><div class="s">${MB(ptsB)}</div></div></div>
-   <div class="item" style="cursor:default"><div style="flex:1"><div class="t">Fotos (${photoN})</div><div class="s">${MB(photoB)} – neue Fotos werden auf 1280 px verkleinert</div></div></div>
-   <div class="item" style="cursor:default"><div style="flex:1"><div class="t">OSM-Orte, Länder- und Regionsgrenzen</div><div class="s">${MB(metaB)}</div></div></div>
-   <div class="item" style="cursor:default"><div style="flex:1"><div class="t">Karten-Zwischenspeicher (${tiles.n} Bilder)</div><div class="s">ca. ${MB(tiles.b)} – angeschaute Gebiete, max. 3000 Bilder, wird automatisch begrenzt</div></div><button class="btn sec" id="stTiles" style="flex:none">Leeren</button></div>
-   <div class="item" style="cursor:default"><div style="flex:1"><div class="t">Offline-Karte (${off.n} Bilder)</div><div class="s">ca. ${MB(off.b)} – Löschen über Menü → Karte offline</div></div></div>
-   <p class="muted">Belegt laut Browser: ${est.usage?MB(est.usage):"?"}${est.quota?` von max. ${MB(est.quota)}`:""}. ${persisted?"Speicher ist als dauerhaft geschützt.":"Speicher ist (noch) nicht als dauerhaft geschützt – nach dem Installieren der App gibt Android das meist frei."}</p>
-   <p class="muted">Punkte und Fotos werden beim Leeren nie gelöscht.</p>`);
-  $("#stTiles").onclick=async()=>{await caches.delete(TILECACHE);toast("Karten-Zwischenspeicher geleert");storageDialog();};}
-const TILECACHE="reisebuch-tiles-v4";
 /* ---------- Update ---------- */
 let swReg=null;
 async function checkUpdate(){if(!navigator.onLine)return toast("Kein Internet",3000);toast("Suche Update …",5000);
@@ -3066,7 +3104,9 @@ function admCSV(){const l=admList();const q=v=>`"${String(v??"").replace(/"/g,'"
 let poiOff=[];/* [{cc,loaded,n,items:[{a:lat,o:lon,t:{…},m:["g.i",…]}]}] */
 /* POI-Daten sind gross: nur einmal aus dem Speicher lesen, danach gilt die Kopie im Arbeitsspeicher (alle Änderungen laufen über savePoiOff) */
 let poiOffP=null;
-function loadPoiOff(){return poiOffP||(poiOffP=(async()=>{try{const m=await getOne("meta","poioff");poiOff=m?m.list||[]:[];}catch(e){poiOff=[];}})());}
+/* POI der Länder sind gross (zehntausende Orte) – erst laden, wenn sie gebraucht werden (Overlay an, Suche, Filter) */
+let poiOffDone=false;
+function loadPoiOff(){return poiOffP||(poiOffP=(async()=>{try{const m=await getOne("meta","poioff");poiOff=m?m.list||[]:[];}catch(e){poiOff=[];}poiOffDone=true;stMark("POI geladen");})());}
 async function savePoiOff(){await put("meta",{id:"poioff",list:poiOff});}
 const POI_KEYS=(()=>{const k=new Set(["name","name:fr","name:ar","name:de","name:en","brand","opening_hours","phone","contact:phone","website","addr:city","fee","drinking_water"]);
   POI_GROUPS.forEach(g=>g.items.forEach(it=>[...it[2].matchAll(/\["([^"]+)"/g)].forEach(m=>k.add(m[1]))));return [...k];})();
@@ -3379,7 +3419,7 @@ const SURF_HW=["trunk","primary","secondary","tertiary","unclassified","road","t
 const GEOFABRIK={MA:"africa/morocco",ES:"europe/spain",PT:"europe/portugal",FR:"europe/france",CH:"europe/switzerland",IT:"europe/italy",ME:"europe/montenegro",AL:"europe/albania",HR:"europe/croatia",BA:"europe/bosnia-herzegovina",GR:"europe/greece",AT:"europe/austria",DE:"europe/germany",SI:"europe/slovenia",DZ:"africa/algeria",TN:"africa/tunisia",MR:"africa/mauritania",SN:"africa/senegal",TR:"europe/turkey",NO:"europe/norway",SE:"europe/sweden",IS:"europe/iceland",GB:"europe/great-britain",IE:"europe/ireland-and-northern-ireland"};
 function poiFirstConds(){const f=[],seen=new Set();POI_GROUPS.forEach(g=>g.items.forEach(it=>it[2].split(";").forEach(one=>{const m=one.match(/\["([^"]+)"(?:(=|~)"([^"]*)")?\]/);
   if(m){const key=m[1]+"|"+(m[2]||"")+"|"+(m[3]||"");if(!seen.has(key)){seen.add(key);f.push([m[1],m[2]||"=",m[3]||""]);}}})));return f;}
-async function countryPackFor(cc){ls("rb_cchide",JSON.stringify(ccHidden().filter(c=>c!==cc)));await loadOffPacks();let pk=offPacks.find(p=>p.kind==="country"&&p.cc===cc&&p.vec)||offPacks.find(p=>p.kind==="country"&&p.cc===cc);
+async function countryPackFor(cc){ls("rb_cchide",JSON.stringify(ccHidden().filter(c=>c!==cc)));ccGoneSet(cc,0);await loadOffPacks();let pk=offPacks.find(p=>p.kind==="country"&&p.cc===cc&&p.vec)||offPacks.find(p=>p.kind==="country"&&p.cc===cc);
   if(!pk){await loadGeo();const areas=countryAreas(cc).map(b=>Object.assign({},b,{z1:5,z2:12}));
     pk={id:uid(),name:countryName(cc),kind:"country",cc,layer:"keine",zmax:12,areas,date:Date.now(),surf:true,poi:true,vec:true,dem:true};offPacks.push(pk);}
   pk.surf=true;pk.poi=true;await saveOffPacks();return pk;}
@@ -3418,9 +3458,10 @@ async function pbfImportUI(cc,file){if(!/\.pbf$/i.test(file.name))return toast("
   try{if(wl)await wl.release();}catch(e){}
   setTimeout(()=>{if($("#pbPh"))offOverview();},4000);}
 /* «Dateien laden»: Vektorkarte (.pmtiles) und Rohdaten (.osm.pbf) in einem Schritt */
-async function landFilesUI(cc,files){const vec=files.find(f=>/\.pmtiles$/i.test(f.name)),pbf=files.find(f=>/\.pbf$/i.test(f.name));
-  if(!vec&&!pbf)return toast("Bitte vec_"+cc+".pmtiles und/oder "+cc+"-rohdaten.osm.pbf wählen",5000);
-  if(vec)await vecImportUI(cc,vec,!!pbf);
+async function landFilesUI(cc,files){const dem=files.find(f=>/^dem_.*\.pmtiles$/i.test(f.name)),vec=files.find(f=>/\.pmtiles$/i.test(f.name)&&f!==dem),pbf=files.find(f=>/\.pbf$/i.test(f.name));
+  if(!vec&&!pbf&&!dem)return toast(`Bitte die Dateien aus dem Ordner IbexMap-Karten wählen: vec_${cc}.pmtiles, dem_${cc}.pmtiles und ${cc}-rohdaten.osm.pbf`,6000);
+  if(vec)await vecImportUI(cc,vec,!!(pbf||dem));
+  if(dem)await vecImportUI(cc,dem,!!pbf,"dem");
   if(pbf)await pbfImportUI(cc,pbf);}
 
 const ccHidden=()=>{try{return JSON.parse(ls("rb_cchide")||"[]");}catch(e){return [];}};
@@ -3430,9 +3471,46 @@ async function countryRemove(cc){await loadOffPacks();await loadPoiOff();const m
   const c=await caches.open(OFFLINE);for(const pk of mine){for(const u of [...packURLs(pk),...packURLs(demPack(pk))]){try{if(!keep.has(u))await c.delete(u);}catch(e){}}if(pk.surf)await surfDeletePack(pk,others);}
   const hide=new Set(offHide());mine.forEach(p=>hide.add(p.id));offShared().filter(d=>d.cc===cc).forEach(d=>hide.add(d.id));ls("rb_offhide",JSON.stringify([...hide]));
   offPacks=others;await saveOffPacks();ls("rb_cchide",JSON.stringify([...new Set([...ccHidden(),cc])]));
-  const v=(await vecFiles())[cc];if(v){try{await(await opfs()).removeEntry(v.name);}catch(e){}}const m=vecMeta();delete m[cc];vecMetaSet(m);
+  for(const k of ["vec","dem"]){const v=(await vecFiles(k))[cc];if(v){try{await(await opfs()).removeEntry(v.name);}catch(e){}}const m=vecMeta(k);delete m[cc];vecMetaSet(m,k);}
   poiOff=poiOff.filter(p=>p.cc!==cc);await savePoiOff();try{await del("meta","poipart_"+cc);}catch(e){}
   offCntCache.clear();drawOffAreas();drawOsm();await vecRefresh();}
+/* Land überall entfernen: dieses Gerät, Google Drive (Vektorkarte, Höhendaten, POI, Strassenoberfläche) und – beim nächsten Abgleich – alle anderen Geräte */
+async function countryRemoveAll(cc,onp){const ids=new Set([...offPacks,...offShared()].filter(d=>d.cc===cc).map(d=>d.id));
+  const files=await gdList();const re=new RegExp(`^((vec|dem)_${cc}\\.pmtiles|poi_${cc}\\.json(\\.gz)?)$`);
+  const del=files.filter(f=>re.test(f.name)||(/^surf_.+\.json(\.gz)?$/.test(f.name)&&ids.has(f.name.replace(/^surf_|\.json(\.gz)?$/g,""))));let err=0,i=0;
+  for(const f of del){i++;if(onp)onp(i,del.length,f.name);try{await gd(`drive/v3/files/${f.id}`,{method:"DELETE"});}catch(e){err++;}}
+  ccGoneSet(cc,1);await countryRemove(cc);
+  try{const fl=await gdList();vecDriveSet(fl);poiDriveSet(fl);surfDriveSet(fl);}catch(e){}
+  offSharedMerge();await syncDrive(true);return {n:del.length,mb:del.reduce((a,f)=>a+(+f.size||0),0)/1048576,err};}
+/* Am PC: überall entfernte Länder (letzte 60 Tage) mit Aufräum-Datei für den Ordner IbexMap-Karten */
+function goneBox(){if(ADM||devGuess()!=="PC")return "";let done={};try{done=JSON.parse(ls("rb_gbatdone")||"{}");}catch(e){}
+  const l=Object.entries(ccGone()).filter(([cc,r])=>r.g&&Date.now()-r.t<60*864e5&&!(done[cc]>r.t));if(!l.length)return "";
+  return `<div class="mgh">Überall entfernt – Ordner IbexMap-Karten am PC aufräumen</div><div class="mgrp">${l.map(([cc])=>`<div class="mrow wrap" style="cursor:default"><span class="mic">${mi("trash",20)}</span>
+    <span class="mtx"><b>${esc(flagEmoji(cc)+" "+countryName(cc))}</b><small>vec_${cc}.pmtiles, dem_${cc}.pmtiles und ${cc}-rohdaten.osm.pbf liegen evtl. noch auf diesem PC</small></span>
+    <button class="btn sec ovb" data-gbat="${cc}">Aufräum-Datei (PC)</button><button class="btn sec ovb" data-gok="${cc}">Erledigt</button></div>`).join("")}</div>`;}
+/* Aufräum-Datei für den PC: löscht im Ordner IbexMap-Karten die Dateien dieses Landes */
+function cleanBat(cc){const n=countryName(cc).normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9 ]/g,"");const fs=[`vec_${cc}.pmtiles`,`vec_${cc}.ok`,`dem_${cc}.pmtiles`,`dem_${cc}.ok`,`${cc}-rohdaten.osm.pbf`,`${cc}-rohdaten.ok`];
+  return ["@echo off",`title IbexMap - ${n} aufraeumen`,'cd /d "%USERPROFILE%\\IbexMap-Karten" 2>nul || (echo Ordner IbexMap-Karten nicht gefunden.& pause & exit /b 0)',"echo.",`echo   Dateien von ${n} im Ordner IbexMap-Karten loeschen:`,
+    ...fs.map(f=>`if exist ${f} (del ${f} & echo      ${f} geloescht)`),`if exist ${n.replace(/ /g,"")}_laden.bat del ${n.replace(/ /g,"")}_laden.bat`,"echo.","echo   Fertig. Das Programm pmtiles.exe bleibt fuer das naechste Land.","pause"].join("\r\n")+"\r\n";}
+function countryRemoveUI(cc){const N=countryName(cc);const pc=devGuess()==="PC";
+  openPanel(`<h2>${esc(flagEmoji(cc)+" "+N)} entfernen</h2>
+    <p class="muted">Deine Punkte, Fotos und Fahrspuren bleiben immer erhalten – gelöscht werden nur die Kartendaten des Landes (Vektorkarte, Höhendaten, Kartenbilder, Strassenoberfläche, POI).</p>
+    <div class="mgrp">
+     <button class="mrow main" id="crAll"><span class="mic">${mi("trash",20)}</span><span class="mtx"><b>Überall entfernen</b><small>Nach der Reise: auf diesem Gerät und auf Google Drive löschen; Handys und Tablet löschen es beim nächsten Abgleich selbst.</small></span></button>
+     <button class="mrow" id="crHere"><span class="mic">${mi("trash",20)}</span><span class="mtx"><b>Nur von diesem Gerät</b><small>Auf Google Drive und den anderen Geräten bleibt alles – z. B. um hier Platz zu schaffen.</small></span></button></div>
+    <div class="actions"><button class="btn sec" id="crBack">Zurück</button></div>`);
+  $("#crBack").onclick=offOverview;
+  $("#crHere").onclick=()=>confirmBox(`${esc(N)} von diesem Gerät entfernen?`,async()=>{openPanel(`<h2>${esc(N)} wird entfernt …</h2>`);await countryRemove(cc);toast(`${N} von diesem Gerät entfernt`,3000);offOverview();});
+  $("#crAll").onclick=()=>{if(!gdClient()||!gdOk()){toast("Für «Überall entfernen» zuerst bei Google anmelden (Menü › Google Drive)",6000);return;}
+    confirmBox(`${esc(N)} überall entfernen?<br><span style="font-weight:400">Vektorkarte, Höhendaten, POI und Strassenoberfläche werden auf Google Drive gelöscht, dazu hier alle Kartendaten. Die anderen Geräte löschen ${esc(N)} beim nächsten Abgleich. Für eine spätere Reise lässt sich das Land jederzeit neu laden.</span>`,async()=>{
+      openPanel(`<h2>${esc(N)} wird überall entfernt …</h2><div class="bar" style="height:14px"><div id="crBar"></div></div><p id="crTxt" class="muted">Google Drive …</p>`);
+      try{const r=await countryRemoveAll(cc,(i,t,n)=>{$("#crBar").style.width=Math.round(i/t*100)+"%";$("#crTxt").textContent=n;});
+        openPanel(`<h2>${esc(N)} entfernt ✓</h2><p>Google Drive: ${fmtN(r.n)} Dateien gelöscht (ca. ${fmtN(Math.round(r.mb))} MB)${r.err?` – ${r.err} konnten nicht gelöscht werden («Speicher prüfen» zeigt sie)`:""}. Dieses Gerät ist aufgeräumt; Handys und Tablet folgen beim nächsten Abgleich.</p>
+          <p><b>Am PC</b> liegen die Dateien der Startdatei noch im Ordner <code>IbexMap-Karten</code> (Benutzerordner): <code>vec_${cc}.pmtiles</code>, <code>dem_${cc}.pmtiles</code>, <code>${cc}-rohdaten.osm.pbf</code>. ${pc?"Die Aufräum-Datei löscht sie per Doppelklick.":"Am PC in IbexMap: Offline-Daten › «Aufräum-Datei (PC)» – oder dort von Hand löschen."}</p>
+          <div class="actions">${pc?`<button class="btn" id="crBat">${mi("download",18)} Aufräum-Datei herunterladen</button>`:""}<button class="btn sec" id="crOk">Fertig</button></div>`);
+        const b=$("#crBat");if(b)b.onclick=()=>{download(`${N.normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9]/g,"")}_aufraeumen.bat`,new Blob([cleanBat(cc)],{type:"application/octet-stream"}));toast("Aufräum-Datei heruntergeladen – am PC doppelklicken",5000);};
+        $("#crOk").onclick=offOverview;}
+      catch(e){toast("Entfernen: "+(e.message==="auth"?"Google-Anmeldung abgelaufen – neu anmelden und nochmals":e.message),7000);offOverview();}});};}
 /* ---------- Speicher prüfen und aufräumen ----------
    Listet auf diesem Gerät und auf Google Drive auf, was gespeichert ist, und markiert Unnötiges (Regeln siehe unten).
    Nie gelöscht: Punkte, Fotos, Fahrspuren, Vektorkarten, Höhendaten, aktuelle POI und Strassenoberfläche deiner Gebiete. */
@@ -3442,16 +3520,22 @@ async function rasterRemove(pk){const others=offPacks.filter(x=>x!==pk);const ke
   if(pk.kind==="country"&&!twin){pk.layer="keine";pk.vec=true;if(pk.dem===undefined)pk.dem=true;}/* Gebiet bleibt für Vektorkarte, Strassenoberfläche und POI */
   else{if(pk.surf)await surfDeletePack(pk,others);if(twin){twin.surf=twin.surf||pk.surf;twin.poi=twin.poi||pk.poi;}offPacks=others;ls("rb_offhide",JSON.stringify([...offHide(),pk.id]));}
   await saveOffPacks();offCntCache.clear();drawOffAreas();return n;}
+async function offPackRemoveTiles(pk){const keep=new Set();offPacks.forEach(x=>{if(x!==pk&&x.layer===pk.layer)packURLs(x).forEach(u=>keep.add(u));});
+  for(const cn of [OFFLINE,DEM_CACHE]){try{const c=await caches.open(cn);for(const u of packURLs(pk))if(!keep.has(u))await c.delete(u);}catch(e){}}offCntCache.clear();}
 async function storageDialog(){openPanel(`<h2>Speicher prüfen</h2><p class="muted">Wird zusammengestellt …</p>`);
-  await loadOffPacks();await loadPoiOff();const vf=await vecFiles();const L=[],D=[];const MB=b=>b/1048576;
+  await loadOffPacks();await loadPoiOff();const vf=await vecFiles(),df=await vecFiles("dem");const L=[],D=[];const MB=b=>b/1048576;
   /* --- dieses Gerät --- */
   for(const pk of offPacks){if(!TSRC(pk.layer)||pk.layer==="Höhendaten")continue;const r=await offPackCount(pk,true);if(!r.n)continue;
-    const vec=pk.cc&&vf[pk.cc]&&vf[pk.cc].ok;const unn=!!vec&&pk.layer!=="Satellit";
-    L.push({t:`Kartenbilder ${pk.name} · ${pk.layer} Stufe ${pk.zmax}`,s:unn?"nicht nötig – die Vektorkarte ersetzt sie":pk.layer==="Satellit"?"Satellit offline – nur behalten, wenn du Satellitenbilder ohne Internet brauchst":"kein Ersatz durch eine Vektorkarte – behalten",mb:estMB(r.n,pk.layer),del:true,sel:unn,act:()=>rasterRemove(pk)});}
+    const vec=pk.cc&&vf[pk.cc]&&vf[pk.cc].ok;const unn=pk.layer==="Strassen"||(!!vec&&pk.layer!=="Satellit");
+    L.push({t:`Kartenbilder ${pk.name} · ${pk.layer} Stufe ${pk.zmax}`,s:unn?(pk.layer==="Strassen"?"nicht mehr nötig – Kartenart «Strassen» gibt es nicht mehr":"nicht nötig – die Vektorkarte ersetzt sie"):pk.layer==="Satellit"?"Satellit offline – nur behalten, wenn du Satellitenbilder ohne Internet brauchst":"kein Ersatz durch eine Vektorkarte – behalten",mb:estMB(r.n,pk.layer),del:true,sel:unn,act:()=>rasterRemove(pk)});}
   for(const [cc,v] of Object.entries(vf))L.push({t:`Vektorkarte ${countryName(cc)}`,s:v.ok?"wird gebraucht":"unvollständig – «Hier vervollständigen» setzt fort",mb:MB(v.size),keep:true});
-  try{const d=await opfs();for await(const [n,h] of d.entries()){if(h.kind!=="file"||/^vec_[A-Z]{2}\.pmtiles$/.test(n))continue;const cc=VEC_ALIAS[n.toLowerCase()];if(cc&&vf[cc]&&vf[cc].name===n)continue;
+  for(const [cc,v] of Object.entries(df))L.push({t:`Höhendaten ${countryName(cc)}`,s:v.ok?"für Höhenlinien und Relief – wird gebraucht":"unvollständig – «Hier vervollständigen» setzt fort",mb:MB(v.size),keep:true});
+  try{const d=await opfs();for await(const [n,h] of d.entries()){if(h.kind!=="file"||/^(vec|dem)_[A-Z]{2}\.pmtiles$/.test(n))continue;const cc=VEC_ALIAS[n.toLowerCase()];if(cc&&vf[cc]&&vf[cc].name===n)continue;
     const f=await h.getFile();L.push({t:`Datei ${n}`,s:cc?`doppelt – die Vektorkarte ${countryName(cc)} ist schon gespeichert`:"Testdatei / unbekannt",mb:MB(f.size),del:true,sel:true,act:async()=>{await d.removeEntry(n);}});}}catch(e){}
-  for(const p of offPacks.filter(x=>x.kind==="country"&&x.dem)){const r=await offPackCount(demPack(p));if(r.n)L.push({t:`Höhendaten ${p.name}`,s:"für Höhenlinien und Relief – wird gebraucht",mb:Math.round(r.n*0.1),keep:true});}
+  /* alte Höhendaten-Kacheln (vor v7.3): unnötig, sobald die Höhendaten-Datei des Landes da ist */
+  for(const p of offPacks.filter(x=>x.kind==="country"&&x.dem)){const dp=demPack(p);const r=await offPackCount(dp,true);if(!r.n)continue;const has=p.cc&&df[p.cc]&&df[p.cc].ok;
+    L.push(has?{t:`Alte Höhendaten-Kacheln ${p.name}`,s:"nicht nötig – ersetzt durch die Höhendaten-Datei",mb:Math.round(r.n*0.1),del:true,sel:true,act:async()=>{await offPackRemoveTiles(dp);}}
+      :{t:`Höhendaten-Kacheln ${p.name}`,s:"werden gebraucht, bis die Höhendaten-Datei da ist (am PC Startdatei neu ausführen)",mb:Math.round(r.n*0.1),keep:true});}
   poiOff.forEach(p=>L.push({t:`POI ${countryName(p.cc)}`,s:`${fmtN(p.n)} Orte · Stand ${fmtD(p.loaded)} – wird gebraucht`,mb:Math.max(1,JSON.stringify(p.items).length/1048576/3),keep:true}));
   let keys=[];try{keys=await keysOf("meta");}catch(e){}
   const used=new Set();offPacks.filter(p=>p.surf).forEach(p=>packCells(p).forEach(k=>used.add(k)));
@@ -3468,11 +3552,11 @@ async function storageDialog(){openPanel(`<h2>Speicher prüfen</h2><p class="mut
   else if(!gdOk())driveNote="Für die Prüfung von Google Drive ist eine frische Google-Anmeldung nötig.";
   else{try{const files=await gdList();const defs=[...offPacks,...offShared()];const pids=new Set(defs.map(d=>d.id));
     const vecCC=new Set([...Object.keys(vecDrive()),...Object.entries(vf).filter(([c,v])=>v.ok).map(([c])=>c)]);
-    const needSlug=new Set(defs.filter(d=>TSRC(d.layer)&&d.layer!=="Höhendaten"&&(d.layer==="Satellit"||!d.cc||!vecCC.has(d.cc))).map(d=>TL_SLUG[d.layer]));
+    const needSlug=new Set(defs.filter(d=>TSRC(d.layer)&&d.layer!=="Höhendaten"&&d.layer!=="Strassen"&&(d.layer==="Satellit"||!d.cc||!vecCC.has(d.cc))).map(d=>TL_SLUG[d.layer]));
     const grp=(t,s,list,o)=>{if(!list.length)return;const mb=list.reduce((a,f)=>a+(+f.size||0),0)/1048576;D.push(Object.assign({t,s:s+` · ${fmtN(list.length)} Datei${list.length>1?"en":""}`,mb,files:list},o));};
     const by=re=>files.filter(f=>re.test(f.name));
     /* doppelte Dateien gleichen Namens: neueste behalten */
-    const usedCC=f=>{const c=(f.name.match(/^(?:poi|vec)_([A-Z]{2})\./)||[])[1];const h=new Set(ccHidden());return defs.some(d=>d.cc===c&&!h.has(c));};
+    const usedCC=f=>{const c=(f.name.match(/^(?:poi|vec|dem)_([A-Z]{2})\./)||[])[1];const h=new Set(ccHidden());return defs.some(d=>d.cc===c&&!h.has(c));};
     const names={};files.forEach(f=>{(names[f.name]=names[f.name]||[]).push(f);});
     const dup=[];Object.values(names).forEach(l=>{if(l.length>1){l.sort((a,b)=>String(b.modifiedTime||"").localeCompare(String(a.modifiedTime||"")));dup.push(...l.slice(1));}});const dupId=new Set(dup.map(f=>f.id));
     const live=files.filter(f=>!dupId.has(f.id));
@@ -3480,11 +3564,15 @@ async function storageDialog(){openPanel(`<h2>Speicher prüfen</h2><p class="mut
     grp("Punkte, Reisen, Einstellungen","werden gebraucht",live.filter(f=>f.name===GD_DATA),{keep:true});
     grp("Fahrspuren","werden gebraucht",live.filter(f=>/^trk_/.test(f.name)),{keep:true});
     grp("Vektorkarten","werden gebraucht",live.filter(f=>/^vec_[A-Z]{2}\.pmtiles$/.test(f.name)&&usedCC(f)),{keep:true});
-    grp("Höhendaten-Pakete","werden gebraucht",live.filter(f=>/^tiles_dem_/.test(f.name)),{keep:true});
-    const hidC=new Set(ccHidden());const usedC=new Set(defs.filter(d=>d.cc&&!hidC.has(d.cc)).map(d=>d.cc));const ccOf=n=>(n.match(/^(?:poi|vec)_([A-Z]{2})\./)||[])[1];
-    const goneC=live.filter(f=>/^(poi_[A-Z]{2}\.json(\.gz)?|vec_[A-Z]{2}\.pmtiles)$/.test(f.name)&&!usedC.has(ccOf(f.name)));const goneId=new Set(goneC.map(f=>f.id));
+    grp("Höhendaten","werden gebraucht",live.filter(f=>/^dem_[A-Z]{2}\.pmtiles$/.test(f.name)&&usedCC(f)),{keep:true});
+    { const demCC=new Set(Object.keys(vecDrive("dem")));const oldDem=live.filter(f=>/^tiles_dem_/.test(f.name));
+      const allNew=defs.filter(d=>d.kind==="country"&&d.cc&&d.dem).every(d=>demCC.has(d.cc));
+      if(allNew)grp("Alte Höhendaten-Pakete","nicht nötig – ersetzt durch die Höhendaten-Dateien",oldDem,{del:true,sel:true});
+      else grp("Alte Höhendaten-Pakete","werden gebraucht, bis für jedes Land die Höhendaten-Datei auf Drive liegt",oldDem,{keep:true}); }
+    const hidC=new Set(ccHidden());const usedC=new Set(defs.filter(d=>d.cc&&!hidC.has(d.cc)).map(d=>d.cc));const ccOf=n=>(n.match(/^(?:poi|vec|dem)_([A-Z]{2})\./)||[])[1];
+    const goneC=live.filter(f=>/^(poi_[A-Z]{2}\.json(\.gz)?|(vec|dem)_[A-Z]{2}\.pmtiles)$/.test(f.name)&&!usedC.has(ccOf(f.name)));const goneId=new Set(goneC.map(f=>f.id));
     grp("POI-Dateien","werden gebraucht",live.filter(f=>/^poi_[A-Z]{2}\.json(\.gz)?$/.test(f.name)&&!goneId.has(f.id)),{keep:true});
-    grp("Länder, die kein Gerät mehr verwendet",[...new Set(goneC.map(f=>countryName(ccOf(f.name))))].join(", ")+" – Vektorkarte/POI auf Drive, nur löschen, wenn du das Land nicht mehr brauchst",goneC,{del:true,sel:false});
+    grp("Länder, die kein Gerät mehr verwendet",[...new Set(goneC.map(f=>countryName(ccOf(f.name))))].join(", ")+" – Vektorkarte/Höhendaten/POI auf Drive, nur löschen, wenn du das Land nicht mehr brauchst",goneC,{del:true,sel:false});
     const sOk=live.filter(f=>/^surf_.+\.json(\.gz)?$/.test(f.name)&&pids.has(f.name.replace(/^surf_|\.json(\.gz)?$/g,""))),sOld=live.filter(f=>/^surf_.+\.json(\.gz)?$/.test(f.name)&&!sOk.includes(f));
     grp("Strassenoberfläche deiner Gebiete","wird gebraucht",sOk,{keep:true});
     grp("Strassenoberfläche gelöschter Gebiete","gehört zu keinem Gebiet mehr",sOld,{del:true,sel:true});
@@ -3610,12 +3698,13 @@ function quickPoint(photo){if(!me){toast("Noch keine GPS-Position – kurz warte
   $("#qPh").onchange=e=>{const f=e.target.files[0];if(f&&pick)save(pick,f);};}
 
 (async()=>{
+  stMark("Programm geladen");
   try{db=await openDB();}catch(e){toast("Speicher nicht verfügbar – Daten werden nicht gesichert",6000);return;}
   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
   showSyncBtn();gdRestore();const _gdNew=gdFromRedirect();
   await loadMeta();
   if(ADM)admInit();
-  await loadPoints();
+  await loadPoints();stMark(`Punkte (${points.length})`);
   /* letzte Kartenansicht steht schon; ohne gespeicherte Ansicht alle Punkte zeigen */
   if(!localStorage.getItem("rb_view")&&points.length){const b=L.latLngBounds(points.map(p=>[p.lat,p.lon]));map.fitBounds(b,{padding:[30,30]});}
   map.on("moveend",()=>{const c=map.getCenter();try{localStorage.setItem("rb_view",JSON.stringify({lat:+c.lat.toFixed(5),lon:+c.lng.toFixed(5),z:map.getZoom()}));}catch(e){}});
@@ -3625,7 +3714,7 @@ function quickPoint(photo){if(!me){toast("Noch keine GPS-Position – kurz warte
   if(!ADM&&ls("rb_drive")==="1")driveMode(true);
   $("#driveBtn").onclick=()=>driveMode(true);if(ADM)$("#driveBtn").style.display="none";nightApply();setInterval(nightApply,300000);
   if(_gdNew||sessionStorage.getItem("rb_after_login")){try{sessionStorage.removeItem("rb_after_login");}catch(e){}if(gdToken)setTimeout(()=>syncDrive(),400);}
-  else autoSyncSoon(4000);
+  else autoSyncSoon(30000);/* Abgleich erst, wenn die App steht */
   /* Altlasten früherer Versionen */
   ["rb_mapshere"].forEach(k=>{if(ls(k))ls(k,null);});
   setTimeout(vecAutoDefault,1500);
@@ -3633,7 +3722,8 @@ function quickPoint(photo){if(!me){toast("Noch keine GPS-Position – kurz warte
   /* Alles Weitere erst, wenn die Karte steht – Schritt für Schritt, damit die App bedienbar bleibt */
   const idle=f=>new Promise(r=>setTimeout(()=>(window.requestIdleCallback||(c=>c()))(()=>{Promise.resolve().then(f).catch(()=>{}).then(r);},{timeout:1500}),50));
   (async()=>{
-    await idle(async()=>{await loadPoiOff();drawOsm();});
+    stMark("Karte bereit");
+    if(poiShow.length)await idle(async()=>{await loadPoiOff();drawOsm();});
     await idle(async()=>{try{const o=await getOne("meta","osmpoi");if(o)osmData={items:o.items||[],loaded:o.loaded,scope:o.scope||""};}catch(e){}drawOsm();});
     await idle(loadGeo);
     await idle(async()=>{if(!countryData)await ensureCountries();else await assignCountries();});
