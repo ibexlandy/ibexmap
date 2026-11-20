@@ -1,4 +1,4 @@
-IbexMap – v7.14 (privates Projekt)
+IbexMap – v7.15 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -376,6 +376,9 @@ NEU IN v6.8
 NEU IN v7.1
 - Vektorkarte erstellen per Doppelklick: Offline-Daten › Land › «Karte erstellen (PC)» › «Startdatei herunterladen». Die Datei <Land>_laden.bat holt das Programm pmtiles, sucht die neueste Weltkarte von Protomaps und schneidet das Land heraus (Ordner IbexMap-Karten im Benutzerordner); danach in IbexMap «Datei laden». Kein cmd, kein Befehl, kein Datum mehr. Der Befehl von Hand bleibt unter «Von Hand (für Fortgeschrittene)».
 - Geprüft: Ganz in der App geht es nicht – der Protomaps-Server sperrt den Zugriff aus dem Browser (CORS).
+
+NEU IN v7.15
+- Neben jedem «Koordinaten kopieren» (POI, Fahne, eigener Punkt, Mein Standort) und im Menü beim langen Drücken auf die Karte: Knopf «Google Maps» – öffnet die Koordinaten direkt in Google Maps (App oder Browser, braucht Internet).
 
 NEU IN v7.14
 - Menüführung: «‹ Zurück» oben links, die Knöpfe «Zurück» und die Zurück-Geste des Handys gehen jetzt immer eine Seite zurück (z. B. Kartenbilder-Details → Offline-Daten → Bereit für unterwegs? → Menü), statt direkt ins Menü oder auf die Karte. Oben links steht, wohin es zurückgeht. Erst auf der obersten Seite schliesst «Zurück» die Leiste.

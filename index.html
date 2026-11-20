@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <!-- Sicherheitsregeln: Code nur von hier (Fingerabdruck), cdnjs und unpkg (mit Prüfsumme). Fingerabdruck setzt /home/claude/tools/csp.py -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-jlnhNn6PkvBPTNdxJxHxhryBZsYaYuYedELHIWuA0cU=' https://cdnjs.cloudflare.com https://unpkg.com; worker-src 'self' blob:; child-src blob:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; font-src 'self' data: https:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-PP1WKjiIX3Mf4F54MvlTAfsRHoGEXEwvY4JNfUe0K10=' https://cdnjs.cloudflare.com https://unpkg.com; worker-src 'self' blob:; child-src blob:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; font-src 'self' data: https:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#92b78c">
 <title>IbexMap</title>
@@ -656,7 +656,7 @@ const ADM=(()=>{try{if(new URLSearchParams(location.search).has("admin")){sessio
   return sessionStorage.getItem("rb_admin")==="1"&&matchMedia("(min-width:900px)").matches;}catch(e){return false;}})();
 if(ADM)document.body.classList.add("adm");
 const GROUP="IbexMap";
-const VERSION="v7.14";
+const VERSION="v7.15";
 /* Startzeit-Messung: Sekunden seit dem Öffnen der App (im Menü › Gerät › Startzeit) */
 const ST_MARKS=[];function stMark(t){if(ST_MARKS.some(m=>m.t===t))return;ST_MARKS.push({t,s:performance.now()/1000});}
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
@@ -1367,6 +1367,10 @@ const navTitle=()=>{const h=$("#panel h2");return h?h.textContent.trim().replace
 const navCanBack=()=>navOver?NAV.length>0:NAV.length>1;
 function navBack(){if(!navCanBack())return closePanel();
   if(!navOver)NAV.pop();const t=NAV[NAV.length-1];NAV_CUR={key:t.key,fn:t.fn,back:1};t.fn();}
+/* «Google Maps» neben jedem «Koordinaten kopieren»: öffnet die Koordinaten in Google Maps (App oder Browser, braucht Internet) */
+const gmURL=co=>"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(co.replace(/\s+/g,""));
+const gmBtn=co=>`<a class="btn sec" href="${gmURL(co)}" target="_blank" rel="noopener noreferrer">${mi("globe",16)} Google Maps</a>`;
+function addGmBtns(root){root.querySelectorAll("[data-coco]").forEach(b=>{if(b.nextElementSibling&&b.nextElementSibling.dataset.gm)return;b.insertAdjacentHTML("afterend",gmBtn(b.dataset.coco).replace("<a ","<a data-gm=\"1\" "));});}
 function openPanel(html,kind=""){
   if(!kind)kind=/^\s*<h2>Menü<\/h2>/.test(html)?"menu":/^\s*<h2>Punkte \(/.test(html)?"list":"";
   const open=isPanelOpen();let cur=NAV_CUR;
@@ -1383,7 +1387,7 @@ function openPanel(html,kind=""){
   $("#panel").innerHTML=`<div class="ptop">${tgt?`<button class="pback" id="pBack">‹ ${esc(tgt.lbl||"Zurück")}</button>`:"<span></span>"}<span class="pgrab"></span><button class="px" id="pX" aria-label="Schliessen">✕</button></div>`+html;
   if(cur&&!cur.tr&&NAV[NAV.length-1]===cur)cur.lbl=kind==="menu"?"Menü":navTitle();
   $("#sheet").classList.add("open");$("#panel").scrollTop=0;
-  $("#pX").onclick=closePanel;const b=$("#pBack");if(b)b.onclick=navBack;growAll($("#panel"));
+  $("#pX").onclick=closePanel;const b=$("#pBack");if(b)b.onclick=navBack;growAll($("#panel"));addGmBtns($("#panel"));
   if(!panelHist){try{history.pushState({rbPanel:1},"");panelHist=true;}catch(e){}}}
 /* Knöpfe «Zurück» / «Zurück zum Menü» in den Seiten: eine Seite zurück, wenn es eine gibt */
 $("#panel").addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("button");if(!b||!/^Zurück( zum Menü)?$/.test(b.textContent.trim())||!navCanBack())return;
@@ -1938,7 +1942,8 @@ document.addEventListener("click",async e=>{const b=e.target.closest&&e.target.c
   toast(await copyText(co)?`Koordinaten kopiert: ${co}`:`Kopieren nicht möglich – ${co}`,4000);});
 map.on("contextmenu",e=>{if(placing)return;const ll=e.latlng;const co=`${ll.lat.toFixed(5)}, ${ll.lng.toFixed(5)}`;
   const pop=L.popup({closeButton:false,offset:[0,-4]}).setLatLng(ll).setContent(`<div class="ctxbtns"><button class="btn" id="cxFlag">${flagI} Fahne setzen</button><button class="btn sec" id="cxPoint">＋ Punkt setzen</button>
-    <button class="btn sec" id="cxCopy" title="Breite, Länge (Dezimalgrad, WGS84) kopieren">${mi("copy",16)} Koordinaten kopieren<small style="display:block;font-weight:400;font-variant-numeric:tabular-nums;opacity:.8">${co}</small></button></div>`).openOn(map);
+    <button class="btn sec" id="cxCopy" title="Breite, Länge (Dezimalgrad, WGS84) kopieren">${mi("copy",16)} Koordinaten kopieren<small style="display:block;font-weight:400;font-variant-numeric:tabular-nums;opacity:.8">${co}</small></button>
+    <a class="btn sec" href="${gmURL(co)}" target="_blank" rel="noopener noreferrer">${mi("globe",16)} In Google Maps öffnen</a></div>`).openOn(map);
   setTimeout(()=>{$("#cxFlag").onclick=()=>{map.closePopup();startPlace(ll,"flag");};$("#cxPoint").onclick=()=>{map.closePopup();startPlace(ll,"point");};
     $("#cxCopy").onclick=async()=>{map.closePopup();toast(await copyText(co)?`Koordinaten kopiert: ${co}`:`Kopieren nicht möglich – ${co}`,4000);};},30);});
 $("#navHere").onclick=()=>{
