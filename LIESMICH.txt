@@ -1,40 +1,42 @@
-IbexMap – v7.3 (privates Projekt)
+IbexMap – v7.4 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
-  index.html            die App
-  sw.js                 Offline-Zwischenspeicher (App + angeschaute Kartenausschnitte)
-  manifest.webmanifest  damit man die App auf Handy/Tablet installieren kann
-  icon-192.png / icon-512.png
+  index.html             die App
+  admin.html             Verwaltung (Tabelle) am PC
+  sw.js                  Offline-Zwischenspeicher (App, Bibliotheken, angeschaute Kartenausschnitte)
+  manifest.webmanifest   damit man die App auf Handy/Tablet installieren kann
+  topo.svg               Hintergrundmuster
+  ibexmap.intern.html    Familienseite (verschlüsselt)
+  icon-*.png, apple-touch-icon.png, favicon.png   App-Logo
+  LIESMICH.txt           diese Datei
 
-1) Am PC ausprobieren
-  - Ordner entpacken, index.html mit Chrome oder Edge öffnen.
-  - Punkte setzen, Fotos per Ziehen oder Ctrl+V einfügen, Liste, Export testen.
-  - Hinweis: GPS und Offline-Funktion gehen am PC über "Datei öffnen" nur eingeschränkt.
+1) Installieren und aktualisieren
+  Die App liegt auf GitHub Pages (https://ibexlandy.github.io/ibexmap/).
+  Neue Version: alle Dateien des zip ins Repository hochladen, danach auf den Geräten
+  Menü -> «App-Version» -> «Update suchen».
+  Auf Handy und Tablet in Chrome öffnen -> Menü -> «App installieren».
 
-2) Auf Tablet und Handy installieren
-  Für GPS, Kamera und Installation braucht die App eine https-Adresse.
-  Der Ordner muss dafür auf einen (privaten) Webspeicher, z. B.:
-    - Netlify Drop: Ordner ins Browserfenster ziehen -> https-Adresse
-    - GitHub Pages (privates GitHub-Konto)
-  Dann die Adresse in Chrome auf dem Gerät öffnen -> Menü -> "Zum Startbildschirm hinzufügen" / "App installieren".
-  Wichtig: Auf dem Webspeicher liegt NUR der Programmcode. Eure Punkte und Fotos
-  bleiben auf dem jeweiligen Gerät gespeichert und werden nirgends hochgeladen.
+2) Daten auf allen Geräten (Google Drive)
+  Punkte, Fotos, Reisen, Fahnen, Fahrspuren und Einstellungen werden über Google Drive
+  abgeglichen (privater App-Ordner, nur für IbexMap sichtbar): Menü -> «Jetzt abgleichen»
+  oder automatisch (Menü -> Unterwegs -> «Automatischer Abgleich»).
+  Die Daten liegen zusätzlich immer auf jedem Gerät, die App funktioniert ohne Internet.
+  Kartendaten pro Land (Vektorkarte, Höhendaten, POI, Strassenoberfläche) ebenfalls über
+  Google Drive: einmal am PC mit der Startdatei erstellen, die anderen Geräte holen sie mit
+  «Hier vervollständigen» (Menü -> Offline-Daten).
 
-3) Daten zwischen PC, Tablet und Handy abgleichen
-  Menü -> "Reisepaket exportieren" (eine .json-Datei mit allen Punkten und Fotos,
-  jedes Mal mit neuem Dateinamen) -> auf dem anderen Gerät Menü -> "importieren"
-  -> "Zusammenführen" (neuere Version gewinnt, auch Löschungen) oder "Alles ersetzen".
-  Das Reisepaket ist auch euer Backup – regelmässig exportieren!
+3) Sicherung und Import
+  Menü -> Daten -> «Sicherung (Datei)»: alle Punkte mit Fotos als eine Datei
+  (IbexMap_Paket_<Datum>.json) – zusätzlich zum Abgleich, unabhängig von Google.
+  Sinnvoll z. B. vor der Abreise, falls einmal versehentlich etwas gelöscht wird.
+  Menü -> Daten -> «Importieren»: GPX (z. B. von Claude erstellte Planungspunkte),
+  Google-Orte (Takeout), OsmAnd-Favoriten (.osf) oder eine Sicherung
+  -> «Zusammenführen» (neuere Version gewinnt) oder «Alles ersetzen».
 
 4) OsmAnd
-  - Im Punkt "Navigieren (OsmAnd)" antippen -> Android fragt nach der App.
-  - Menü -> "GPX exportieren": alle Punkte in EINER Gruppe "IbexMap".
-  - Die bisherige Datei Marokko_2027_Fixpunkte.gpx kann über "importieren" geladen werden.
-
-Noch nicht enthalten (nächste Schritte)
-  - Echte Offline-Karte für ganz Marokko (jetzt: nur bereits angeschaute Gebiete offline)
-  - Automatischer Abgleich über einen eigenen Server
+  - Im Punkt «Navigieren (OsmAnd)» antippen -> Android fragt nach der App.
+  - Menü -> Daten -> «GPX für OsmAnd»: alle Punkte in EINER Gruppe «IbexMap».
 
 NEU IN v6
 - Kartenfilter (Trichter-Knopf): Orte aus OpenStreetMap wie in OsmAnd (Einkauf, Tankstelle,
@@ -374,6 +376,17 @@ NEU IN v6.8
 NEU IN v7.1
 - Vektorkarte erstellen per Doppelklick: Offline-Daten › Land › «Karte erstellen (PC)» › «Startdatei herunterladen». Die Datei <Land>_laden.bat holt das Programm pmtiles, sucht die neueste Weltkarte von Protomaps und schneidet das Land heraus (Ordner IbexMap-Karten im Benutzerordner); danach in IbexMap «Datei laden». Kein cmd, kein Befehl, kein Datum mehr. Der Befehl von Hand bleibt unter «Von Hand (für Fortgeschrittene)».
 - Geprüft: Ganz in der App geht es nicht – der Protomaps-Server sperrt den Zugriff aus dem Browser (CORS).
+
+NEU IN v7.4
+- Offline-Daten › Höhenlinien: Knopf «Auf Drive stellen», wenn die Höhendaten-Datei auf diesem Gerät liegt, aber noch nicht auf Google Drive (z. B. wenn der Upload nach dem Einlesen nicht geklappt hat).
+- Datum und Uhrzeit: Die Startdatei benennt die Dateien mit Datum und Uhrzeit, z. B. vec_MA_2026-11-20_0812.pmtiles, dem_MA_2026-11-20_0812.pmtiles, MA-rohdaten_2026-11-20_0812.osm.pbf. Vorhandene Dateien ohne Datum werden beim ersten Start einmalig umbenannt (nicht neu geladen); die .ok-Dateien entfallen. Halbe Downloads heissen tmp_… bzw. .part. Beim Aktualisieren bleibt pro Art nur die neueste Datei.
+- Offline-Daten zeigen bei Vektorkarte, Höhenlinien, Strassenoberfläche und POI den «Stand» (Datum und Uhrzeit der Daten). Liegt auf Google Drive eine neuere Vektorkarte oder Höhendaten-Datei, meldet die Übersicht «neuere Version auf Drive», und «Hier vervollständigen» ersetzt die alte.
+- «Dateien laden (PC)»: Dateien eines anderen Landes werden abgewiesen; liegen mehrere Dateien gleicher Art vor, wird die neueste genommen.
+- Vektorkarte bis Detailstufe 14 statt 15: etwa halb so gross (Spanien ca. 1.9 statt 3.8 GB), Strassen, Pisten und Wege vollständig, beim Hineinzoomen weiterhin scharf (Stufe 15 brachte nur Gebäude und Hausnummern). Die Startdatei erkennt Vektorkarten mit Stufe 15 und erstellt sie einmalig kleiner neu; danach «Dateien laden», Handys und Tablet holen die neue Version mit «Hier vervollständigen».
+- Regionen (Provinzen Marokko) entfernt: Menüeinträge «Regionen Marokko» und «Region für alle Punkte», Anzeige bei Punkten, Spalte in der Verwaltung und im Export. Die gespeicherten Regionsgrenzen werden gelöscht. Land wird weiterhin automatisch zugeordnet.
+- Offline-Daten: Ist ein Land komplett (alles auf Google Drive), steht am PC statt «Dateien laden (PC)» und «Startdatei (PC)» nur noch «Aktualisieren (PC)»; dort Startdatei und «Dateien laden» zusammen.
+- Menü › Daten: «Reisepaket» heisst jetzt «Sicherung (Datei)» und steht weiter unten – der Abgleich zwischen den Geräten läuft über Google Drive, die Sicherung ist nur noch eine zusätzliche Absicherung. «Importieren» bleibt für GPX, Google-Orte, OsmAnd-Favoriten und Sicherungen. Einleitung dieser Datei auf den heutigen Stand gebracht.
+- Alte Topo/Strassen-Kartenbilder eines Landes zählen nicht mehr als «fehlt»: Die Zeile «Kartenbilder» erscheint nur noch für Satellit oder swisstopo, und «Hier vervollständigen» lädt keine Topo/Strassen-Bilder mehr (die Vektorkarte ersetzt sie). Ein neues Gerät übernimmt von den anderen Geräten nur noch Vektorkarte, Höhendaten, POI und Strassenoberfläche. Vorhandene alte Bilder lassen sich mit «Speicher prüfen» löschen.
 
 NEU IN v7.3
 - Höhenlinien und Relief aus einer einzigen Datei pro Land (wie die Vektorkarte): Die Startdatei erstellt jetzt zusätzlich dem_XX.pmtiles aus Mapterhorn (Copernicus-Höhenmodell 30 m, Kacheln 512 px bis Stufe 11 = volle Genauigkeit der Daten). Ersetzt die tausenden einzelnen Höhendaten-Bilder vom AWS-Server. Startdatei zeigt jetzt 5 Schritte; bereits vorhandene Dateien werden nicht nochmals geladen (Vektorkarte bis 7 Tage alt, Rohdaten neu bis 30 Tage alt statt 1 Tag, Höhendaten unbegrenzt).
