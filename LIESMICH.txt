@@ -1,4 +1,4 @@
-IbexMap – v7.4 (privates Projekt)
+IbexMap – v7.5 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -376,6 +376,13 @@ NEU IN v6.8
 NEU IN v7.1
 - Vektorkarte erstellen per Doppelklick: Offline-Daten › Land › «Karte erstellen (PC)» › «Startdatei herunterladen». Die Datei <Land>_laden.bat holt das Programm pmtiles, sucht die neueste Weltkarte von Protomaps und schneidet das Land heraus (Ordner IbexMap-Karten im Benutzerordner); danach in IbexMap «Datei laden». Kein cmd, kein Befehl, kein Datum mehr. Der Befehl von Hand bleibt unter «Von Hand (für Fortgeschrittene)».
 - Geprüft: Ganz in der App geht es nicht – der Protomaps-Server sperrt den Zugriff aus dem Browser (CORS).
+
+NEU IN v7.5
+- Sicherheit: Kartenbausteine (MapLibre, PMTiles, Leaflet usw.) mit fester Version und Prüfsumme – der Browser führt sie nur aus, wenn sie unverändert sind. Alte Bausteine ohne feste Version werden aus dem Speicher entfernt.
+- Sicherheitsregeln (Content-Security-Policy) für App und Familienseite: Code nur aus der App selbst und von den beiden Bibliotheks-Servern; eingeschleuster oder fremder Code wird blockiert.
+- Startdatei: pmtiles.exe wird nur verwendet, wenn das Download-Archiv die offizielle Prüfsumme von GitHub hat. Ein früher ungeprüft geladenes pmtiles.exe wird einmal neu geholt und geprüft.
+- Google-Anmeldung mit Zufallswert: Nur eine Anmeldung, die das Gerät selbst gestartet hat, wird angenommen.
+- Familienseite: GitHub-Konto und Repository werden auf erlaubte Zeichen geprüft.
 
 NEU IN v7.4
 - Offline-Daten › Höhenlinien: Knopf «Auf Drive stellen», wenn die Höhendaten-Datei auf diesem Gerät liegt, aber noch nicht auf Google Drive (z. B. wenn der Upload nach dem Einlesen nicht geklappt hat).

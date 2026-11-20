@@ -2,13 +2,15 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
+<!-- Sicherheitsregeln: Code nur von hier (Fingerabdruck), cdnjs und unpkg (mit Prüfsumme). Fingerabdruck setzt /home/claude/tools/csp.py -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-BRe39zTwxPHSp8jTeKdAiAFlS0oeO9fGSMbaopc4FAg=' https://cdnjs.cloudflare.com https://unpkg.com; worker-src 'self' blob:; child-src blob:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; font-src 'self' data: https:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#92b78c">
 <title>IbexMap</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="favicon.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha384-c6Rcwz4e4CITMbu/NBmnNS8yN2sC3cUElMEMfP3vqqKFp7GOYaaBBCqmaWBjmkjb" crossorigin="anonymous">
 <style>
 :root{--sb:env(safe-area-inset-bottom,0px);--bg:#f4f1ea;--ink:#222;--muted:#6b6b6b;--accent:#2f3b2f;--accent2:#c8742c;--line:#d9d3c7;--card:#fff}
 *{box-sizing:border-box}
@@ -449,7 +451,7 @@ onmessage=async ev=>{try{const {file,poiFirst,keep,hw}=ev.data;P=(t,f,x)=>postMe
   postMessage({t:"done",ways:hwW,pois:pois.length,cells:cells.size,nodes:N});
 }catch(e){postMessage({t:"err",msg:e&&e.message||String(e)});}};
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" integrity="sha384-NElt3Op+9NBMCYaef5HxeJmU4Xeard/Lku8ek6hoPTvYkQPh3zLIrJP7KiRocsxO" crossorigin="anonymous"></script>
 <script>
 "use strict";
 /* ---------- Konstanten ---------- */
@@ -556,7 +558,7 @@ const ADM=(()=>{try{if(new URLSearchParams(location.search).has("admin")){sessio
   return sessionStorage.getItem("rb_admin")==="1"&&matchMedia("(min-width:900px)").matches;}catch(e){return false;}})();
 if(ADM)document.body.classList.add("adm");
 const GROUP="IbexMap";
-const VERSION="v7.4";
+const VERSION="v7.5";
 /* Startzeit-Messung: Sekunden seit dem Öffnen der App (im Menü › Gerät › Startzeit) */
 const ST_MARKS=[];function stMark(t){if(ST_MARKS.some(m=>m.t===t))return;ST_MARKS.push({t,s:performance.now()/1000});}
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
@@ -702,14 +704,22 @@ const DEM_URL="https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{
 const DEMLAY={_url:DEM_URL,options:{maxZoom:DEM_MAXZ}};/* nur für Offline-Pakete «Höhendaten», wird nie angezeigt */
 const TSRC=n=>BASE[n]||(n==="Höhendaten"?DEMLAY:null);
 const VEC_NAME="Vektor (offline)";
-const VEC_LIBS=["https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.js","https://unpkg.com/pmtiles@4/dist/pmtiles.js","https://unpkg.com/@protomaps/basemaps@5/dist/basemaps.js",
-  "https://unpkg.com/maplibre-contour@0.1.0/dist/index.min.js","https://unpkg.com/@maplibre/maplibre-gl-leaflet/leaflet-maplibre-gl.js"];
-const VEC_CSS="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.css";
+/* Bausteine mit fester Version und Prüfsumme (SRI): Der Browser führt sie nur aus, wenn sie Byte für Byte unverändert sind.
+   Neue Version: URL und Prüfsumme gemeinsam ändern (sha384 der Datei). */
+const LIB_SRI={
+  "https://unpkg.com/maplibre-gl@5.24.1/dist/maplibre-gl.js":"sha384-nXMl9YiLoSG5KBPTFgvxVuIqQQcqIvo0bFrvoEaGJC6r7IibIzF1S36Zbf/sKBtL",
+  "https://unpkg.com/pmtiles@4.5.0/dist/pmtiles.js":"sha384-pbKNZbDshUsLnZMIVsn/t+j3xEY9PGfuX5Z22l5rcy/obXz3EwaMx1F5d9sRsJMn",
+  "https://unpkg.com/@protomaps/basemaps@5.7.2/dist/basemaps.js":"sha384-fzuU7k7ZWwfZAe1+3h7plrSA6dNazJaM2NsKVwcrReJLK0gwVwyOSyPwROl9m1M0",
+  "https://unpkg.com/maplibre-contour@0.1.0/dist/index.min.js":"sha384-rKd9nNV3F43xwxeA6WNNsPH+cMYQl6SEM+/HDoU/sgeuK+faXwhqXYA0Pwp0COXT",
+  "https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.4/leaflet-maplibre-gl.js":"sha384-tXYNKOHx4T02jMP7YYCtBxPIv1B5gaA5mcVPBzqMp6d7VzWzxJgI2aWF/nJLrQdS",
+  "https://unpkg.com/maplibre-gl@5.24.1/dist/maplibre-gl.css":"sha384-uTttxo/aOKbdE5RlD/SPzSDoDmNvGlUYPjONi2MN/b7c9HPSvW07OIuyP7uL6jxK"};
+const VEC_LIBS=Object.keys(LIB_SRI).filter(u=>u.endsWith(".js"));
+const VEC_CSS="https://unpkg.com/maplibre-gl@5.24.1/dist/maplibre-gl.css";
 const VEC_GLYPHS="https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf",VEC_SPRITE="https://protomaps.github.io/basemaps-assets/sprites/v4/light";
 let vecLibP=null,vecProto=null,vecDem=null;const vecAdded={};
 function vecLibs(){return vecLibP||(vecLibP=(async()=>{
-  if(!document.querySelector("link[data-vec]")){const l=document.createElement("link");l.rel="stylesheet";l.href=VEC_CSS;l.dataset.vec="1";document.head.appendChild(l);}
-  for(const u of VEC_LIBS)await new Promise((res,rej)=>{const s=document.createElement("script");s.src=u;s.onload=res;s.onerror=()=>rej(new Error(`Kartenbaustein «${u.split("/").slice(3,-2).join("/")||u}» nicht ladbar (beim ersten Mal ist Internet nötig)`));document.head.appendChild(s);});
+  if(!document.querySelector("link[data-vec]")){const l=document.createElement("link");l.rel="stylesheet";l.crossOrigin="anonymous";if(LIB_SRI[VEC_CSS])l.integrity=LIB_SRI[VEC_CSS];l.href=VEC_CSS;l.dataset.vec="1";document.head.appendChild(l);}
+  for(const u of VEC_LIBS)await new Promise((res,rej)=>{const s=document.createElement("script");s.crossOrigin="anonymous";if(LIB_SRI[u])s.integrity=LIB_SRI[u];s.src=u;s.onload=res;s.onerror=()=>rej(new Error(`Kartenbaustein «${u.split("/").slice(3,-2).join("/")||u}» nicht ladbar (beim ersten Mal ist Internet nötig)`));document.head.appendChild(s);});
   vecProto=new pmtiles.Protocol();maplibregl.addProtocol("pmtiles",vecProto.tile);
   vecDem=new mlcontour.DemSource({url:DEM_URL,encoding:"terrarium",maxzoom:DEM_MAXZ,worker:true,id:"dem"});vecDem.setupMaplibre(maplibregl);
   vecPrefetch();})().catch(e=>{vecLibP=null;throw e;}));}
@@ -737,7 +747,9 @@ async function vecFiles(k="vec"){const out={};try{const d=await opfs();const met
    Ohne Datei: wie bisher die Höhendaten von AWS (online bzw. aus früheren Paketen). */
 const DEMF_MAXZ=11;
 /* Vektorkarte bis Stufe 14: Strassen, Pisten und Wege sind vollständig und bleiben beim Hineinzoomen scharf; Stufe 15 (nur Gebäude, Hausnummern) verdoppelt die Datei */
-const VEC_MAXZ=14;let demSrcs=[],demFileDem=null,demReady=false,demKey="";
+const VEC_MAXZ=14;
+/* SHA-256 von go-pmtiles_1.31.2_Windows_x86_64.zip laut GitHub-Release (geprüft am 20.11.2026) */
+const PMTILES_SHA="a658baa4d7e55020aef6ca17bd9ff9faa1582671266b36f58c52db0ac8e785a1";let demSrcs=[],demFileDem=null,demReady=false,demKey="";
 async function demTile(u){const m=String(u).match(/demfile:\/\/(\d+)\/(\d+)\/(\d+)/);if(!m)return null;
   for(const s of demSrcs){try{const r=await s.getZxy(+m[1],+m[2],+m[3]);if(r&&r.data)return new Uint8Array(r.data);}catch(e){}}return null;}
 async function demPrepare(){const fs=await vecFiles("dem");const ok=Object.values(fs).filter(v=>v.ok);
@@ -855,15 +867,22 @@ function vecBat(cc){const gf=GEOFABRIK[cc]?`https://download.geofabrik.de/${GEOF
 'cd /d "%DIR%"',
 `for /f %%t in ('powershell -NoProfile -Command "(Get-Date).ToString('yyyy-MM-dd_HHmm')"') do set "TS=%%t"`,
 ...migr(`${V}.pmtiles`,`${V}.ok`,V,".pmtiles"),...migr(`${H}.pmtiles`,`${H}.ok`,H,".pmtiles"),...migr(`${R}.osm.pbf`,`${R}.ok`,R,".osm.pbf"),
+/* pmtiles.exe nur verwenden, wenn das Download-Archiv die offizielle Prüfsumme von GitHub hat (SHA-256, Release v1.31.2) */
+"if exist pmtiles.exe if not exist pmtiles_1.31.2_geprueft.txt del pmtiles.exe",
 "if not exist pmtiles.exe (",
-"  echo   1/5  Programm pmtiles wird geholt ...",
+"  echo   1/5  Programm pmtiles wird geholt und geprueft ...",
 "  curl -s -L -o pmtiles.zip https://github.com/protomaps/go-pmtiles/releases/download/v1.31.2/go-pmtiles_1.31.2_Windows_x86_64.zip",
 "  if errorlevel 1 goto err",
+'  set "H="',
+`  for /f "skip=1 delims=" %%h in ('certutil -hashfile pmtiles.zip SHA256') do if not defined H set "H=%%h"`,
+'  set "H=!H: =!"',
+`  if /i not "!H!"=="${PMTILES_SHA}" (echo        FEHLER: pmtiles.zip hat nicht die offizielle Pruefsumme - wird nicht verwendet.& del pmtiles.zip& goto err)`,
 "  tar -xf pmtiles.zip pmtiles.exe",
 "  if errorlevel 1 goto err",
 "  del pmtiles.zip",
+"  echo Pruefsumme ok> pmtiles_1.31.2_geprueft.txt",
 ") else (",
-"  echo   1/5  Programm pmtiles ist schon da.",
+"  echo   1/5  Programm pmtiles ist schon da ^(geprueft^).",
 ")",
 ...newest(`${V}_*.pmtiles`,7),
 /* nur verwenden, wenn mit der aktuellen Detailstufe erstellt (bis v7.3: Stufe 15, viel grösser) */
@@ -2252,17 +2271,20 @@ const GD_REDIRECT=()=>location.origin+location.pathname;
 function gdRestore(){try{const t=JSON.parse(localStorage.getItem("rb_gtok")||"null");if(t&&Date.now()<t.exp-60000){gdToken=t.tok;gdExp=t.exp;}}catch(e){}}
 function gdFromRedirect(){if(!/access_token=|error=/.test(location.hash))return false;
   const q=new URLSearchParams(location.hash.slice(1));history.replaceState(null,"",location.pathname+location.search);
-  if(q.get("state")!=="ibexmap"){return false;}
+  /* Zufallswert der Anmeldung prüfen: nur eine Anmeldung, die dieses Gerät selbst gestartet hat, wird angenommen */
+  const want=ls("rb_gstate");ls("rb_gstate",null);
+  if(!want||q.get("state")!==want){if(q.get("access_token"))setTimeout(()=>toast("Google-Anmeldung abgelehnt (nicht von diesem Gerät gestartet) – bitte neu anmelden",7000),500);return false;}
   if(q.get("error")){if(/interaction_required|login_required|consent_required/.test(q.get("error"))&&!sessionStorage.getItem("rb_retry")){
       sessionStorage.setItem("rb_retry","1");ls("rb_gconn",null);setTimeout(()=>gdAuth(true),300);return false;}
     sessionStorage.removeItem("rb_retry");setTimeout(()=>toast("Google-Anmeldung abgebrochen oder blockiert: "+q.get("error"),8000),500);return false;}
   try{sessionStorage.removeItem("rb_retry");}catch(e){}
   gdToken=q.get("access_token");gdExp=Date.now()+(+q.get("expires_in")||3600)*1000;ls("rb_gconn","1");
   try{localStorage.setItem("rb_gtok",JSON.stringify({tok:gdToken,exp:gdExp}));}catch(e){}return true;}
+function gdState(){const v=[...crypto.getRandomValues(new Uint8Array(16))].map(b=>b.toString(16).padStart(2,"0")).join("");ls("rb_gstate",v);return v;}
 async function gdAuth(force){if(!force&&gdToken&&Date.now()<gdExp-60000)return gdToken;
   const u=new URL("https://accounts.google.com/o/oauth2/v2/auth");
   u.search=new URLSearchParams({client_id:gdClient(),redirect_uri:GD_REDIRECT(),response_type:"token",scope:GD_SCOPE,
-    include_granted_scopes:"true",state:"ibexmap",prompt:ls("rb_gconn")&&!force?"none":"select_account",...(ls("rb_gmail")?{login_hint:ls("rb_gmail")}:{})}).toString();
+    include_granted_scopes:"true",state:gdState(),prompt:ls("rb_gconn")&&!force?"none":"select_account",...(ls("rb_gmail")?{login_hint:ls("rb_gmail")}:{})}).toString();
   toast("Weiter zur Google-Anmeldung …",4000);
   try{sessionStorage.setItem("rb_after_login","sync");}catch(e){}
   location.href=u.toString();
@@ -2876,7 +2898,9 @@ const famShared=()=>{const c=famCfg(),o={};FAM_SHARED.forEach(k=>{if(c[k]!==unde
 function famMerge(r){if(!r||!r.upd)return false;const c=famCfg();
   if((c.upd||c.last||0)>=r.upd){if((r.last||0)>(c.last||0)){c.last=r.last;famSave(c);}return false;}
   const n=Object.assign({},c);FAM_SHARED.forEach(k=>{if(r[k]!==undefined)n[k]=r[k];});if((c.last||0)>(n.last||0))n.last=c.last;famSave(n);return true;}
-const famURL=c=>`https://${c.owner}.github.io/${c.repo}/`;
+/* GitHub-Konto und Repository nur mit erlaubten Zeichen (sonst kein Link) */
+const ghOk=c=>/^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$/.test(c.owner||"")&&/^[A-Za-z0-9._-]{1,100}$/.test(c.repo||"");
+const famURL=c=>ghOk(c)?`https://${c.owner}.github.io/${c.repo}/`:"#";
 function b64(buf){const b=buf instanceof Uint8Array?buf:new Uint8Array(buf);let s="";for(let i=0;i<b.length;i+=0x8000)s+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));return btoa(s);}
 const unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 const hex=b=>[...b].map(x=>x.toString(16).padStart(2,"0")).join("");
@@ -2958,6 +2982,7 @@ function famSettings(){const c=famCfg();const owner=c.owner||location.hostname.s
   $("#fmSave").onclick=()=>{const n={trip:$("#fmTrip").value,title:$("#fmTitle").value.trim(),owner:$("#fmOwner").value.trim(),repo:$("#fmRepo").value.trim(),token:$("#fmToken").value.trim(),pw:$("#fmPw").value};
     if(!n.owner||!n.repo||!n.token)return toast("Bitte Konto, Repository und Schlüssel ausfüllen",4000);
     if(n.pw.length<14)return toast("Passwort zu kurz – mindestens 14 Zeichen",4000);
+    if(!ghOk(n))return toast("GitHub-Konto oder Repository enthält unerlaubte Zeichen (erlaubt: Buchstaben, Ziffern, - . _)",5000);
     const keepSalt=c.salt&&c.pw===n.pw&&c.owner===n.owner&&c.repo===n.repo;
     famSave(Object.assign(n,{salt:keepSalt?c.salt:"",last:keepSalt?c.last:0,upd:Date.now()}));toast(gdClient()?"Gespeichert – wird beim Abgleich auf die anderen Geräte übernommen":"Gespeichert");famSettings();if(gdClient())syncDrive();};
   const l=$("#fmLink");if(l)l.onclick=async()=>{const t=`${c.title||"Unsere Reise"}\n${famURL(c)}\nPasswort: ${c.pw}`;
