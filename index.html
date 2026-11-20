@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <!-- Sicherheitsregeln: Code nur von hier (Fingerabdruck), cdnjs und unpkg (mit Prüfsumme). Fingerabdruck setzt /home/claude/tools/csp.py -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-qkNJ91OpXHq/5Mo/qYhIKBC05HlUsiYnJW3sT1M7fVM=' https://cdnjs.cloudflare.com https://unpkg.com; worker-src 'self' blob:; child-src blob:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; font-src 'self' data: https:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-/42wDeKhwNziql34d+GQAJg4m9hTsW46YjX2DidPmtQ=' https://cdnjs.cloudflare.com https://unpkg.com; worker-src 'self' blob:; child-src blob:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; font-src 'self' data: https:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#92b78c">
 <title>IbexMap</title>
@@ -579,7 +579,7 @@ const ADM=(()=>{try{if(new URLSearchParams(location.search).has("admin")){sessio
   return sessionStorage.getItem("rb_admin")==="1"&&matchMedia("(min-width:900px)").matches;}catch(e){return false;}})();
 if(ADM)document.body.classList.add("adm");
 const GROUP="IbexMap";
-const VERSION="v7.9";
+const VERSION="v7.10";
 /* Startzeit-Messung: Sekunden seit dem Öffnen der App (im Menü › Gerät › Startzeit) */
 const ST_MARKS=[];function stMark(t){if(ST_MARKS.some(m=>m.t===t))return;ST_MARKS.push({t,s:performance.now()/1000});}
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
@@ -798,8 +798,15 @@ async function vecStyle(){const fs=await vecFiles();const sources={},layers=[],p
     if(vecAdded[v.name]!==v.file.lastModified+":"+v.size){vecProto.add(new pmtiles.PMTiles(new pmtiles.FileSource(v.file)));vecAdded[v.name]=v.file.lastModified+":"+v.size;}
     sources[sid]={type:"vector",url:"pmtiles://"+v.name,attribution:'© <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> · Protomaps'};
     const own=[];basemaps.layers(sid,basemaps.namedFlavor(vecFlavor),{lang:"de"}).forEach(l=>{if(l.type==="background"){if(!bg)bg=Object.assign({},l,{id:"bg"});return;}own.push(Object.assign({},l,{id:cc+"_"+l.id}));});
-    own.push({id:cc+"_tracks",type:"line",source:sid,"source-layer":"roads",minzoom:10,filter:["==",["get","kind_detail"],"track"],
-      paint:{"line-color":"#9a4a00","line-width":["interpolate",["linear"],["zoom"],10,0.8,14,2.2,17,4],"line-dasharray":[3,1.5]}});per.push(own);}
+    /* Planung: Strassen, die in der Datei schon stecken, auf Stufe 6–12 deutlicher zeichnen (der Grundstil zeichnet sie dort sehr blass) – unter die Beschriftung */
+    const si=own.findIndex(l=>l.type==="symbol"),low={id:cc+"_roads_low",type:"line",source:sid,"source-layer":"roads",minzoom:6,maxzoom:12.5,
+      filter:["in",["get","kind"],["literal",["major_road","medium_road","minor_road"]]],layout:{"line-cap":"round","line-join":"round"},
+      paint:{"line-color":["match",["get","kind"],"major_road",dark?"#d9b27a":"#b8742a","medium_road",dark?"#c8bca8":"#6f6455",dark?"#a89c8a":"#8a8070"],
+        "line-width":["interpolate",["linear"],["zoom"],6,["match",["get","kind"],"major_road",1.2,"medium_road",0.8,0.5],9,["match",["get","kind"],"major_road",2,"medium_road",1.4,0.9],12,["match",["get","kind"],"major_road",3,"medium_road",2.2,1.4]],
+        "line-opacity":["interpolate",["linear"],["zoom"],11.5,0.95,12.5,0]}};
+    if(si>=0)own.splice(si,0,low);else own.push(low);
+    own.push({id:cc+"_tracks",type:"line",source:sid,"source-layer":"roads",minzoom:8,filter:["==",["get","kind_detail"],"track"],
+      paint:{"line-color":"#9a4a00","line-width":["interpolate",["linear"],["zoom"],8,0.6,10,0.8,14,2.2,17,4],"line-dasharray":[3,1.5]}});per.push(own);}
   /* mehrere Länder: Ebenen gleicher Art nebeneinander, damit Relief und Höhenlinien überall unter den Strassen liegen */
   for(let i=0;i<Math.max(0,...per.map(o=>o.length));i++)per.forEach(o=>{if(o[i])layers.push(o[i]);});
   const useFile=await demPrepare(),DS=useFile?demFileDem:vecDem;
@@ -3378,7 +3385,10 @@ function poiOffFind(keys,ctr,R){const out=[];
   for(const p of poiOff)for(const x of p.items){if(!x.m.some(k=>keys.has(k)))continue;const d=distKm(ctr,{lat:x.a,lon:x.o});if(d<=R)out.push({lat:x.a,lon:x.o,t:x.t,d,m:x.m});}
   return out;}
 /* ---------- Strassenoberfläche (wie OsmAnd): farbige Linien aus OpenStreetMap, online pro Kartenausschnitt, offline pro Gebiet ---------- */
-const SURF_CELL=0.5,SURF_MINZ=11;
+const SURF_CELL=0.5,SURF_MINZ=8,SURF_FULLZ=11;
+/* Herausgezoomt (Planung) nur wichtigere Strassen: bis Stufe 9 Fern-, Haupt-, Neben- und Verbindungsstrassen; Stufe 10 zusätzlich kleine Strassen und Pisten mit Angabe zu Belag oder Qualität; ab 11 alles */
+function surfKeep(w,z){if(z>=SURF_FULLZ)return true;if(/^(trunk|primary|secondary|tertiary)$/.test(w.h))return true;
+  return z>=10&&(w.h==="unclassified"||w.h==="road"||(w.h==="track"&&!!(w.s||w.g||w.x4)));}
 const SURF_DE={asphalt:"Asphalt",paved:"befestigt",concrete:"Beton","concrete:plates":"Betonplatten",paving_stones:"Pflaster",sett:"Kopfsteinpflaster",chipseal:"Teerbelag",
   compacted:"verdichtet",fine_gravel:"Feinschotter",gravel:"Schotter",pebblestone:"Kies",unpaved:"unbefestigt",dirt:"Erde",earth:"Erde",ground:"Naturboden",grass:"Gras",
   mud:"Schlamm",sand:"Sand",rock:"Fels",stone:"Steine",rocks:"Fels",wood:"Holz",salt:"Salz",snow:"Schnee",ice:"Eis"};
@@ -3392,7 +3402,7 @@ const SURF_CLS=[["#2e9e44","Asphalt, Beton, Pflaster",/^(asphalt|paved|concrete.
   ["#f57c00","Schotter, Kies, unbefestigt",/^(gravel|pebblestone|unpaved)$/],
   ["#8d5524","Erde, Naturboden, Gras",/^(dirt|earth|ground|grass)$/],
   ["#d32f2f","Sand, Schlamm, Fels",/^(sand|mud|rock|rocks|stone|salt|snow|ice)$/]];
-function surfStyle(w){const z=map.getZoom(),wd={trunk:5,primary:4.5,secondary:4,tertiary:3.5}[w.h]||3;const k=SURF_CLS.find(c=>c[2].test(w.s||""));
+function surfStyle(w){const z=map.getZoom(),wd=({trunk:5,primary:4.5,secondary:4,tertiary:3.5}[w.h]||3)*(z<10?0.55:z<11?0.75:1);const k=SURF_CLS.find(c=>c[2].test(w.s||""));
   const soft=/^grade[345]$/.test(w.g||"")||/^(bad|very_bad|horrible|very_horrible|impassable)$/.test(w.sm||"");
   if(k)return {color:k[0],weight:wd+(z>=14?1:0),opacity:.9,dashArray:soft?"8 5":null};
   if(!w.s&&/^(trunk|primary|secondary)$/.test(w.h))return {color:"#2e9e44",weight:wd-1,opacity:.45,dashArray:null};
@@ -3409,18 +3419,20 @@ async function surfFetch(k,fetcher){const b=cellBox(k);
     if(pts.length<2)continue;
     ways.push({h:t.highway,s:t.surface||"",g:t.tracktype||"",sm:t.smoothness||"",n:t.name||t["name:fr"]||t.ref||"",x4:t["4wd_only"]==="yes"?1:0,mv:t.motor_vehicle||t.access||"",p:pts});}
   return {id:"surf_"+k,ways,loaded:Date.now()};}
-async function surfGet(k,net){if(surfMem.has(k))return surfMem.get(k);
-  try{const m=await getOne("meta","surf_"+k);if(m){surfMem.set(k,m);return m;}}catch(e){}
+/* Zwischenspeicher begrenzen: herausgezoomt werden viele Felder gelesen – sonst wächst der Speicher beim Verschieben über das ganze Land */
+function surfMemPut(k,d){surfMem.delete(k);surfMem.set(k,d);while(surfMem.size>70)surfMem.delete(surfMem.keys().next().value);}
+async function surfGet(k,net){if(surfMem.has(k)){const d=surfMem.get(k);surfMemPut(k,d);return d;}
+  try{const m=await getOne("meta","surf_"+k);if(m){surfMemPut(k,m);return m;}}catch(e){}
   if(!net||!navigator.onLine||surfBusy.has(k))return null;surfBusy.add(k);
-  try{const d=await surfFetch(k);surfMem.set(k,d);return d;}catch(e){return null;}finally{surfBusy.delete(k);}}
+  try{const d=await surfFetch(k);surfMemPut(k,d);return d;}catch(e){return null;}finally{surfBusy.delete(k);}}
 let surfT=0;
 function drawSurf(){surfLayer.clearLayers();surfLegend();if(!surfOn)return;if(map.getZoom()<SURF_MINZ){surfHint("Strassenoberfläche: näher hineinzoomen");return;}
   clearTimeout(surfT);surfT=setTimeout(async()=>{const bb=map.getBounds(),b={s:bb.getSouth(),w:bb.getWest(),n:bb.getNorth(),e:bb.getEast()};
-    const ks=cellsOf(b);if(ks.length>9){surfHint("Strassenoberfläche: näher hineinzoomen");return;}
-    let miss=0;const pb=bb.pad(.1);
-    for(const k of ks){const d=await surfGet(k,true);if(!d){miss++;continue;}if(!surfOn||map.getZoom()<SURF_MINZ)return;
-      for(const w of d.ways){const wp=surfPts(w.p);let inside=false;for(const p of wp)if(pb.contains(p)){inside=true;break;}if(!inside)continue;
-        L.polyline(wp,Object.assign({renderer:surfCanvas,interactive:true},surfStyle(w))).addTo(surfLayer).on("click",ev=>{L.DomEvent.stopPropagation(ev);surfInfo(w,ev.latlng);});}}
+    const z=map.getZoom(),ks=cellsOf(b);if(ks.length>(z<SURF_FULLZ?48:9)){surfHint("Strassenoberfläche: näher hineinzoomen");return;}
+    let miss=0;const pb=bb.pad(.1),sf=z<10?3:z<11?2:1;
+    for(const k of ks){const d=await surfGet(k,z>=SURF_FULLZ);if(!d){miss++;continue;}if(!surfOn||map.getZoom()<SURF_MINZ)return;
+      for(const w of d.ways){if(!surfKeep(w,z))continue;const wp=surfPts(w.p);let inside=false;for(const p of wp)if(pb.contains(p)){inside=true;break;}if(!inside)continue;
+        L.polyline(wp,Object.assign({renderer:surfCanvas,interactive:true,smoothFactor:sf},surfStyle(w))).addTo(surfLayer).on("click",ev=>{L.DomEvent.stopPropagation(ev);surfInfo(w,ev.latlng);});}}
     surfHint(miss?(navigator.onLine?"Strassenoberfläche: OpenStreetMap antwortet nicht – später nochmals":"Strassenoberfläche: offline nicht gespeichert (Offline-Daten › beim Land «Hier vervollständigen»)"):"");},250);}
 /* Punkte einer Strasse: neues flaches Format [la,lo,la,lo,…] (ab v7.6) oder altes [[la,lo],…] */
 function surfPts(p){if(!p||!p.length||Array.isArray(p[0]))return p||[];const o=[];for(let i=0;i+1<p.length;i+=2)o.push([p[i],p[i+1]]);return o;}
