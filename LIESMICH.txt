@@ -1,4 +1,4 @@
-IbexMap – v7.8 (privates Projekt)
+IbexMap – v7.9 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -376,6 +376,21 @@ NEU IN v6.8
 NEU IN v7.1
 - Vektorkarte erstellen per Doppelklick: Offline-Daten › Land › «Karte erstellen (PC)» › «Startdatei herunterladen». Die Datei <Land>_laden.bat holt das Programm pmtiles, sucht die neueste Weltkarte von Protomaps und schneidet das Land heraus (Ordner IbexMap-Karten im Benutzerordner); danach in IbexMap «Datei laden». Kein cmd, kein Befehl, kein Datum mehr. Der Befehl von Hand bleibt unter «Von Hand (für Fortgeschrittene)».
 - Geprüft: Ganz in der App geht es nicht – der Protomaps-Server sperrt den Zugriff aus dem Browser (CORS).
+
+NEU IN v7.9
+- «Koordinaten kopieren» jetzt auch bei POI (Campingplatz, Tankstelle usw.), bei Fahnen und bei eigenen Punkten, gleich unter «Navigieren (OsmAnd)».
+- Richtung zum Ziel: Bei Fahnen, eigenen Punkten und POI steht jetzt Distanz und Richtung mit Pfeil (z. B. «4.3 km Luftlinie Richtung Nordost (52°)»). Wird bei jeder neuen GPS-Position nachgeführt – hilft auf Pisten ohne Strasse.
+- Mein Standort: Tipp auf den blauen Standortpunkt (im Fahrmodus auf die GPS-Angabe) → Koordinaten kopieren, teilen (WhatsApp, SMS …) oder Fahne setzen.
+- «Bereit für unterwegs?» prüft neu «Vektorkarte offline»: Kartenprogramm, Schriften und Symbole müssen auf dem Gerät gespeichert sein, sonst bleibt die Vektorkarte offline leer. Fehlt etwas: «Jetzt laden» (im WLAN). Auf jedem Gerät einmal prüfen.
+- Berberschrift (Tifinagh) der marokkanischen Ortsnamen wird jetzt für offline mitgeladen.
+- Vektorkarte flüssiger (vor allem auf dem Tablet): Pixeldichte auf 1.5 begrenzt (vorher bis 3 – bis 4× weniger Zeichenarbeit); Relief wird im Hintergrund berechnet statt im Programmteil, der auf den Finger reagiert; Relief erst ab Zoomstufe 7.
+- Menü aufgeräumt (16 statt 22 Einträge):
+  · «Abschnitte» entfernt (auch im Punkt-Formular, in der Liste, in der Tabelle und bei den Kartenbildern). Bereits gespeicherte Abschnitte bleiben in den Daten erhalten.
+  · «Vektorkarte zeigen» entfernt – über den Ebenen-Knopf.
+  · «Ländergrenzen» entfernt – Laden über «Bereit für unterwegs?».
+  · «Startzeit» ist jetzt unter «App-Version».
+  · «Automatischer Abgleich» ist jetzt unter «Google Drive» (Schalter).
+  · «Fotos Punkten zuordnen» und «Neue Punkte aus Fotos» → ein Eintrag «Fotos».
 
 NEU IN v7.8
 - Lange auf die Karte drücken (am PC: Rechtsklick) → neu «Koordinaten kopieren»: kopiert Breite und Länge der Stelle (Dezimalgrad mit Punkt, z. B. «31.12345, -7.54321») in die Zwischenablage, zum Einfügen in OsmAnd, Google Maps, WhatsApp usw. Die Koordinaten stehen auch gleich sichtbar im Menü.

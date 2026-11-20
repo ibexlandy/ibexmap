@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <!-- Sicherheitsregeln: Code nur von hier (Fingerabdruck), cdnjs und unpkg (mit Prüfsumme). Fingerabdruck setzt /home/claude/tools/csp.py -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-Sz+2mgkNoFNU3HNd4xJSVaWJsT+ud8m27imVZs/pMEQ=' https://cdnjs.cloudflare.com https://unpkg.com; worker-src 'self' blob:; child-src blob:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; font-src 'self' data: https:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-qkNJ91OpXHq/5Mo/qYhIKBC05HlUsiYnJW3sT1M7fVM=' https://cdnjs.cloudflare.com https://unpkg.com; worker-src 'self' blob:; child-src blob:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; font-src 'self' data: https:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#92b78c">
 <title>IbexMap</title>
@@ -261,6 +261,7 @@ details.more summary{cursor:pointer;font-size:14px;font-weight:600;color:var(--i
 .detail .dtitle{font-size:23px;margin:2px 0 10px}
 .meta{display:flex;flex-direction:column;gap:7px;font-size:15.5px;color:#444;margin-bottom:6px}
 .mrow{display:flex;align-items:center;gap:10px}
+.dirar{display:inline-flex;width:22px;height:22px;flex:none;transition:transform .3s}
 .mrow>svg{margin:0 3px}
 .detail .src a{color:var(--accent2);font-weight:600;word-break:break-all}
 .detail .desc{font-size:16.5px;line-height:1.5}
@@ -578,7 +579,7 @@ const ADM=(()=>{try{if(new URLSearchParams(location.search).has("admin")){sessio
   return sessionStorage.getItem("rb_admin")==="1"&&matchMedia("(min-width:900px)").matches;}catch(e){return false;}})();
 if(ADM)document.body.classList.add("adm");
 const GROUP="IbexMap";
-const VERSION="v7.8";
+const VERSION="v7.9";
 /* Startzeit-Messung: Sekunden seit dem Öffnen der App (im Menü › Gerät › Startzeit) */
 const ST_MARKS=[];function stMark(t){if(ST_MARKS.some(m=>m.t===t))return;ST_MARKS.push({t,s:performance.now()/1000});}
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
@@ -744,10 +745,19 @@ function vecLibs(){return vecLibP||(vecLibP=(async()=>{
   vecDem=new mlcontour.DemSource({url:DEM_URL,encoding:"terrarium",maxzoom:DEM_MAXZ,worker:true,id:"dem"});vecDem.setupMaplibre(maplibregl);
   vecPrefetch();})().catch(e=>{vecLibP=null;throw e;}));}
 /* Schriften und Symbole einmal vorausladen, damit Beschriftungen auch offline erscheinen */
+/* 11520-11775 = Tifinagh (Berberschrift auf den Ortsschildern in Marokko) */
+function vecAssetURLs(){const DS=VEC_SPRITE.replace(/light$/,"dark");const urls=[VEC_SPRITE+".json",VEC_SPRITE+".png",VEC_SPRITE+"@2x.json",VEC_SPRITE+"@2x.png",DS+".json",DS+".png",DS+"@2x.json",DS+"@2x.png"];
+  ["Noto Sans Regular","Noto Sans Medium","Noto Sans Italic"].forEach(f=>["0-255","256-511","512-767","768-1023","1024-1279","1536-1791","1792-2047","8192-8447","8448-8703","11520-11775"].forEach(r=>urls.push(VEC_GLYPHS.replace("{fontstack}",encodeURIComponent(f)).replace("{range}",r))));
+  return urls;}
 let vecPre=false;function vecPrefetch(){if(vecPre||!navigator.onLine)return;vecPre=true;
-  const DS=VEC_SPRITE.replace(/light$/,"dark");const urls=[VEC_SPRITE+".json",VEC_SPRITE+".png",VEC_SPRITE+"@2x.json",VEC_SPRITE+"@2x.png",DS+".json",DS+".png",DS+"@2x.json",DS+"@2x.png"];
-  ["Noto Sans Regular","Noto Sans Medium","Noto Sans Italic"].forEach(f=>["0-255","256-511","512-767","768-1023","1024-1279","1536-1791","1792-2047","8192-8447","8448-8703"].forEach(r=>urls.push(VEC_GLYPHS.replace("{fontstack}",encodeURIComponent(f)).replace("{range}",r))));
-  urls.forEach((u,i)=>setTimeout(()=>fetch(u).catch(()=>{}),i*60));}
+  vecAssetURLs().forEach((u,i)=>setTimeout(()=>fetch(u).catch(()=>{}),i*60));}
+/* Sind Programm, Schriften und Symbole der Vektorkarte auf diesem Gerät gespeichert? (sonst bleibt die Karte offline leer) */
+const vecAllURLs=()=>[...VEC_LIBS,VEC_CSS,...vecAssetURLs()];
+async function vecOffCheck(){try{if(!navigator.serviceWorker||!navigator.serviceWorker.controller)return null;const c=await caches.open("reisebuch-libs");let miss=0;const all=vecAllURLs();
+  for(const u of all)if(!await c.match(u))miss++;return {miss,total:all.length};}catch(e){return null;}}
+async function vecOffLoad(){if(!navigator.onLine)return toast("Kein Internet",3000);const all=vecAllURLs();let ok=0;
+  for(let i=0;i<all.length;i++){toast(`Vektorkarte für offline: ${i+1} von ${all.length} …`,60000);try{const r=await fetch(all[i],{mode:"cors",credentials:"omit"});if(r.ok)ok++;}catch(e){}}
+  toast(ok===all.length?"Vektorkarte ist offline bereit":`${all.length-ok} Teile nicht ladbar – später nochmals versuchen`,5000);return ok===all.length;}
 async function opfs(){return await navigator.storage.getDirectory();}
 /* Stand einer Datei: Datum und Uhrzeit aus dem Namen (…_2026-11-20_0812…), sonst Änderungsdatum der Datei */
 function fileStamp(f){const m=String(f.name||"").match(/_(\d{4})-(\d{2})-(\d{2})_(\d{2})(\d{2})/);return m?new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5]).getTime():(f.lastModified||Date.now());}
@@ -776,7 +786,7 @@ async function demPrepare(){const fs=await vecFiles("dem");const ok=Object.value
   const key=ok.map(v=>v.name+":"+v.size+":"+v.file.lastModified).join("|");
   if(key!==demKey){demKey=key;demSrcs=ok.map(v=>new pmtiles.PMTiles(new pmtiles.FileSource(v.file)));}
   if(demSrcs.length&&!demReady){demReady=true;
-    maplibregl.addProtocol("demfile",async params=>{const b=await demTile(params.url);if(!b)throw new Error("keine Höhendaten");return {data:b};});
+    maplibregl.addProtocol("demfile",async params=>{const b=await demTile(params.url);if(!b)throw new Error("keine Höhendaten");return {data:b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength)};});
     /* die Höhenlinien-Berechnung holt ihre Kacheln mit fetch – Adressen «demfile://» kommen direkt aus der Datei */
     const of=window.fetch;window.fetch=function(u,o){const a=typeof u==="string"?u:(u&&u.url)||"";
       if(a.startsWith("demfile://"))return demTile(a).then(b=>b?new Response(b,{headers:{"Content-Type":"image/webp"}}):new Response(null,{status:404}));return of.apply(this,arguments);};
@@ -793,9 +803,9 @@ async function vecStyle(){const fs=await vecFiles();const sources={},layers=[],p
   /* mehrere Länder: Ebenen gleicher Art nebeneinander, damit Relief und Höhenlinien überall unter den Strassen liegen */
   for(let i=0;i<Math.max(0,...per.map(o=>o.length));i++)per.forEach(o=>{if(o[i])layers.push(o[i]);});
   const useFile=await demPrepare(),DS=useFile?demFileDem:vecDem;
-  sources.hill={type:"raster-dem",tiles:[DS.sharedDemProtocolUrl],encoding:"terrarium",tileSize:useFile?512:256,maxzoom:useFile?DEMF_MAXZ:DEM_MAXZ};
+  sources.hill={type:"raster-dem",tiles:[useFile?"demfile://{z}/{x}/{y}":DS.sharedDemProtocolUrl],encoding:"terrarium",tileSize:useFile?512:256,maxzoom:useFile?DEMF_MAXZ:DEM_MAXZ};
   sources.cont={type:"vector",tiles:[DS.contourProtocolUrl({multiplier:1,thresholds:{9:[200,1000],10:[100,500],11:[50,250],12:[20,100],13:[20,100],14:[10,50],15:[10,50],16:[10,50]},elevationKey:"ele",levelKey:"level",contourLayer:"contours"})],maxzoom:16};
-  const terrain=[{id:"hill",type:"hillshade",source:"hill",paint:{"hillshade-exaggeration":0.35,"hillshade-shadow-color":"#5a4a3a","hillshade-highlight-color":"#ffffff"}},
+  const terrain=[{id:"hill",type:"hillshade",source:"hill",minzoom:7,paint:{"hillshade-exaggeration":0.35,"hillshade-shadow-color":"#5a4a3a","hillshade-highlight-color":"#ffffff"}},
     {id:"cont",type:"line",source:"cont","source-layer":"contours",minzoom:9,paint:{"line-color":dark?"#c9a77a":"#a0784a","line-opacity":["match",["get","level"],1,0.75,0.4],"line-width":["match",["get","level"],1,1.1,0.6]}},
     {id:"cont-l",type:"symbol",source:"cont","source-layer":"contours",minzoom:11,filter:[">",["get","level"],0],
       layout:{"symbol-placement":"line","text-field":["concat",["number-format",["get","ele"],{}]," m"],"text-size":10.5,"text-font":["Noto Sans Regular"]},
@@ -813,7 +823,7 @@ const VecLayer=L.Layer.extend({onAdd(m){this._vm=m;this._vecOn=true;document.bod
   onRemove(m){this._vecOn=false;document.body.classList.remove("vecon");if(this._vgl&&m.hasLayer(this._vgl))m.removeLayer(this._vgl);}});
 const VEC=new VecLayer();
 async function vecMount(v){await vecLibs();if(!v._vecOn)return;const s=await vecStyle();if(!v._vecOn)return;
-  if(!v._vgl)v._vgl=L.maplibreGL({style:s.style});else{try{v._vgl.getMaplibreMap().setStyle(s.style);}catch(e){}}
+  if(!v._vgl)v._vgl=L.maplibreGL({style:s.style,pixelRatio:Math.min(window.devicePixelRatio||1,1.5)});else{try{v._vgl.getMaplibreMap().setStyle(s.style);}catch(e){}}
   if(!v._vm.hasLayer(v._vgl))v._vgl.addTo(v._vm);
   try{const mm=v._vgl.getMaplibreMap();if(mm&&!ST_MARKS.some(x=>x.t==="Vektorkarte gezeichnet"))mm.once("idle",()=>stMark("Vektorkarte gezeichnet"));}catch(e){}
   if(!s.n)toast("Vektorkarte: auf diesem Gerät ist noch keine Länderdatei – Menü › Offline-Daten",7000);}
@@ -1132,28 +1142,32 @@ function drawOsm(){osmLayer.clearLayers();
     mk.addTo(osmLayer).on("click",ev=>{L.DomEvent.stopPropagation(ev);showOsm(x);});});}
 map.on("moveend zoomend",drawOsm);
 function showPoi(x){const [gi,ii]=x.m[0].split(".").map(Number),g=POI_GROUPS[gi],kind=g.items[ii][0],t=x.t;
-  const nm=t.name||t["name:fr"]||t["name:de"]||t.brand||kind;const d=me?` · ${distKm(me,{lat:x.a,lon:x.o}).toFixed(1)} km Luftlinie`:"";
+  const nm=t.name||t["name:fr"]||t["name:de"]||t.brand||kind;const d="";
   const row=(l,v)=>v?`<div><b>${l}:</b> ${esc(v)}</div>`:"";
   openPanel(`<div class="detail"><h2>${icoBadge(g.i,g.c,28)} ${esc(nm)}</h2>
     <div class="muted">${esc(x.m.map(k=>{const [a,b]=k.split(".").map(Number);return POI_GROUPS[a].items[b][0];}).join(", "))}${t.brand&&t.brand!==nm?" · "+esc(t.brand):""}${d}</div>
     ${row("Arabisch",t["name:ar"])}${row("Öffnungszeiten",t.opening_hours)}${row("Telefon",t.phone||t["contact:phone"])}${row("Ort",t["addr:city"])}${row("Gebühr",t.fee==="yes"?"ja":t.fee==="no"?"nein":"")}
     ${safeUrl(t.website)?`<div><a href="${esc(safeUrl(t.website))}" target="_blank" rel="noopener noreferrer">Webseite</a></div>`:""}
+    <div class="meta">${dirRow(x.a,x.o)}</div>
     <p class="muted">Quelle: © OpenStreetMap-Mitwirkende (offline gespeichert). Angaben können veraltet sein.</p>
     <div class="actions"><a class="btn or" href="geo:${x.a},${x.o}?q=${x.a},${x.o}(${encodeURIComponent(nm)})">Navigieren (OsmAnd)</a>
+    <button class="btn sec" data-coco="${(+x.a).toFixed(5)}, ${(+x.o).toFixed(5)}">${mi("copy",16)} Koordinaten kopieren</button>
     <button class="btn sec" id="oTake">Als eigenen Punkt übernehmen</button><button class="btn sec" id="oClose">Schliessen</button></div></div>`);
   $("#oClose").onclick=closePanel;
   $("#oTake").onclick=()=>{const desc=[kind,t.opening_hours&&("Öffnungszeiten: "+t.opening_hours),(t.phone||t["contact:phone"])&&("Tel. "+(t.phone||t["contact:phone"]))].filter(Boolean).join("\n");
     editPoint(newPoint(x.a,x.o,{title:nm===kind?"":nm,cat:g.i in CATS?g.i:"sight",desc,source:"OpenStreetMap"}),true);};}
 function showOsm(x){const c=OSM[x.ty],t=x.t;const nm=t.name||t["name:fr"]||t.brand||osmKind(t)||c.n;
-  const d=me?` · ${distKm(me,x).toFixed(1)} km Luftlinie`:"";
+  const d="";
   const row=(l,v)=>v?`<div><b>${l}:</b> ${esc(v)}</div>`:"";
   openPanel(`<div class="detail"><h2>${icoBadge(x.ty,c.c,28)} ${esc(nm)}</h2>
     <div class="muted">${esc(osmKind(t)||c.n)}${t.brand&&t.brand!==nm?" · "+esc(t.brand):""}${d}</div>
     ${row("Arabisch",t["name:ar"])}${row("Öffnungszeiten",t.opening_hours)}${row("Telefon",t.phone||t["contact:phone"])}
     ${row("Adresse",[t["addr:street"],t["addr:city"]].filter(Boolean).join(", "))}${row("Diesel",t["fuel:diesel"]==="yes"?"ja":t["fuel:diesel"]==="no"?"nein":"")}
     ${safeUrl(t.website)?`<div><a href="${esc(safeUrl(t.website))}" target="_blank" rel="noopener noreferrer">Webseite</a></div>`:""}
+    <div class="meta">${dirRow(x.lat,x.lon)}</div>
     <p class="muted">Quelle: © OpenStreetMap-Mitwirkende. Angaben können veraltet sein.</p>
     <div class="actions"><a class="btn or" href="geo:${x.lat},${x.lon}?q=${x.lat},${x.lon}(${encodeURIComponent(nm)})">Navigieren (OsmAnd)</a>
+    <button class="btn sec" data-coco="${(+x.lat).toFixed(5)}, ${(+x.lon).toFixed(5)}">${mi("copy",16)} Koordinaten kopieren</button>
     <button class="btn sec" id="oTake">Als eigenen Punkt übernehmen</button><button class="btn sec" id="oClose">Schliessen</button></div></div>`);
   $("#oClose").onclick=closePanel;
   $("#oTake").onclick=()=>{const desc=[osmKind(t),t.opening_hours&&("Öffnungszeiten: "+t.opening_hours),(t.phone||t["contact:phone"])&&("Tel. "+(t.phone||t["contact:phone"]))].filter(Boolean).join("\n");
@@ -1173,8 +1187,8 @@ function startGPS(){
   watchId=navigator.geolocation.watchPosition(pos=>{
     me={lat:pos.coords.latitude,lon:pos.coords.longitude,acc:pos.coords.accuracy};
     if(!lastPosT||Date.now()-lastPosT>30000){lastPosT=Date.now();try{localStorage.setItem("rb_lastpos",JSON.stringify({lat:me.lat,lon:me.lon,t:lastPosT}));}catch(e){}}
-    gpsState("ok",`GPS ±${Math.round(me.acc)} m`);lastSpd=pos.coords.speed;trkAdd(me.lat,me.lon,me.acc);if(driveOn)driveInfo();
-    if(!meMarker){meMarker=L.circleMarker([me.lat,me.lon],{radius:8,color:"#fff",weight:3,fillColor:"#1e88e5",fillOpacity:1}).addTo(map);
+    gpsState("ok",`GPS ±${Math.round(me.acc)} m`);lastSpd=pos.coords.speed;trkAdd(me.lat,me.lon,me.acc);if(driveOn)driveInfo();updDirs();
+    if(!meMarker){meMarker=L.circleMarker([me.lat,me.lon],{radius:8,color:"#fff",weight:3,fillColor:"#1e88e5",fillOpacity:1}).addTo(map).on("click",myPosPanel);
       meCircle=L.circle([me.lat,me.lon],{radius:me.acc,color:"#1e88e5",weight:1,fillOpacity:.1}).addTo(map);}
     else{meMarker.setLatLng([me.lat,me.lon]);meCircle.setLatLng([me.lat,me.lon]).setRadius(me.acc);}
     if(follow)map.setView([me.lat,me.lon],Math.max(map.getZoom(),14));
@@ -1185,6 +1199,21 @@ $("#locBtn").onclick=()=>{startGPS();if($("#gpsInfo").classList.contains("bad"))
   if(follow&&me)map.setView([me.lat,me.lon],Math.max(map.getZoom(),14));
   toast(follow?"Karte folgt deinem Standort":"Karte folgt nicht mehr");};
 map.on("dragstart",()=>{if(follow){follow=false;$("#locBtn").classList.remove("follow");}});
+/* Richtung zum Ziel (Peilung ab Norden) – hilft auf Pisten ohne Strasse; wird bei jeder neuen GPS-Position nachgeführt */
+function bearing(a,b){const r=x=>x*Math.PI/180;const y=Math.sin(r(b.lon-a.lon))*Math.cos(r(b.lat)),x=Math.cos(r(a.lat))*Math.sin(r(b.lat))-Math.sin(r(a.lat))*Math.cos(r(b.lat))*Math.cos(r(b.lon-a.lon));
+  return (Math.atan2(y,x)*180/Math.PI+360)%360;}
+const DIR8=["Norden","Nordost","Osten","Südost","Süden","Südwest","Westen","Nordwest"];
+function dirHTML(lat,lon){if(!me)return "";const t={lat,lon},d=distKm(me,t),b=bearing(me,t);
+  return `<span class="dirar" style="transform:rotate(${b.toFixed(0)}deg)"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 2l6 18-6-4-6 4z" fill="#c4512a"/></svg></span><span><b>${kmTxt(d)}</b> Luftlinie Richtung ${DIR8[Math.round(b/45)%8]} (${b.toFixed(0)}°)</span>`;}
+const dirRow=(lat,lon)=>`<div class="mrow" data-dir="${lat},${lon}" ${me?"":`style="display:none"`}>${dirHTML(lat,lon)}</div>`;
+function updDirs(){if(!me)return;document.querySelectorAll("[data-dir]").forEach(e=>{const [la,lo]=e.dataset.dir.split(",").map(Number);e.innerHTML=dirHTML(la,lo);e.style.display="";});}
+/* Eigener Standort: kopieren oder teilen (Treffpunkt, Notfall) – Tipp auf den blauen Punkt oder im Fahrmodus auf die GPS-Angabe */
+function myPosPanel(){if(!me)return toast("Noch keine GPS-Position",3000);const co=`${me.lat.toFixed(5)}, ${me.lon.toFixed(5)}`;
+  openPanel(`<h2>Mein Standort</h2><p class="muted">${co} · GPS ±${Math.round(me.acc)} m</p>
+    <div class="actions"><button class="btn" data-coco="${co}">${mi("copy",16)} Koordinaten kopieren</button>${navigator.share?`<button class="btn sec" id="mpShare">Teilen (WhatsApp, SMS …)</button>`:""}
+    <button class="btn sec" id="mpFlag">${mi("flag",16)} Fahne hier</button><button class="btn sec" id="mpClose">Schliessen</button></div>`);
+  const sh=$("#mpShare");if(sh)sh.onclick=async()=>{try{await navigator.share({title:"Mein Standort",text:`Mein Standort: ${co} (GPS ±${Math.round(me.acc)} m)\nhttps://maps.google.com/?q=${me.lat.toFixed(5)},${me.lon.toFixed(5)}`});}catch(e){}};
+  $("#mpFlag").onclick=()=>{closePanel();addFlag(me.lat,me.lon,"");};$("#mpClose").onclick=closePanel;}
 function distKm(a,b){const R=6371,r=x=>x*Math.PI/180;const dLa=r(b.lat-a.lat),dLo=r(b.lon-a.lon);
   const h=Math.sin(dLa/2)**2+Math.cos(r(a.lat))*Math.cos(r(b.lat))*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.sqrt(h));}
 
@@ -1519,11 +1548,12 @@ function flagLabel(f,i){return f.name||`Fahne ${i+1}`;}
 function showFlag(id){const i=flags.findIndex(f=>f.id===id);if(i<0)return;const f=flags[i];
   openPanel(`<h2><span class="ico" style="background:${flagColor(f)};width:28px;height:28px;color:#fff;font-weight:800;font-size:14px">${i+1}</span> ${esc(flagLabel(f,i))}</h2>
    <div class="meta"><div class="mrow">${mi("pin")}<span>${f.lat.toFixed(5)}, ${f.lon.toFixed(5)}</span></div>
-   ${me?`<div class="mrow">${mi("ruler")}<span>${kmTxt(distKm(me,f))} Luftlinie</span></div>`:""}
+   ${dirRow(f.lat,f.lon)}
    <div class="mrow">${mi("cal")}<span>gesetzt ${esc(fmtDT(f.created))}</span></div></div>
    <label>Name (freiwillig)</label><input id="flName" value="${esc(f.name)}" placeholder="z. B. Abzweigung Piste, Wasser holen …">
    <div class="actions"><button class="btn" id="flPass">✓ Passiert</button>
    <a class="btn sec" href="geo:${f.lat},${f.lon}?q=${f.lat},${f.lon}(${encodeURIComponent(flagLabel(f,i))})">Navigieren (OsmAnd)</a>
+   <button class="btn sec" data-coco="${(+f.lat).toFixed(5)}, ${(+f.lon).toFixed(5)}">${mi("copy",16)} Koordinaten kopieren</button>
    <button class="btn sec" id="flPoint">Als Punkt speichern</button><button class="btn sec" id="flAll">Alle Fahnen</button></div>`);
   $("#flName").onchange=async e=>{f.name=e.target.value.trim();await saveFlags();};
   $("#flPass").onclick=async()=>{await passFlag(f.id);closePanel();toast("Fahne entfernt",2000);};
@@ -1604,11 +1634,10 @@ async function showDetail(id){const p=points.find(x=>x.id===id);if(!p)return;con
     <h2 class="dtitle">${esc(ptTitle(p))}</h2>
     <div class="meta">
       <div class="mrow">${icoBadge(p.cat in CATS?p.cat:"other",c.c,24)}<span><b>${esc(c.n)}</b>${p.cat==="water"&&p.water==="trink"?" (Trinkwasser)":p.cat==="water"&&p.water==="brauch"?" (Brauchwasser)":""} · ${p.status==="besucht"?`<span class="lchk">✓</span>`:""}${esc(STATUS[p.status]||"")}</span></div>
-      ${p.section?`<div class="mrow">${mi("sec")}<span>${esc(p.section)}</span></div>`:""}
       <div class="mrow">${mi("cal")}<span>Erfasst ${esc(fmtDT(p.created))}${p.visited?` · besucht ${esc(visTxt(p))}`:""}</span></div>
       ${p.trip&&tripName(p.trip)?`<div class="mrow">${mi("route")}<span>${esc(tripName(p.trip))}</span></div>`:""}
       <div class="mrow">${mi("globe")}<span>${esc(countryName(p.country)||"Land unbekannt")}</span></div>
-      ${me?`<div class="mrow">${mi("ruler")}<span>${distKm(me,p).toFixed(1)} km Luftlinie</span></div>`:""}
+      ${dirRow(p.lat,p.lon)}
       ${p.cat==="water"?`<div class="mrow">${icoBadge("water","#0288d1",24)}<span><b>${esc(WATERQ[p.water||"unklar"])}</b></span></div>`:""}
       ${p.imp?`<div class="mrow"><span class="vimp" style="position:static;display:inline-block;width:22px;height:22px;line-height:18px">!</span><span><b>Wichtig</b></span></div>`:""}
       ${p.story?`<div class="mrow"><span class="lstory" style="width:22px;height:22px;margin:0">${storyI(13)}</span><span>Storypoint – wird publiziert</span></div>`:""}
@@ -1622,6 +1651,7 @@ async function showDetail(id){const p=points.find(x=>x.id===id);if(!p)return;con
     <div class="muted" style="margin-top:10px">${p.lat.toFixed(5)}, ${p.lon.toFixed(5)}</div>
     <div class="actions">
       <a class="btn or" href="geo:${p.lat},${p.lon}?q=${p.lat},${p.lon}(${encodeURIComponent(ptTitle(p))})">Navigieren (OsmAnd)</a>
+      <button class="btn sec" data-coco="${(+p.lat).toFixed(5)}, ${(+p.lon).toFixed(5)}">${mi("copy",16)} Koordinaten kopieren</button>
       <button class="btn sec" id="dShow">Auf Karte</button>
       <button class="btn sec" id="dEdit">Bearbeiten</button>
       ${p.status!=="besucht"?`<button class="btn sec" id="dVisited">Als besucht markieren</button>`:""}
@@ -1645,7 +1675,7 @@ async function editPoint(p,isNew=false){await loadGeo();
    <div id="fVisWrap" style="display:${p.status==="besucht"?"block":"none"}"><div class="row"><div><label id="fVisLbl">Besucht am</label><input id="fVisited" type="date" value="${esc(p.visited||new Date().toISOString().slice(0,10))}"></div>
      <div id="fToWrap"><label>Bis</label><input id="fVisTo" type="date" value="${esc(p.visitedTo||"")}"></div></div><div class="muted" id="fNights" style="margin-top:4px"></div></div>
    <div class="row"><div><label>Reise</label><select id="fTrip">${tripsSorted().map(t=>`<option value="${t.id}" ${(p.trip||curTrip)===t.id?"selected":""}>${esc(t.name)}</option>`).join("")}<option value="">– keine Reise –</option></select></div>
-   <div><label>Abschnitt</label><select id="fSection">${secOpts(p.trip||curTrip,p.section)}</select></div></div>
+   <div style="display:none"><label>Abschnitt</label><select id="fSection">${secOpts(p.trip||curTrip,p.section)}</select></div></div>
    <input id="fSectionNew" placeholder="Name des neuen Abschnitts" style="display:none;margin-top:6px">
    <label>Land (automatisch)</label><div class="muted">${esc(countryName(p.country||countryOf(p.lat,p.lon))||(countryData?"–":"Ländergrenzen noch nicht geladen"))}</div>
    <div id="fWaterWrap" style="display:${p.cat==="water"?"block":"none"}"><label>Wasser</label><select id="fWater">${Object.entries(WATERQ).map(([k,v])=>`<option value="${k}" ${(p.water||"unklar")===k?"selected":""}>${v}</option>`).join("")}</select></div>
@@ -1761,6 +1791,9 @@ map.on("click",e=>{if(!placing)return;putCross(e.latlng);});
 /* Text in die Zwischenablage – mit Rückfall für ältere Browser bzw. ohne Berechtigung */
 async function copyText(t){try{await navigator.clipboard.writeText(t);return true;}catch(e){}
   try{const ta=document.createElement("textarea");ta.value=t;ta.setAttribute("readonly","");ta.style.cssText="position:fixed;left:-9999px";document.body.appendChild(ta);ta.select();const ok=document.execCommand("copy");ta.remove();return ok;}catch(e){return false;}}
+/* «Koordinaten kopieren» in POI, Fahnen und eigenen Punkten */
+document.addEventListener("click",async e=>{const b=e.target.closest&&e.target.closest("[data-coco]");if(!b)return;const co=b.dataset.coco;
+  toast(await copyText(co)?`Koordinaten kopiert: ${co}`:`Kopieren nicht möglich – ${co}`,4000);});
 map.on("contextmenu",e=>{if(placing)return;const ll=e.latlng;const co=`${ll.lat.toFixed(5)}, ${ll.lng.toFixed(5)}`;
   const pop=L.popup({closeButton:false,offset:[0,-4]}).setLatLng(ll).setContent(`<div class="ctxbtns"><button class="btn" id="cxFlag">${flagI} Fahne setzen</button><button class="btn sec" id="cxPoint">＋ Punkt setzen</button>
     <button class="btn sec" id="cxCopy" title="Breite, Länge (Dezimalgrad, WGS84) kopieren">${mi("copy",16)} Koordinaten kopieren<small style="display:block;font-weight:400;font-variant-numeric:tabular-nums;opacity:.8">${co}</small></button></div>`).openOn(map);
@@ -1785,8 +1818,6 @@ async function showList(){const keepL=isPanelOpen()&&$("#lSearch")?$("#panel").s
   const chip=(grp,val,label,extra="")=>`<button class="chip ${LF[grp].has(val)?"on":""}" data-g="${grp}" data-v="${esc(val)}">${extra}${label}</button>`;
   const cnt=f=>points.filter(f).length;
   const countries=[...new Set(points.map(p=>p.country).filter(Boolean))].sort((a,b)=>countryName(a).localeCompare(countryName(b)));
-  const secTrips=LF.trip.size?trips.filter(t=>LF.trip.has(t.id)):[curTripObj()].filter(Boolean);
-  const secs=[...new Set(secTrips.flatMap(t=>t.sections||[]))];
   openPanel(`<h2>Punkte (${points.length})</h2>
     <input id="lSearch" placeholder="Suchen …" value="${esc(fText)}">
     ${lfAny()?`<div class="chips"><button class="chip" id="lfReset" style="border-color:var(--accent2);color:var(--accent2)">✕ Alle Filter zurücksetzen</button></div>`:""}
@@ -1795,7 +1826,6 @@ async function showList(){const keepL=isPanelOpen()&&$("#lSearch")?$("#panel").s
     <div class="lfh">Status</div><div class="chips">${Object.entries(STATUS).map(([k,v])=>chip("st",k,esc(v))).join("")}</div>
     <div class="lfh">Reise</div><div class="chips">${tripsSorted().map(t=>chip("trip",t.id,`${esc(t.name)} (${cnt(p=>p.trip===t.id)})${t.hidden?" "+hidI:""}`)).join("")}${chip("trip","__none",`ohne Reise (${cnt(p=>!p.trip)})`)}</div>
     ${countries.length?`<div class="lfh">Land</div><div class="chips">${countries.map(c=>chip("cc",c,`${esc(countryName(c))} (${cnt(p=>p.country===c)})`,mi("globe",15))).join("")}</div>`:""}
-    ${secs.length?`<div class="lfh">Abschnitt</div><div class="chips">${secs.map(x=>chip("sec",x,esc(x))).join("")}</div>`:""}
     <div class="lfh">Sortierung</div><div class="chips">${[["dist","Nächste zuerst"],["new","Neueste zuerst"],["old","Älteste zuerst"],["stars","Beste Bewertung"]].map(([k,t])=>`<button class="chip ${lSort===k?"on":""}" data-so="${k}">${t}</button>`).join("")}</div><div id="lItems"></div>`);
   $("#panel").querySelectorAll("[data-so]").forEach(b=>b.onclick=()=>{lSort=b.dataset.so;try{localStorage.setItem("rb_lsort",lSort);}catch(e){}showList();});
   $("#panel").querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{const S=LF[b.dataset.g],v=b.dataset.v;S.has(v)?S.delete(v):S.add(v);
@@ -1840,11 +1870,10 @@ $("#navMenu").onclick=async()=>{
    ${grp("Reisen",
      row("mReady","shield","Bereit für unterwegs?","Prüfen, ob die Reise offline vollständig ist")
      +row("mTrips","route","Reisen verwalten",`Aktuell: ${esc(curTripObj()?curTripObj().name:"–")} · ${trips.length} Reise${trips.length==1?"":"n"}`)
-     +row("mSec","sec","Abschnitte",`${sections.length} in der aktuellen Reise`))}
+)}
    ${grp("Daten",
      row("mImport","download","Importieren","GPX, Google-Orte, OsmAnd .osf, Sicherung")
-     +row("mPhotos","photo","Fotos Punkten zuordnen","Nach Ort im Foto oder Dateiname")
-     +row("mWiz","pin","Neue Punkte aus Fotos","Fotos auswählen, Punkte auf einer grossen Seite erfassen")
+     +row("mPhotos","photo","Fotos","Neue Punkte aus Fotos erfassen oder Fotos bestehenden Punkten zuordnen")
      +row("mGpx","nav","GPX für OsmAnd",`Alle Punkte in einer Gruppe «${GROUP}»`,{act:"Exportieren"})
      +row("mTrash","trash","Papierkorb",trashN?`${trashN} gelöschte Punkte · 30 Tage wiederherstellbar`:"leer")
      +row("mExport","upload","Sicherung (Datei)","Punkte und Fotos zusätzlich als Datei sichern – der Abgleich läuft über Google Drive",{act:"Sichern"})
@@ -1852,37 +1881,41 @@ $("#navMenu").onclick=async()=>{
    ${!ADM?grp("Unterwegs",
      row("mDrive","wheel","Fahrmodus","Grosse Knöpfe, Karte folgt dir, Punkt oder Foto mit einem Tipp, Bildschirm bleibt an",{act:driveOn?"aktiv":"Starten"})
      +row("mTrk","route","Fahrspuren",`${trkOn()?"Aufzeichnung ein":"Aufzeichnung aus"} · ${trks.filter(t=>!t.del&&t.pts.length>1).length} Tage`)
-     +row("mNight","moon","Nachtmodus",{off:"Aus",on:"Ein",auto:"Automatisch (20–6 Uhr)"}[nightMode()],{act:"Ändern"})
-     +row("mAuto","sync","Automatischer Abgleich",autoSyncOn()?"Ein – solange die Google-Anmeldung gültig ist":"Aus – nur mit dem Kreispfeil",{act:autoSyncOn()?"Ausschalten":"Einschalten"})):""}
+     +row("mNight","moon","Nachtmodus",{off:"Aus",on:"Ein",auto:"Automatisch (20–6 Uhr)"}[nightMode()],{act:"Ändern"})):""}
    ${grp("Karte",
-     row("mOff","mapdl","Offline-Daten","Karten, Strassenoberfläche und POI pro Land – was jedes Gerät hat")
-     +row("mVec","map","Vektorkarte zeigen","Scharf in jeder Zoomstufe, Höhenlinien, Pisten – offline aus der Länderdatei",{act:map.hasLayer(VEC)?"aktiv":"Zeigen"})
-     +row("mCountries","globe","Ländergrenzen",countryData?`${countryData.length} Länder geladen`:"Noch nicht geladen",{act:countryData?"Neu laden":"Laden"}))}
+     row("mOff","mapdl","Offline-Daten","Karten, Strassenoberfläche und POI pro Land – was jedes Gerät hat"))}
    ${grp("Gerät",
      ("wakeLock" in navigator?`<label class="mrow"><span class="mic">${mi("screen",20)}</span><span class="mtx"><b>Bildschirm eingeschaltet lassen</b><small>Solange IbexMap offen ist</small></span><input type="checkbox" class="msw" id="mWake" ${wakeOn()?"checked":""}></label>`:"")
      +row("mStore","db","Speicher",mb?mb+" · anzeigen und aufräumen":"Anzeigen und aufräumen")
-     +row("mStart","clock","Startzeit",ST_MARKS.length?`Karte nach ${ST_MARKS.find(m=>m.t==="Karte bereit")?ST_MARKS.find(m=>m.t==="Karte bereit").s.toFixed(1):"?"} s bereit`:"Messung läuft",{act:"Details"})
-     +row("mUpd","refresh","App-Version","Installiert: "+VERSION,{act:"Update suchen"}))}`);
-  $("#mSec").onclick=manageSections;
-  $("#mUpd").onclick=checkUpdate;
-  $("#mStart").onclick=()=>openPanel(`<h2>Startzeit</h2><p class="muted">Sekunden seit dem Öffnen von IbexMap (dieser Start, ${esc(devName())}).</p>
-    <div class="mgrp">${ST_MARKS.map(m=>`<div class="mrow" style="cursor:default"><span class="mtx"><b>${esc(m.t)}</b></span><span style="font-variant-numeric:tabular-nums">${m.s.toFixed(1)} s</span></div>`).join("")}</div>
-    <p class="muted" style="font-size:12.5px">Abgleich mit Google Drive startet erst nach 30 s, POI der Länder werden erst geladen, wenn das Overlay, die Suche oder der Filter sie braucht.</p>
-    <div class="actions"><button class="btn sec" id="stmBack">Zurück</button></div>`)||($("#stmBack").onclick=()=>$("#navMenu").onclick());
+     +row("mUpd","refresh","App-Version",`Installiert: ${VERSION}${stReady()?` · Start ${stReady()} s`:""} · Update, Startzeit`))}`);
+
+  $("#mUpd").onclick=appVersionDialog;
   const ma=$("#mAdm");if(ma)ma.onclick=()=>{location.href=location.pathname+"?admin";};
   const mw=$("#mWake");if(mw)mw.onchange=()=>{ls("rb_wake",mw.checked?"1":"0");if(mw.checked){wakeAcquire();toast("Bildschirm bleibt eingeschaltet",2500);}else{wakeRelease();toast("Bildschirm schaltet normal ab",2500);}};
   $("#mStore").onclick=storageDialog;
   $("#mTrips").onclick=manageTrips;
-  $("#mCountries").onclick=async()=>{if(!navigator.onLine)return toast("Kein Internet",3000);toast("Lade Ländergrenzen …",60000);
-    try{const n=await downloadCountries();const k=await assignCountries();toast(`${n} Länder geladen, ${k} Punkte zugeordnet`,4000);$("#navMenu").onclick();}catch(e){toast("Laden fehlgeschlagen",4000);}};
   $("#mFamSet").onclick=famSettings;const fp=$("#mFamPub");if(fp)fp.onclick=famPublish;
-  $("#mGset").onclick=gdSettings;const ms=$("#mSync");if(ms)ms.onclick=syncDrive;$("#mOff").onclick=offOverview;const mv=$("#mVec");if(mv)mv.onclick=()=>{closePanel();setBase(VEC_NAME);};
+  $("#mGset").onclick=gdSettings;const ms=$("#mSync");if(ms)ms.onclick=syncDrive;$("#mOff").onclick=offOverview;
   const md=$("#mDrive");if(md)md.onclick=()=>driveMode(!driveOn);const mt=$("#mTrk");if(mt)mt.onclick=tracksDialog;
   const mn=$("#mNight");if(mn)mn.onclick=()=>{const o=["off","on","auto"];const n=o[(o.indexOf(nightMode())+1)%3];ls("rb_night",n);nightApply();toast("Nachtmodus: "+{off:"aus",on:"ein",auto:"automatisch (20–6 Uhr)"}[n],3000);$("#navMenu").onclick();};
-  const mAu=$("#mAuto");if(mAu)mAu.onclick=()=>{ls("rb_autosync",autoSyncOn()?"0":"1");toast(autoSyncOn()?"Automatischer Abgleich ein":"Automatischer Abgleich aus",3000);if(autoSyncOn())autoSyncSoon(2000);$("#navMenu").onclick();};
-  $("#mPhotos").onclick=photoDialog;$("#mWiz").onclick=wizardStart;$("#mReady").onclick=readyDialog;$("#mTrash").onclick=trashDialog;
+  $("#mPhotos").onclick=photoMenu;$("#mReady").onclick=readyDialog;$("#mTrash").onclick=trashDialog;
   $("#mExport").onclick=exportPackage;$("#mGpx").onclick=exportGPX;$("#mImport").onclick=()=>pickWait($("#fileImport"),"Datei importieren","GPX, OsmAnd-.osf, Google-Orte oder eine Sicherung (IbexMap_Paket_….json) auswählen. Google-Orte vorher über Google Takeout «Maps (Meine Orte)» bzw. «Gespeichert» als .json oder .csv exportieren.");
 };
+/* App-Version: Update suchen und Startzeit (früher zwei Menüeinträge) */
+const stReady=()=>{const m=ST_MARKS.find(x=>x.t==="Karte bereit");return m?m.s.toFixed(1):"";};
+function appVersionDialog(){openPanel(`<h2>App-Version</h2><p class="muted">Installiert: <b>${VERSION}</b>. Neue Versionen kommen beim Öffnen der App von selbst.</p>
+    <div class="actions"><button class="btn" id="avUpd">${mi("refresh",16)} Jetzt nach Update suchen</button></div>
+    <div class="mgh">Startzeit (dieser Start, ${esc(devName())})</div>
+    <div class="mgrp">${ST_MARKS.map(m=>`<div class="mrow" style="cursor:default"><span class="mtx"><b>${esc(m.t)}</b></span><span style="font-variant-numeric:tabular-nums">${m.s.toFixed(1)} s</span></div>`).join("")||`<div class="mrow"><span class="mtx"><small>Messung läuft</small></span></div>`}</div>
+    <p class="muted" style="font-size:12.5px">Sekunden seit dem Öffnen. Abgleich mit Google Drive startet erst nach 30 s, POI der Länder werden erst geladen, wenn das Overlay, die Suche oder der Filter sie braucht.</p>
+    <div class="actions"><button class="btn sec" id="avBack">Zurück</button></div>`);
+  $("#avUpd").onclick=checkUpdate;$("#avBack").onclick=()=>$("#navMenu").onclick();}
+/* Fotos: ein Menüeintrag für beide Wege */
+function photoMenu(){openPanel(`<h2>Fotos</h2><div class="mgrp">
+    <button class="mrow wrap" id="pmNew"><span class="mic">${mi("pin",20)}</span><span class="mtx"><b>Neue Punkte aus Fotos</b><small>Fotos auswählen, Punkte auf einer grossen Seite erfassen</small></span><span class="mchev">${mi("chev",18)}</span></button>
+    <button class="mrow wrap" id="pmAdd"><span class="mic">${mi("photo",20)}</span><span class="mtx"><b>Fotos bestehenden Punkten zuordnen</b><small>Nach Ort im Foto oder Dateiname, auch aus einer OsmAnd-Datei (.osf)</small></span><span class="mchev">${mi("chev",18)}</span></button></div>
+    <div class="actions"><button class="btn sec" id="pmBack">Zurück</button></div>`);
+  $("#pmNew").onclick=wizardStart;$("#pmAdd").onclick=photoDialog;$("#pmBack").onclick=()=>$("#navMenu").onclick();}
 function manageSections(){
   const used=x=>points.filter(p=>p.trip===curTrip&&p.section===x).length;
   openPanel(`<h2>Abschnitte – ${esc(curTripObj()?curTripObj().name:"")}</h2><div id="sList">${sections.map((x,i)=>`<div class="item"><div style="flex:1"><div class="t">${esc(x)}</div><div class="s">${used(x)} Punkte${sectorInfo(x)?` · ${esc(sectorInfo(x).zeit)}`:""}</div>${sectorInfo(x)?`<div class="s">Klima: ${esc(sectorInfo(x).klima)}</div><div class="s">${esc(sectorInfo(x).info)}</div>`:""}</div>
@@ -2174,7 +2207,7 @@ async function wizShow(){const g=wz.groups[wz.i];const N=wz.groups.length;
      <div><label id="wVisL">${STAY.includes(f.cat)?"Von":"Besucht am"}</label><input id="wVis" type="date" value="${esc(f.visited)}"></div>
      <div id="wToW" style="display:${STAY.includes(f.cat)?"":"none"}"><label>Bis</label><input id="wTo" type="date" value="${esc(f.visitedTo)}"></div></div>
    <div class="row"><div><label>Reise</label><select id="wTrip"><option value="">– keine Reise –</option>${tripsSorted().map(x=>`<option value="${x.id}" ${f.trip===x.id?"selected":""}>${esc(x.name)}</option>`).join("")}</select></div>
-     <div><label>Abschnitt</label><select id="wSec" ${t?"":"disabled"}><option value="">–</option>${(t?t.sections:[]).map(x=>`<option ${f.section===x?"selected":""}>${esc(x)}</option>`).join("")}</select></div></div>
+     <div style="display:none"><label>Abschnitt</label><select id="wSec" ${t?"":"disabled"}><option value="">–</option>${(t?t.sections:[]).map(x=>`<option ${f.section===x?"selected":""}>${esc(x)}</option>`).join("")}</select></div></div>
    <div id="wRate">${RATE[f.cat]?`<label>Bewertung gesamt</label>${starsWidget("__w",f.stars)}`:""}</div>
    <label>Beschreibung</label><textarea id="wDesc" style="min-height:90px">${esc(f.desc)}</textarea>
    <label>Notiz</label><textarea id="wNote" style="min-height:60px">${esc(f.note)}</textarea>
@@ -2258,7 +2291,7 @@ function manageTrips(){
      <span class="oact">${btn("show",t.id,"pin","Auf der Karte zeigen")}${cur?ph:btn("cur",t.id,"star","Als aktuelle Reise wählen")}${cur?ph:btn("hide",t.id,t.hidden?"eyeoff":"eye",t.hidden?"Ausgeblendet – antippen zum Einblenden":"Sichtbar – antippen zum Ausblenden (dann nur sichtbar, wenn im Filter gewählt)")}${btn("ren",t.id,"edit","Umbenennen")}${n||trips.length<2?ph:btn("del",t.id,"trash","Löschen")}</span></div>`;}).join("")}</div>
    <p class="muted" style="margin-top:8px">${mi("pin",13)} auf Karte zeigen · ${mi("star",13)} aktuelle Reise · ${mi("eye",13)} sichtbar / ${mi("eyeoff",13)} ausgeblendet · ${mi("edit",13)} umbenennen · ${mi("trash",13)} löschen (nur ohne Punkte)</p>
    <div class="mgh">Neue Reise</div>
-   <div class="mgrp" style="padding:10px 12px"><div class="row"><input id="tNew" placeholder="z. B. Spanien 2027" style="flex:1"><select id="tTpl" style="flex:1"><option value="">Ohne Abschnitte</option><option value="ma">Vorlage Marokko (A–J)</option><option value="copy">Abschnitte der aktuellen Reise</option></select></div>
+   <div class="mgrp" style="padding:10px 12px"><div class="row"><input id="tNew" placeholder="z. B. Spanien 2027" style="flex:1"><select id="tTpl" hidden><option value=""></option></select></div>
    <div class="actions" style="margin-top:10px"><button class="btn" id="tAdd">Anlegen und als aktuelle Reise wählen</button></div></div>
    <p class="muted" style="margin-top:10px">Bestehende Punkte bleiben bei ihrer Reise; einen Punkt verschiebst du im Formular über «Reise». Ausgeblendete Reisen (z. B. alte Reisen) erscheinen auf Karte, Liste und Verwaltung nur, wenn du sie im Filter ausdrücklich wählst.</p>`);
   const P=$("#panel");
@@ -2408,9 +2441,11 @@ function gdSettings(){
    <label>OAuth-Client-ID</label><input id="gId" value="${esc(gdClient())}" placeholder="1234…apps.googleusercontent.com">
    <label>Google-Konto für den Abgleich (E-Mail)</label><input id="gMail" type="email" value="${esc(ls("rb_gmail"))}" placeholder="deine.private@gmail.com">
    <p class="muted">Auf allen Geräten dasselbe Konto eintragen. Ist auf dem Gerät ein anderes Google-Konto angemeldet, wählst du im Google-Fenster «Anderes Konto verwenden».</p>
+   ${gdClient()?`<div class="mgrp"><label class="mrow"><span class="mic">${mi("sync",20)}</span><span class="mtx"><b>Automatisch abgleichen</b><small>30 s nach dem Start und nach Änderungen – sonst nur mit dem Kreispfeil</small></span><input type="checkbox" class="msw" id="gAuto" ${autoSyncOn()?"checked":""}></label></div>`:""}
    <div class="actions"><button class="btn" id="gSave">Speichern und verbinden</button>${gdClient()?`<button class="btn sec" id="gSwitch">Konto wechseln</button><button class="btn warn" id="gOff">Trennen</button>`:""}<button class="btn sec" id="gBack">Zurück</button></div>
    <p class="muted">Die Daten auf dem Gerät bleiben immer erhalten – der Abgleich kopiert nur hin und her. Zusätzlich kannst du im Menü › Daten › «Sicherung (Datei)» alles als Datei sichern – unabhängig von Google.</p>`);
   $("#gBack").onclick=()=>$("#navMenu").onclick();
+  const ga=$("#gAuto");if(ga)ga.onchange=()=>{ls("rb_autosync",ga.checked?"1":"0");toast(ga.checked?"Automatischer Abgleich ein":"Automatischer Abgleich aus",3000);if(ga.checked)autoSyncSoon(2000);};
   $("#gSave").onclick=()=>{const v=$("#gId").value.trim(),mail=$("#gMail").value.trim();
     if(mail!==ls("rb_gmail")){ls("rb_gmail",mail||null);ls("rb_gconn",null);gdToken=null;}if(!/\.apps\.googleusercontent\.com$/.test(v))return toast("Das sieht nicht nach einer Client-ID aus (endet auf .apps.googleusercontent.com)",5000);
     if(v!==gdClient()){ls("rb_gclient",v);ls("rb_gconn",null);gdToken=null;}showSyncBtn();closePanel();syncDrive();};
@@ -2646,7 +2681,7 @@ async function offlineDialog(){
    <div class="mgrp">
      <button class="mrow wrap" id="oNewCC"><span class="mic main2">${mi("globe",20)}</span><span class="mtx"><b>Ganzes Land</b><small>Land aus der Liste wählen – wie bei OsmAnd</small></span><span class="mchev">${mi("chev",18)}</span></button>
      <button class="mrow wrap" id="oNewView"><span class="mic">${mi("map",20)}</span><span class="mtx"><b>Kartenausschnitt wählen</b><small>Karte verschieben und zoomen, dann übernehmen</small></span><span class="mchev">${mi("chev",18)}</span></button>
-     <button class="mrow wrap" id="oNewSec"><span class="mic">${mi("sec",20)}</span><span class="mtx"><b>Abschnitt der Reise</b><small>z. B. «C Wüste» – ganzes Gebiet</small></span><span class="mchev">${mi("chev",18)}</span></button>
+     
      <button class="mrow wrap" id="oNewPts"><span class="mic">${mi("pin",20)}</span><span class="mtx"><b>Rund um eure Punkte</b><small>Umkreis um jeden Punkt der Reise, dazu eine grobe Übersicht</small></span><span class="mchev">${mi("chev",18)}</span></button>
    </div>
    <p class="muted" style="margin-top:14px">Am besten zu Hause im WLAN laden. Bilder, die mehrere Gebiete brauchen, werden nur einmal gespeichert und erst gelöscht, wenn kein Gebiet sie mehr braucht. Die Kartendienste sind für normale Nutzung gedacht – bitte nur laden, was ihr wirklich braucht.</p>`);
@@ -2656,7 +2691,7 @@ async function offlineDialog(){
   $("#panel").querySelectorAll("[data-oo]").forEach(b=>b.onclick=async()=>{const d=offShared().find(x=>x.id===b.dataset.id);if(!d)return;
     if(b.dataset.oo==="hide"){ls("rb_offhide",JSON.stringify([...offHide(),d.id]));offlineDialog();return;}
     if(offPacks.some(x=>x.id===d.id))return offlineDialog();const pk=Object.assign({},d,{date:Date.now()});offPacks.push(pk);await saveOffPacks();offRunPack(pk,false);});
-  $("#oNewView").onclick=offPickView;$("#oNewCC").onclick=offCountryPick;$("#oNewSec").onclick=()=>offConfig({kind:"section"});$("#oNewPts").onclick=()=>offConfig({kind:"points"});
+  $("#oNewView").onclick=offPickView;$("#oNewCC").onclick=offCountryPick;$("#oNewPts").onclick=()=>offConfig({kind:"points"});
   $("#panel").querySelectorAll("[data-o]").forEach(b=>b.onclick=async()=>{const pk=offPacks[+b.dataset.i];const o=b.dataset.o;
     if(o==="show"){closePanel();drawOffAreas(pk);const bb=L.latLngBounds(pk.areas.flatMap(a=>[[a.s,a.w],[a.n,a.e]]));map.fitBounds(bb,{padding:[30,30]});
       if(BASE[pk.layer]&&!map.hasLayer(BASE[pk.layer])){Object.values(BASE).forEach(l=>map.removeLayer(l));BASE[pk.layer].addTo(map);}toast(`${pk.name} – ${pk.layer}`,3000);}
@@ -3036,7 +3071,7 @@ const AF={trip:new Set(),cc:new Set(),cat:new Set(),st:new Set(),sec:new Set(),s
 let admSort={k:"updated",d:-1};try{const s=JSON.parse(localStorage.getItem("rb_asort")||"null");if(s&&s.k)admSort=s;}catch(e){}
 const admShown=new Set();const admHi=L.layerGroup().addTo(map);
 const ST_ORD={idee:0,fix:1,besucht:2};const ADM_Z=8;/* Verwaltung: Karte zeigt beim Anklicken einer Zeile eine Übersicht (Region), nicht Strassenebene */
-const ADM_COLS=[["title","Titel"],["cat","Kategorie"],["st","Status"],["trip","Reise"],["sec","Abschnitt"],["cc","Land"],["stars","Sterne"],["story","Story"],["photos","Fotos"],["vis","Besucht"],["created","Erfasst"],["updated","Geändert"]];
+const ADM_COLS=[["title","Titel"],["cat","Kategorie"],["st","Status"],["trip","Reise"],["cc","Land"],["stars","Sterne"],["story","Story"],["photos","Fotos"],["vis","Besucht"],["created","Erfasst"],["updated","Geändert"]];
 const admKey={title:p=>ptTitle(p).toLowerCase(),cat:p=>(CATS[p.cat]||CATS.other).n,st:p=>ST_ORD[p.status||"idee"]??0,trip:p=>tripName(p.trip).toLowerCase()||"~",
   sec:p=>(p.section||"~").toLowerCase(),cc:p=>countryName(p.country).toLowerCase()||"~",stars:p=>p.stars||0,story:p=>p.story?1:0,
   photos:p=>(p.photos||[]).length,vis:p=>p.visited||"",created:p=>p.created||0,updated:p=>p.updated||0};
@@ -3065,7 +3100,6 @@ function admToolbar(){
    ${admFilterBtn("cat","Kategorie",admOpts("cat",p=>p.cat in CATS?p.cat:"other",v=>`${icoBadge(v,CATS[v].c,18)} ${esc(CATS[v].n)}`))}
    ${admFilterBtn("st","Status",admOpts("st",p=>p.status||"idee",v=>esc(STATUS[v]||v)))}
    ${admFilterBtn("stars","Sterne",admOpts("stars",p=>String(p.stars||0),v=>v==="0"?"<em>ohne Bewertung</em>":`<span style="color:#e0a100">${"★".repeat(+v)}</span>`).sort((a,b)=>b[0]-a[0]))}
-   ${admFilterBtn("sec","Abschnitt",admOpts("sec",p=>p.section||"",v=>v?esc(v):"<em>ohne Abschnitt</em>"))}
    ${admFilterBtn("x","Weitere",xs.map(([v,l])=>[v,l,points.filter(p=>admMatch(p,"x")&&(()=>{const s=AF.x;AF.x=new Set([v]);const r=admMatch(p);AF.x=s;return r;})()).length]))}
    ${Object.values(AF).some(s=>s.size)||admQ?`<button class="alink" id="aReset">Alle Filter zurücksetzen</button>`:""}
    <span class="acount" id="aCount"></span>
@@ -3093,7 +3127,6 @@ function admRow(p){const c=CATS[p.cat]||CATS.other,t=tripOf(p.trip),secs=t?t.sec
    <td><select data-e="cat">${Object.entries(CATS).map(([k,v])=>`<option value="${k}" ${p.cat===k?"selected":""}>${esc(v.n)}</option>`).join("")}</select></td>
    <td><select data-e="status">${Object.entries(STATUS).map(([k,v])=>`<option value="${k}" ${(p.status||"idee")===k?"selected":""}>${v}</option>`).join("")}</select></td>
    <td><select data-e="trip"><option value="">– keine –</option>${tripsSorted().map(x=>`<option value="${x.id}" ${p.trip===x.id?"selected":""}>${esc(x.name)}</option>`).join("")}</select></td>
-   <td><select data-e="section" ${t?"":"disabled"}><option value="">–</option>${secs.map(x=>`<option ${p.section===x?"selected":""}>${esc(x)}</option>`).join("")}${p.section&&!secs.includes(p.section)?`<option selected>${esc(p.section)}</option>`:""}</select></td>
    <td class="atxt">${esc(countryName(p.country))||`<span class="muted">–</span>`}</td>
    <td>${RATE[p.cat]?`<span class="astars">${[1,2,3,4,5].map(i=>`<button data-star="${i}" class="${(p.stars||0)>=i?"on":""}">★</button>`).join("")}</span>`:`<span class="muted">–</span>`}</td>
    <td class="ack"><input type="checkbox" data-e="story" ${p.story?"checked":""} title="Storypoint (Familienseite)"></td>
@@ -3488,6 +3521,7 @@ async function readyDialog(){openPanel(`<h2>Bereit für unterwegs?</h2><p class=
   const nMap=pts.filter(p=>vecOk(p)||offPacks.some(pk=>TSRC(pk.layer)&&pk.areas.some(a=>a.z2>=12&&inA(p,a)))).length,nSurf=cov(pk=>pk.surf);
   const ccs=[...new Set(pts.map(p=>p.country).filter(Boolean))],ccMiss=ccs.filter(c=>!poiOff.some(x=>x.cc===c));
   const lastS=+ls("rb_lastsync")||0,ageD=lastS?(Date.now()-lastS)/864e5:999,pend=(await getAll("points")).some(p=>(p.updated||0)>lastS);
+  const anyVec=Object.values(vf).some(v=>v.ok),vOff=anyVec?await vecOffCheck():null;
   let persisted=false;try{persisted=navigator.storage&&navigator.storage.persisted?await navigator.storage.persisted():false;}catch(e){}
   const fam=famCfg();const nStory=pts.filter(p=>p.story).length;
   const st=(ok,warn)=>ok?["ok","✓"]:warn?["warn","!"]:["bad","✕"];
@@ -3495,6 +3529,7 @@ async function readyDialog(){openPanel(`<h2>Bereit für unterwegs?</h2><p class=
   const rows=[
     [st(gdClient()&&ageD<1&&!pend,gdClient()),"Abgleich mit Google Drive",!gdClient()?"Nicht eingerichtet – ohne Abgleich gibt es keine Sicherung":lastS?`Letzter Abgleich ${fmtDT(lastS)}${pend?" · seither Änderungen":""}`:"Noch nie abgeglichen",gdClient()?["Jetzt abgleichen",()=>{closePanel();syncDrive();}]:["Einrichten",gdSettings]],
     [st(pts.length&&nMap===pts.length,nMap>0),"Karte offline",pts.length?`${nMap} von ${pts.length} Punkten der Reise offline auf der Karte (Vektorkarte oder Kartenbilder ab Stufe 12, ${pc(nMap)} %)`:"Die aktuelle Reise hat noch keine Punkte",["Offline-Daten",offOverview]],
+    ...(vOff?[[st(!vOff.miss,false),"Vektorkarte offline",vOff.miss?`${vOff.miss} von ${vOff.total} Teilen fehlen (Kartenprogramm, Schriften, Symbole) – ohne sie bleibt die Vektorkarte offline leer`:"Kartenprogramm, Schriften und Symbole gespeichert",vOff.miss?["Jetzt laden",async()=>{await vecOffLoad();readyDialog();}]:null]]:[]),
     [st(pts.length&&nSurf===pts.length,nSurf>0),"Strassenoberfläche offline",`${nSurf} von ${pts.length} Punkten (${pc(nSurf)} %)`,["Offline-Daten",offOverview]],
     [st(ccs.length&&!ccMiss.length,ccMiss.length<ccs.length),"POI-Overlay und Suche offline",ccs.length?(ccMiss.length?`Fehlt: ${ccMiss.map(countryName).join(", ")}`:`Gespeichert: ${ccs.map(countryName).join(", ")}`+(poiOff.some(p=>ccs.includes(p.cc)&&Date.now()-p.loaded>POI_OLD)?" · Stand älter als 3 Monate – neu laden empfohlen":"")):"Noch keine Länder bei den Punkten",["Länder laden",poiOffDialog]],
     [st(!!countryData,false),"Ländergrenzen",countryData?`${countryData.length} Länder – Land wird offline automatisch zugeordnet`:"Nicht geladen",["Laden",async()=>{toast("Lade Ländergrenzen …",60000);try{await downloadCountries();await assignCountries();toast("Geladen",2500);}catch(e){toast("Laden fehlgeschlagen",3000);}readyDialog();}]],
@@ -3780,7 +3815,7 @@ function driveUI(){let bar=$("#driveBar");
   $("#dRec").onclick=()=>trkToggle(!trkOn());$("#dEnd").onclick=()=>driveMode(false);driveInfo();}
 let lastSpd=null;
 function driveInfo(){const e=$("#dInfo");if(!e)return;const t=trks.find(x=>x.id===dayKey(Date.now()));
-  e.innerHTML=`<span><b>${lastSpd!=null?Math.round(lastSpd*3.6):"–"}</b> km/h</span><span><b>${t&&!t.del?trkKm(t).toFixed(1):"0.0"}</b> km heute</span><span>${me?`GPS ±${Math.round(me.acc)} m`:"GPS sucht …"}</span>${trkOn()?`<span class="recdot">● Aufnahme</span>`:""}`;}
+  e.innerHTML=`<span><b>${lastSpd!=null?Math.round(lastSpd*3.6):"–"}</b> km/h</span><span><b>${t&&!t.del?trkKm(t).toFixed(1):"0.0"}</b> km heute</span><span id="dPos" style="cursor:pointer;text-decoration:underline">${me?`GPS ±${Math.round(me.acc)} m`:"GPS sucht …"}</span>${trkOn()?`<span class="recdot">● Aufnahme</span>`:""}`;const dp=$("#dPos");if(dp)dp.onclick=myPosPanel;}
 async function driveMode(on){driveOn=on;ls("rb_drive",on?"1":"0");
   if(on){closePanel();startGPS();follow=true;$("#locBtn").classList.add("follow");if(me)map.setView([me.lat,me.lon],Math.max(map.getZoom(),15));
     try{if("wakeLock" in navigator)driveWL=await navigator.wakeLock.request("screen");}catch(e){}}
