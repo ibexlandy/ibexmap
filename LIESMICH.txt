@@ -1,4 +1,4 @@
-IbexMap – v7.5 (privates Projekt)
+IbexMap – v7.6 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -376,6 +376,11 @@ NEU IN v6.8
 NEU IN v7.1
 - Vektorkarte erstellen per Doppelklick: Offline-Daten › Land › «Karte erstellen (PC)» › «Startdatei herunterladen». Die Datei <Land>_laden.bat holt das Programm pmtiles, sucht die neueste Weltkarte von Protomaps und schneidet das Land heraus (Ordner IbexMap-Karten im Benutzerordner); danach in IbexMap «Datei laden». Kein cmd, kein Befehl, kein Datum mehr. Der Befehl von Hand bleibt unter «Von Hand (für Fortgeschrittene)».
 - Geprüft: Ganz in der App geht es nicht – der Protomaps-Server sperrt den Zugriff aus dem Browser (CORS).
+
+NEU IN v7.6
+- Rohdaten grosser Länder (z. B. Spanien): Das Auslesen arbeitet jetzt in Portionen («Teil 1, Teil 2 …») und speichert jede Portion, bevor die nächste kommt. Strassenpunkte werden kompakter gespeichert. Ergebnis identisch, Arbeitsspeicher deutlich kleiner – vorher brach Spanien mit «Out of Memory» ab. Dauert bei grossen Ländern etwas länger (mehrere Durchgänge).
+- Strassenoberfläche auf Google Drive in Teilen à ca. 20 MB (statt einer riesigen Datei), damit auch Handys sie verarbeiten können; grosse Dateien werden in Stücken hochgeladen.
+- Offline-Daten: Die Zeile «Kartenbilder» erscheint nur noch, wenn für das Land Satellit- oder swisstopo-Bilder gespeichert sind – alte Topo-Bilder eines anderen Geräts blenden sie nicht mehr ein.
 
 NEU IN v7.5
 - Sicherheit: Kartenbausteine (MapLibre, PMTiles, Leaflet usw.) mit fester Version und Prüfsumme – der Browser führt sie nur aus, wenn sie unverändert sind. Alte Bausteine ohne feste Version werden aus dem Speicher entfernt.

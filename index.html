@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <!-- Sicherheitsregeln: Code nur von hier (Fingerabdruck), cdnjs und unpkg (mit Prüfsumme). Fingerabdruck setzt /home/claude/tools/csp.py -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-BRe39zTwxPHSp8jTeKdAiAFlS0oeO9fGSMbaopc4FAg=' https://cdnjs.cloudflare.com https://unpkg.com; worker-src 'self' blob:; child-src blob:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; font-src 'self' data: https:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-FqK+mIu+k22VeJPL3LV1IXDZ9AMO4aUH9opXyikx1iE=' https://cdnjs.cloudflare.com https://unpkg.com; worker-src 'self' blob:; child-src blob:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; font-src 'self' data: https:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#92b78c">
 <title>IbexMap</title>
@@ -384,7 +384,10 @@ function poiHit(t){for(const k in t){const fs=POIF[k];if(!fs)continue;const v=t[
 function keyIdx(B,set){const m=new Uint8Array(B.st.length);for(let i=0;i<B.st.length;i++){const l=B.st[i][1]-B.st[i][0];if(l<40&&set.has(B.S(i)))m[i]=1;}return m;}
 /* wachsende Zahlenliste */
 class F64{constructor(n=1<<20){this.a=new Float64Array(n);this.n=0;}push(v){if(this.n===this.a.length){const x=new Float64Array(this.a.length*2);x.set(this.a);this.a=x;}this.a[this.n++]=v;}}
-onmessage=async ev=>{try{const {file,poiFirst,keep,hw}=ev.data;P=(t,f,x)=>postMessage(Object.assign({t:"prog",phase:t,f},x||{}));
+/* Warten, bis das Hauptprogramm eine Portion gespeichert hat (sonst stauen sich die Ergebnisse im Arbeitsspeicher) */
+let ackR=null;const waitAck=()=>new Promise(r=>{ackR=r;});
+onmessage=async ev=>{if(ev.data&&ev.data.t==="ack"){if(ackR){const r=ackR;ackR=null;r();}return;}
+  try{const {file,poiFirst,keep,hw}=ev.data;P=(t,f,x)=>postMessage(Object.assign({t:"prog",phase:t,f},x||{}));
   POIF={};for(const [k,op,v] of poiFirst){(POIF[k]=POIF[k]||[]).push([op,op==="~"?new RegExp(v):v]);}KEEP=new Set(keep);HW=new Set(hw);
   const keyNeed=new Set([...Object.keys(POIF),"highway"]);
   P("Datei wird gegliedert …",0);const bl=await index(file,f=>P("Datei wird gegliedert …",f));
@@ -392,63 +395,79 @@ onmessage=async ev=>{try{const {file,poiFirst,keep,hw}=ev.data;P=(t,f,x)=>postMe
   const cls=new Map();const clsOf=async i=>{if(!cls.has(i))cls.set(i,kind(block(await blockData(file,bl[i]))));return cls.get(i);};
   const first=async(pred)=>{let lo=0,hi=bl.length;while(lo<hi){const m=(lo+hi)>>1;if(pred(await clsOf(m)))hi=m;else lo=m+1;}return lo;};
   const wStart=await first(k=>k>=3),rStart=await first(k=>k>=4);
-  /* Durchgang 1: Wege */
-  const refs=new F64(1<<22);const ways=[];let poiW=0,hwW=0;
-  for(let i=wStart;i<rStart;i++){if(i%20===0)P("Strassen und Flächen lesen …",(i-wStart)/Math.max(1,rStart-wStart),{n:hwW,p:poiW});
-    const B=block(await blockData(file,bl[i]));const ki=keyIdx(B,keyNeed);const b=B.b;
-    for(const [gs,ge] of B.groups){const o={p:gs};while(o.p<ge){const k=rd(b,o);if((k>>3)!==3||(k&7)!==2){skip(b,o,k&7);continue;}
-      const l=rd(b,o),e=o.p+l;let id=0;const ks=[],vs=[];let rs=null;
-      while(o.p<e){const k2=rd(b,o),f=k2>>3,wt=k2&7;
-        if(f===1)id=rd(b,o);else if(f===2&&wt===2)packed(b,o,x=>ks.push(x));else if(f===3&&wt===2)packed(b,o,x=>vs.push(x));
-        else if(f===8&&wt===2){rs=[];let acc=0;packed(b,o,x=>{acc+=zz(x);rs.push(acc);});}else skip(b,o,wt);}
-      let rel=false;for(const x of ks)if(ki[x]){rel=true;break;}if(!rel||!rs||rs.length<2)continue;
-      const t={};for(let j=0;j<ks.length;j++){const kk=B.S(ks[j]);if(KEEP.has(kk)||kk==="highway"||kk==="surface"||kk==="tracktype"||kk==="smoothness"||kk==="4wd_only"||kk==="motor_vehicle"||kk==="ref")t[kk]=B.S(vs[j]);}
-      const isHw=t.highway&&HW.has(t.highway),isPoi=poiHit(t);if(!isHw&&!isPoi)continue;
-      const s=refs.n;for(const r of rs)refs.push(r);ways.push({id,t,s,n:rs.length,hw:isHw,poi:isPoi});if(isHw)hwW++;if(isPoi)poiW++;}}}
-  P("Knoten vorbereiten …",0);
-  const need=refs.a.slice(0,refs.n).sort();let N=0;for(let i=0;i<need.length;i++)if(i===0||need[i]!==need[i-1])need[N++]=need[i];
-  const lat=new Float32Array(N).fill(NaN),lon=new Float32Array(N).fill(NaN);
-  /* Durchgang 2: Knoten (Koordinaten der Wege + POI-Knoten) */
-  const pois=[];let q=0;
-  const nodeOut=(id,la,lo,tags)=>{while(q<N&&need[q]<id)q++;if(q<N&&need[q]===id){lat[q]=la;lon[q]=lo;}
-    if(tags&&poiHit(tags))pois.push({a:+la.toFixed(5),o:+lo.toFixed(5),t:tags});};
-  for(let i=0;i<wStart;i++){if(i%20===0)P("Orte und Koordinaten lesen …",i/Math.max(1,wStart),{p:pois.length});
-    const B=block(await blockData(file,bl[i]));const ki=keyIdx(B,new Set(Object.keys(POIF)));const b=B.b;const g=B.gran*1e-9;
-    for(const [gs,ge] of B.groups){const o={p:gs};while(o.p<ge){const k=rd(b,o),f=k>>3,wt=k&7;
-      if(f===2&&wt===2){const l=rd(b,o),e=o.p+l;let ids=[],las=[],los=[],kv=null;
-        while(o.p<e){const k2=rd(b,o),f2=k2>>3,w2=k2&7;
-          if(f2===1&&w2===2){let a=0;packed(b,o,x=>{a+=zz(x);ids.push(a);});}
-          else if(f2===8&&w2===2){let a=0;packed(b,o,x=>{a+=zz(x);las.push(a);});}
-          else if(f2===9&&w2===2){let a=0;packed(b,o,x=>{a+=zz(x);los.push(a);});}
-          else if(f2===10&&w2===2){kv=[];packed(b,o,x=>kv.push(x));}else skip(b,o,w2);}
-        let p=0;for(let j=0;j<ids.length;j++){let tags=null;
-          if(kv){let hit=false;const st=p;while(p<kv.length&&kv[p]!==0){if(ki[kv[p]])hit=true;p+=2;}
-            if(hit){tags={};for(let x=st;x<p;x+=2){const kk=B.S(kv[x]);if(KEEP.has(kk))tags[kk]=B.S(kv[x+1]);}}p++;}
-          nodeOut(ids[j],(B.lato+B.gran*las[j])*1e-9,(B.lono+B.gran*los[j])*1e-9,tags);}}
-      else if(f===1&&wt===2){const l=rd(b,o),e=o.p+l;let id=0,la=0,lo=0;const ks=[],vs=[];
-        while(o.p<e){const k2=rd(b,o),f2=k2>>3,w2=k2&7;if(f2===1)id=zz(rd(b,o));else if(f2===2&&w2===2)packed(b,o,x=>ks.push(x));else if(f2===3&&w2===2)packed(b,o,x=>vs.push(x));
-          else if(f2===8)la=zz(rd(b,o));else if(f2===9)lo=zz(rd(b,o));else skip(b,o,w2);}
-        let tags=null;if(ks.some(x=>ki[x])){tags={};ks.forEach((x,j)=>{const kk=B.S(x);if(KEEP.has(kk))tags[kk]=B.S(vs[j]);});}
-        nodeOut(id,(B.lato+B.gran*la)*1e-9,(B.lono+B.gran*lo)*1e-9,tags);}
-      else skip(b,o,wt);}}}
-  /* Ergebnis: Wege mit Koordinaten */
-  const find=id=>{let lo=0,hi=N-1;while(lo<=hi){const m=(lo+hi)>>1;const v=need[m];if(v===id)return m;if(v<id)lo=m+1;else hi=m-1;}return -1;};
-  const cells=new Map();let done=0;
-  for(const w of ways){if(++done%20000===0)P("Ergebnis zusammenstellen …",done/ways.length);
-    const pts=[];let s=Infinity,n=-Infinity,we=Infinity,ea=-Infinity,pl="";
-    for(let j=w.s;j<w.s+w.n;j++){const x=find(refs.a[j]);if(x<0||isNaN(lat[x]))continue;const la=lat[x],lo=lon[x];
-      if(la<s)s=la;if(la>n)n=la;if(lo<we)we=lo;if(lo>ea)ea=lo;
-      if(w.hw){const p=[+la.toFixed(4),+lo.toFixed(4)];const key=p[0]+","+p[1];if(key!==pl){pts.push(p);pl=key;}}}
-    if(s===Infinity)continue;
-    if(w.poi){const t={};for(const k in w.t)if(KEEP.has(k))t[k]=w.t[k];pois.push({a:+((s+n)/2).toFixed(5),o:+((we+ea)/2).toFixed(5),t});}
-    if(w.hw&&pts.length>=2){const t=w.t;const r={h:t.highway,s:t.surface||"",g:t.tracktype||"",sm:t.smoothness||"",n:t.name||t["name:fr"]||t.ref||"",x4:t["4wd_only"]==="yes"?1:0,mv:t.motor_vehicle||t.access||"",p:pts};
-      const ks=new Set();for(const p of pts)ks.add(Math.floor(p[0]/0.5)+"_"+Math.floor(p[1]/0.5));
-      for(const k of ks){if(!cells.has(k))cells.set(k,[]);cells.get(k).push(r);}}}
-  P("Ergebnis übergeben …",1);
-  let batch={},bn=0;for(const [k,v] of cells){batch[k]=v;if(++bn%40===0){postMessage({t:"surf",cells:batch});batch={};}}
-  postMessage({t:"surf",cells:batch});
-  for(let i=0;i<pois.length;i+=20000)postMessage({t:"poi",items:pois.slice(i,i+20000)});
-  postMessage({t:"done",ways:hwW,pois:pois.length,cells:cells.size,nodes:N});
+  /* Portionsweise (ab v7.6): Wege-Blöcke in Gruppen mit höchstens LIM Wegpunkten, pro Gruppe ein Durchgang über die Knoten.
+     Der Speicherbedarf bleibt so bei wenigen hundert MB, egal wie gross das Land ist. Ergebnisse gehen nach jeder Gruppe hinaus. */
+  const LIM=4e6,nW=Math.max(1,rStart-wStart),poiKeys=new Set(Object.keys(POIF));
+  /* Nummernbereich jedes Knoten-Blocks (im ersten Durchgang gemerkt): spätere Durchgänge überspringen Blöcke ohne benötigte Punkte */
+  const bFirst=new Float64Array(wStart).fill(-1),bLast=new Float64Array(wStart).fill(-1);
+  let wi=wStart,part=0,hwW=0,poiW=0,poiN=0,nodesN=0;const cellKeys=new Set();
+  while(wi<rStart||part===0){part++;const p0=wi;const refs=new F64(LIM+1000000);const ways=[];
+    /* Wege dieser Gruppe */
+    for(;wi<rStart&&refs.n<LIM;wi++){if((wi-wStart)%20===0)P(`Teil ${part}: Strassen und Flächen lesen …`,(wi-wStart)/nW,{n:hwW,p:poiN+poiW});
+      const B=block(await blockData(file,bl[wi]));const ki=keyIdx(B,keyNeed);const b=B.b;
+      for(const [gs,ge] of B.groups){const o={p:gs};while(o.p<ge){const k=rd(b,o);if((k>>3)!==3||(k&7)!==2){skip(b,o,k&7);continue;}
+        const l=rd(b,o),e=o.p+l;let id=0;const ks=[],vs=[];let rs=null;
+        while(o.p<e){const k2=rd(b,o),f=k2>>3,wt=k2&7;
+          if(f===1)id=rd(b,o);else if(f===2&&wt===2)packed(b,o,x=>ks.push(x));else if(f===3&&wt===2)packed(b,o,x=>vs.push(x));
+          else if(f===8&&wt===2){rs=[];let acc=0;packed(b,o,x=>{acc+=zz(x);rs.push(acc);});}else skip(b,o,wt);}
+        let rel=false;for(const x of ks)if(ki[x]){rel=true;break;}if(!rel||!rs||rs.length<2)continue;
+        const t={};for(let j=0;j<ks.length;j++){const kk=B.S(ks[j]);if(KEEP.has(kk)||kk==="highway"||kk==="surface"||kk==="tracktype"||kk==="smoothness"||kk==="4wd_only"||kk==="motor_vehicle"||kk==="ref")t[kk]=B.S(vs[j]);}
+        const isHw=t.highway&&HW.has(t.highway),isPoi=poiHit(t);if(!isHw&&!isPoi)continue;
+        const s=refs.n;for(const r of rs)refs.push(r);ways.push({t,s,n:rs.length,hw:isHw,poi:isPoi});if(isHw)hwW++;if(isPoi)poiW++;}}}
+    const share=(wi-p0)/nW,base=(p0-wStart)/nW;
+    /* benötigte Knoten: sortiert, ohne Doppelte */
+    const need=refs.a.slice(0,refs.n);need.sort();let N=0;for(let i=0;i<need.length;i++)if(i===0||need[i]!==need[i-1])need[N++]=need[i];
+    const lat=new Float32Array(N).fill(NaN),lon=new Float32Array(N).fill(NaN);
+    /* Knoten: Koordinaten dieser Gruppe (und beim ersten Durchgang die POI-Knoten) */
+    const firstPart=part===1,pois=[];let q=0;
+    const nodeOut=(id,la,lo,tags)=>{while(q<N&&need[q]<id)q++;if(q<N&&need[q]===id){lat[q]=la;lon[q]=lo;}
+      if(tags&&poiHit(tags))pois.push({a:+la.toFixed(5),o:+lo.toFixed(5),t:tags});};
+    const lowB=x=>{let lo=0,hi=N;while(lo<hi){const m=(lo+hi)>>1;if(need[m]<x)lo=m+1;else hi=m;}return lo;};
+    for(let i=0;i<wStart;i++){if(i%20===0)P(`Teil ${part}: Koordinaten lesen …`,base+share*0.6*(i/Math.max(1,wStart)),{n:hwW,p:poiN+poiW+pois.length});
+      if(!firstPart&&q>=N)break;/* alle Punkte dieser Gruppe gefunden (Knoten sind nach Nummer sortiert) */
+      if(!firstPart&&bFirst[i]>=0){const x=lowB(bFirst[i]);if(x>=N||need[x]>bLast[i])continue;}/* Block enthält keinen benötigten Punkt */
+      let bf=-1,bLa=-1;
+      const B=block(await blockData(file,bl[i]));const ki=firstPart?keyIdx(B,poiKeys):null;const b=B.b;
+      for(const [gs,ge] of B.groups){const o={p:gs};while(o.p<ge){const k=rd(b,o),f=k>>3,wt=k&7;
+        if(f===2&&wt===2){const l=rd(b,o),e=o.p+l;const ids=[],las=[],los=[];let kv=null;
+          while(o.p<e){const k2=rd(b,o),f2=k2>>3,w2=k2&7;
+            if(f2===1&&w2===2){let a=0;packed(b,o,x=>{a+=zz(x);ids.push(a);});}
+            else if(f2===8&&w2===2){let a=0;packed(b,o,x=>{a+=zz(x);las.push(a);});}
+            else if(f2===9&&w2===2){let a=0;packed(b,o,x=>{a+=zz(x);los.push(a);});}
+            else if(f2===10&&w2===2&&firstPart){kv=[];packed(b,o,x=>kv.push(x));}else skip(b,o,w2);}
+          if(firstPart){nodesN+=ids.length;if(ids.length){if(bf<0)bf=ids[0];bLa=ids[ids.length-1];}}
+          let p=0;for(let j=0;j<ids.length;j++){let tags=null;
+            if(kv){let hit=false;const st=p;while(p<kv.length&&kv[p]!==0){if(ki[kv[p]])hit=true;p+=2;}
+              if(hit){tags={};for(let x=st;x<p;x+=2){const kk=B.S(kv[x]);if(KEEP.has(kk))tags[kk]=B.S(kv[x+1]);}}p++;}
+            nodeOut(ids[j],(B.lato+B.gran*las[j])*1e-9,(B.lono+B.gran*los[j])*1e-9,tags);}}
+        else if(f===1&&wt===2){const l=rd(b,o),e=o.p+l;let id=0,la=0,lo=0;const ks=[],vs=[];
+          while(o.p<e){const k2=rd(b,o),f2=k2>>3,w2=k2&7;if(f2===1)id=zz(rd(b,o));else if(f2===2&&w2===2)packed(b,o,x=>ks.push(x));else if(f2===3&&w2===2)packed(b,o,x=>vs.push(x));
+            else if(f2===8)la=zz(rd(b,o));else if(f2===9)lo=zz(rd(b,o));else skip(b,o,w2);}
+          let tags=null;if(firstPart&&ks.some(x=>ki[x])){tags={};ks.forEach((x,j)=>{const kk=B.S(x);if(KEEP.has(kk))tags[kk]=B.S(vs[j]);});}
+          if(firstPart){nodesN++;if(bf<0)bf=id;bLa=id;}nodeOut(id,(B.lato+B.gran*la)*1e-9,(B.lono+B.gran*lo)*1e-9,tags);}
+        else skip(b,o,wt);}}
+      if(firstPart){bFirst[i]=bf;bLast[i]=bLa;}}
+    /* Wege mit Koordinaten → Strassenoberfläche (Felder 0.5°) und Flächen-POI */
+    const find=id=>{let lo=0,hi=N-1;while(lo<=hi){const m=(lo+hi)>>1;const v=need[m];if(v===id)return m;if(v<id)lo=m+1;else hi=m-1;}return -1;};
+    const cells=new Map();let done=0;
+    for(const w of ways){if(++done%20000===0)P(`Teil ${part}: Ergebnis zusammenstellen …`,base+share*(0.6+0.4*done/ways.length),{n:hwW,p:poiN+poiW+pois.length});
+      /* Punkte als flache Zahlenreihe [Breite, Länge, Breite, Länge, …] – viel kompakter als ein Objekt pro Punkt */
+      const pts=[];let s=Infinity,n=-Infinity,we=Infinity,ea=-Infinity,pa=NaN,po=NaN;
+      for(let j=w.s;j<w.s+w.n;j++){const x=find(refs.a[j]);if(x<0||isNaN(lat[x]))continue;const la=lat[x],lo=lon[x];
+        if(la<s)s=la;if(la>n)n=la;if(lo<we)we=lo;if(lo>ea)ea=lo;
+        if(w.hw){const a=+la.toFixed(4),o2=+lo.toFixed(4);if(a!==pa||o2!==po){pts.push(a,o2);pa=a;po=o2;}}}
+      if(s===Infinity)continue;
+      if(w.poi){const t={};for(const k in w.t)if(KEEP.has(k))t[k]=w.t[k];pois.push({a:+((s+n)/2).toFixed(5),o:+((we+ea)/2).toFixed(5),t});}
+      if(w.hw&&pts.length>=4){const t=w.t;const r={h:t.highway,s:t.surface||"",g:t.tracktype||"",sm:t.smoothness||"",n:t.name||t["name:fr"]||t.ref||"",x4:t["4wd_only"]==="yes"?1:0,mv:t.motor_vehicle||t.access||"",p:pts};
+        const ks=new Set();for(let j=0;j<pts.length;j+=2)ks.add(Math.floor(pts[j]/0.5)+"_"+Math.floor(pts[j+1]/0.5));
+        for(const k of ks){if(!cells.has(k))cells.set(k,[]);cells.get(k).push(r);}}}
+    /* Ergebnis dieser Gruppe abgeben; das Hauptprogramm hängt Felder, die schon da sind, an */
+    let batch={},bn=0;for(const [k,v] of cells){cellKeys.add(k);batch[k]=v;if(++bn%40===0){postMessage({t:"surf",cells:batch});batch={};}}
+    if(bn%40)postMessage({t:"surf",cells:batch});
+    for(let i=0;i<pois.length;i+=20000)postMessage({t:"poi",items:pois.slice(i,i+20000)});
+    poiN+=pois.length;
+    if(wi<rStart){postMessage({t:"part"});await waitAck();}}
+  postMessage({t:"done",ways:hwW,pois:poiN,cells:cellKeys.size,nodes:nodesN,parts:part});
 }catch(e){postMessage({t:"err",msg:e&&e.message||String(e)});}};
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" integrity="sha384-NElt3Op+9NBMCYaef5HxeJmU4Xeard/Lku8ek6hoPTvYkQPh3zLIrJP7KiRocsxO" crossorigin="anonymous"></script>
@@ -558,7 +577,7 @@ const ADM=(()=>{try{if(new URLSearchParams(location.search).has("admin")){sessio
   return sessionStorage.getItem("rb_admin")==="1"&&matchMedia("(min-width:900px)").matches;}catch(e){return false;}})();
 if(ADM)document.body.classList.add("adm");
 const GROUP="IbexMap";
-const VERSION="v7.5";
+const VERSION="v7.6";
 /* Startzeit-Messung: Sekunden seit dem Öffnen der App (im Menü › Gerät › Startzeit) */
 const ST_MARKS=[];function stMark(t){if(ST_MARKS.some(m=>m.t===t))return;ST_MARKS.push({t,s:performance.now()/1000});}
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
@@ -2308,7 +2327,7 @@ async function gzBlob(obj){const b=new Blob([JSON.stringify(obj)],{type:"applica
   if(typeof CompressionStream==="undefined")return {blob:b,enc:"json"};
   return {blob:await new Response(b.stream().pipeThrough(new CompressionStream("gzip"))).blob(),enc:"gz"};}
 async function poiToDrive(p,id){const z=await gzBlob({cc:p.cc,loaded:p.loaded,n:p.n,items:p.items});
-  await gdUpload(poiFile(p.cc),z.blob,id,{loaded:String(p.loaded),n:String(p.n),enc:z.enc});}
+  await (z.blob.size>4e6?gdUploadBig:gdUpload)(poiFile(p.cc),z.blob,id,{loaded:String(p.loaded),n:String(p.n),enc:z.enc});}
 async function poiUploadNow(cc){if(!gdClient()||!navigator.onLine)return;const p=poiOff.find(x=>x.cc===cc);if(!p)return;
   try{toast(`${countryName(cc)} wird für die anderen Geräte auf Google Drive gespeichert …`,60000);
     const files=await gdList();const f=files.find(x=>x.name===poiFile(cc));await poiToDrive(p,f&&f.id);poiDriveSet(await gdList());
@@ -2434,11 +2453,11 @@ async function offOverview(){openPanel(`<h2>Offline-Daten</h2><p class="muted">W
   const drv=(ok,txt)=>`<br><span style="font-size:12px;color:${ok?"#1f6b2a":"#9a4a00"}">Google Drive: ${txt}</span>`;
   const row=(title,sub,cells,extra)=>`<tr style="border-top:1px solid #0001"><td style="padding:7px 0;vertical-align:top;width:36%"><b>${title}</b><br><span class="muted" style="font-size:12px">${sub}</span>${extra||""}</td><td style="padding:7px 0">${cells}</td></tr>`;
   const card=cc=>{const def=defs.find(d=>d.kind==="country"&&d.cc===cc&&d.vec)||defs.find(d=>d.kind==="country"&&d.cc===cc);
-    const per=ids.map(i=>{const d=all[i];const rp=(d.packs||[]).find(p=>p.key&&p.key.startsWith(cc+"|")&&p.total>0);const sp=(d.packs||[]).find(p=>p.key&&p.key.startsWith(cc+"|")&&p.surf);
+    const per=ids.map(i=>{const d=all[i];const rp=(d.packs||[]).find(p=>p.key&&OFF_LAYERS.some(l=>p.key===cc+"|"+l)&&p.total>0);const sp=(d.packs||[]).find(p=>p.key&&p.key.startsWith(cc+"|")&&p.surf);
       return {i,vec:d.noMap?"aus":(d.vec||{})[cc]??null,dem:d.noMap?"aus":(d.dem||{})[cc]??null,map:d.noMap?"aus":rp?pc(rp.n,rp.total):null,hasMap:!!rp,
         surf:sp?(sp.surfMiss==null?0:pc(sp.surfCells-sp.surfMiss,sp.surfCells)):null,poi:(d.poi||[]).some(p=>p.cc===cc)?"✓":null};});
     const mine=per.find(x=>x.i===myId)||{};const sd=surfOnDrive(cc),pd=poiOnDrive(cc),vdr=vd[cc],ddr=vecDrive("dem")[cc],ldem=dfs[cc];
-    const rasterDef=defs.find(d=>d.kind==="country"&&d.cc===cc&&OFF_LAYERS.includes(d.layer));const md=rasterDef?tlDriveShare(rasterDef):{pc:0,mb:0};const showMap=per.some(x=>x.hasMap);
+    const rasterDef=defs.find(d=>d.kind==="country"&&d.cc===cc&&OFF_LAYERS.includes(d.layer));const md=rasterDef?tlDriveShare(rasterDef):{pc:0,mb:0};const showMap=!!rasterDef&&per.some(x=>x.hasMap);/* Zeile «Kartenbilder» nur für Satellit/swisstopo – alte Topo/Strassen-Bilder zählen nicht */
     const lv=vfs[cc];const todo=[];
     const newer=(k,l,d)=>l&&l.ok&&d&&d.build&&(vecMeta(k)[cc]||{}).build!==d.build&&(d.date||0)>=((vecMeta(k)[cc]||{}).date||0);
     if(mapsHere()){if(!(lv&&lv.ok))todo.push("Vektorkarte"+(vdr?" (von Drive)":" (zuerst am PC erstellen)"));else if(newer("vec",lv,vdr))todo.push("Vektorkarte (neuere Version auf Drive)");
@@ -3355,9 +3374,11 @@ function drawSurf(){surfLayer.clearLayers();surfLegend();if(!surfOn)return;if(ma
     const ks=cellsOf(b);if(ks.length>9){surfHint("Strassenoberfläche: näher hineinzoomen");return;}
     let miss=0;const pb=bb.pad(.1);
     for(const k of ks){const d=await surfGet(k,true);if(!d){miss++;continue;}if(!surfOn||map.getZoom()<SURF_MINZ)return;
-      for(const w of d.ways){let inside=false;for(const p of w.p)if(pb.contains(p)){inside=true;break;}if(!inside)continue;
-        L.polyline(w.p,Object.assign({renderer:surfCanvas,interactive:true},surfStyle(w))).addTo(surfLayer).on("click",ev=>{L.DomEvent.stopPropagation(ev);surfInfo(w,ev.latlng);});}}
+      for(const w of d.ways){const wp=surfPts(w.p);let inside=false;for(const p of wp)if(pb.contains(p)){inside=true;break;}if(!inside)continue;
+        L.polyline(wp,Object.assign({renderer:surfCanvas,interactive:true},surfStyle(w))).addTo(surfLayer).on("click",ev=>{L.DomEvent.stopPropagation(ev);surfInfo(w,ev.latlng);});}}
     surfHint(miss?(navigator.onLine?"Strassenoberfläche: OpenStreetMap antwortet nicht – später nochmals":"Strassenoberfläche: offline nicht gespeichert (Offline-Daten › beim Land «Hier vervollständigen»)"):"");},250);}
+/* Punkte einer Strasse: neues flaches Format [la,lo,la,lo,…] (ab v7.6) oder altes [[la,lo],…] */
+function surfPts(p){if(!p||!p.length||Array.isArray(p[0]))return p||[];const o=[];for(let i=0;i+1<p.length;i+=2)o.push([p[i],p[i+1]]);return o;}
 function surfInfo(w,ll){const r=(l,v)=>v?`<div><b>${l}:</b> ${esc(v)}</div>`:"";
   L.popup({maxWidth:260}).setLatLng(ll).setContent(`<div style="font-size:13.5px;line-height:1.45"><b style="font-size:15px">${esc(w.n||HW_DE[w.h]||"Strasse")}</b><br>${esc(HW_DE[w.h]||w.h)}
     ${r("Oberfläche",w.s?(SURF_DE[w.s]||w.s):"nicht eingetragen")}${r("Pistenqualität",GRADE_DE[w.g]||"")}${r("Befahrbarkeit",SMOOTH_DE[w.sm]||w.sm)}
@@ -3377,15 +3398,23 @@ map.on("moveend zoomend",()=>{if(surfOn)drawSurf();});
 function packCells(pk){const set=new Set();for(const a of pk.areas){if(pk.kind==="points"&&a.z2<9)continue;cellsOf(a).forEach(k=>set.add(k));}return [...set];}
 /* Strassenoberfläche über Google Drive teilen: pro Offline-Gebiet eine gepackte Datei; andere Geräte holen sie dort statt bei Overpass */
 const surfDrive=()=>{try{return JSON.parse(ls("rb_surfdrive")||"[]");}catch(e){return [];}};
-function surfDriveSet(files){ls("rb_surfdrive",JSON.stringify(files.filter(f=>/^surf_.+\.json\.gz$/.test(f.name)).map(f=>({pid:f.name.slice(5,-8),id:f.id,size:+f.size||0,enc:(f.appProperties||{}).enc||"gz",date:+((f.appProperties||{}).date)||0}))));}
+/* Dateien surf_<Gebiet>.json.gz (bis v7.5, eine Datei) oder surf_<Gebiet>~<Teil>.json.gz (ab v7.6, Teile à ca. 20 MB) */
+const surfPid=n=>(String(n).match(/^surf_(.+?)(?:~\d+)?\.json(?:\.gz)?$/)||[])[1]||"";
+function surfDriveSet(files){ls("rb_surfdrive",JSON.stringify(files.filter(f=>/^surf_.+\.json\.gz$/.test(f.name)).map(f=>({pid:surfPid(f.name),name:f.name,id:f.id,size:+f.size||0,enc:(f.appProperties||{}).enc||"gz",date:+((f.appProperties||{}).date)||0}))));}
 /* Stand der Rohdaten (POI und Strassenoberfläche) pro Land */
 const rawDate=()=>{try{return JSON.parse(ls("rb_rawdate")||"{}");}catch(e){return {};}};
-async function surfToDrive(pk){if(!gdClient()||!navigator.onLine)return;const cells={};
-  for(const k of packCells(pk)){let h=null;try{h=await getOne("meta","surf_"+k);}catch(e){}if(h)cells[k]=h;}
-  if(!Object.keys(cells).length)return;
-  try{const z=await gzBlob({pid:pk.id,cells});const files=await gdList();const f=files.find(x=>x.name===`surf_${pk.id}.json.gz`);
-    await gdUpload(`surf_${pk.id}.json.gz`,z.blob,f&&f.id,{enc:z.enc,n:String(Object.keys(cells).length),date:String(Math.max(0,...Object.values(cells).map(c=>+c.loaded||0)))});surfDriveSet(await gdList());
-    toast(`Strassenoberfläche «${pk.name}» auch auf Google Drive gespeichert`,4000);}catch(e){}}
+async function surfToDrive(pk){if(!gdClient()||!navigator.onLine)return;
+  /* in Teilen von ca. 20 MB (vor dem Packen), damit auch Handys sie verarbeiten können; Felder werden einzeln gelesen, nie alle auf einmal */
+  const ks=packCells(pk);let part={},sz=0,nPart=0,nCells=0,maxD=0;const names=[];const files=await gdList();
+  const flush=async()=>{if(!Object.keys(part).length)return;const name=`surf_${pk.id}~${nPart}.json.gz`;const z=await gzBlob({pid:pk.id,cells:part});
+    const f=files.find(x=>x.name===name);await (z.blob.size>4e6?gdUploadBig:gdUpload)(name,z.blob,f&&f.id,{enc:z.enc,n:String(Object.keys(part).length),date:String(maxD)});
+    names.push(name);nPart++;part={};sz=0;};
+  try{for(const k of ks){let h=null;try{h=await getOne("meta","surf_"+k);}catch(e){}if(!h)continue;
+      maxD=Math.max(maxD,+h.loaded||0);const est=JSON.stringify(h).length;if(sz+est>20e6&&sz>0)await flush();part[k]=h;sz+=est;nCells++;}
+    await flush();if(!nCells)return;
+    /* ältere Dateien dieses Gebiets (alte Einzeldatei, überzählige Teile) löschen */
+    for(const f of files)if(surfPid(f.name)===pk.id&&!names.includes(f.name)){try{await gd(`drive/v3/files/${f.id}`,{method:"DELETE"});}catch(e){}}
+    surfDriveSet(await gdList());toast(`Strassenoberfläche «${pk.name}» auch auf Google Drive gespeichert (${nPart} ${nPart>1?"Teile":"Datei"})`,4000);}catch(e){}}
 async function surfFromDrive(pk,show){if(!gdClient()||!navigator.onLine)return 0;const need=new Set(packCells(pk));let got=0;
   const defs=[...offPacks,...offShared()];
   for(const r of surfDrive()){const d=defs.find(x=>x.id===r.pid);if(d&&!packCells(d).some(k=>need.has(k)))continue;
@@ -3490,14 +3519,18 @@ async function pbfImportUI(cc,file){if(!/\.pbf$/i.test(file.name))return toast("
   $("#pbStop").onclick=()=>{stopped=true;w.terminate();set("Abgebrochen",0,"");try{if(wl)wl.release();}catch(e){}};
   const done=new Promise((res,rej)=>{w.onmessage=ev=>{const d=ev.data;
     if(d.t==="prog")set(d.phase,d.f,`${d.n!=null?fmtN(d.n)+" Strassen · ":""}${d.p!=null?fmtN(d.p)+" POI · ":""}${Math.round((Date.now()-t0)/1000)} s`);
-    else if(d.t==="surf")q=q.then(async()=>{for(const [k,ways] of Object.entries(d.cells)){const rec={id:"surf_"+k,ways,loaded:stand};await put("meta",rec);surfMem.set(k,rec);produced.add(k);cellsN++;}});
+    /* Felder speichern; kommt ein Feld in einer späteren Gruppe nochmals, werden die Strassen angehängt. Nicht im Arbeitsspeicher behalten. */
+    else if(d.t==="surf")q=q.then(async()=>{for(const [k,ways] of Object.entries(d.cells)){let rec={id:"surf_"+k,ways,loaded:stand};
+      if(produced.has(k)){try{const old=await getOne("meta","surf_"+k);if(old&&old.ways)rec.ways=old.ways.concat(ways);}catch(e){}}else{produced.add(k);cellsN++;}
+      await put("meta",rec);surfMem.delete(k);}});
     else if(d.t==="poi"){for(const it of d.items){const m=[];POI_GROUPS.forEach((g,gi)=>g.items.forEach((x,ii)=>{try{if(poiSelOk(x[2],it.t))m.push(gi+"."+ii);}catch(e){}}));if(m.length){it.m=m;items.push(it);}}}
+    else if(d.t==="part")q=q.then(()=>w.postMessage({t:"ack"}));
     else if(d.t==="done")res(d);else if(d.t==="err")rej(new Error(d.msg));};
     w.onerror=e=>rej(new Error((e&&e.message)||"Fehler beim Lesen"));});
   w.postMessage({file,poiFirst:poiFirstConds(),keep:POI_KEYS,hw:SURF_HW});
   let r;try{r=await done;}catch(e){w.terminate();try{if(wl)wl.release();}catch(x){}if(!stopped)set("Fehler: "+e.message,0,"Falls der Arbeitsspeicher nicht reicht: andere Programme schliessen und nochmals versuchen.");return;}
   w.terminate();set("Speichern …",1,"");await q;
-  for(const k of packCells(pk))if(!produced.has(k)){const rec={id:"surf_"+k,ways:[],loaded:stand};await put("meta",rec);surfMem.set(k,rec);}
+  for(const k of packCells(pk))if(!produced.has(k)){const rec={id:"surf_"+k,ways:[],loaded:stand};await put("meta",rec);surfMem.delete(k);}
   await loadPoiOff();poiOff=poiOff.filter(p=>p.cc!==cc);poiOff.push({cc,loaded:stand,n:items.length,items});await savePoiOff();try{await del("meta","poipart_"+cc);}catch(e){}
   {const rd=rawDate();rd[cc]=stand;ls("rb_rawdate",JSON.stringify(rd));}
   offCntCache.clear();drawOsm();if(surfOn)drawSurf();
@@ -3534,7 +3567,7 @@ async function countryRemove(cc){await loadOffPacks();await loadPoiOff();const m
 /* Land überall entfernen: dieses Gerät, Google Drive (Vektorkarte, Höhendaten, POI, Strassenoberfläche) und – beim nächsten Abgleich – alle anderen Geräte */
 async function countryRemoveAll(cc,onp){const ids=new Set([...offPacks,...offShared()].filter(d=>d.cc===cc).map(d=>d.id));
   const files=await gdList();const re=new RegExp(`^((vec|dem)_${cc}\\.pmtiles|poi_${cc}\\.json(\\.gz)?)$`);
-  const del=files.filter(f=>re.test(f.name)||(/^surf_.+\.json(\.gz)?$/.test(f.name)&&ids.has(f.name.replace(/^surf_|\.json(\.gz)?$/g,""))));let err=0,i=0;
+  const del=files.filter(f=>re.test(f.name)||(/^surf_.+\.json(\.gz)?$/.test(f.name)&&ids.has(surfPid(f.name))));let err=0,i=0;
   for(const f of del){i++;if(onp)onp(i,del.length,f.name);try{await gd(`drive/v3/files/${f.id}`,{method:"DELETE"});}catch(e){err++;}}
   ccGoneSet(cc,1);await countryRemove(cc);
   try{const fl=await gdList();vecDriveSet(fl);poiDriveSet(fl);surfDriveSet(fl);}catch(e){}
@@ -3630,7 +3663,7 @@ async function storageDialog(){openPanel(`<h2>Speicher prüfen</h2><p class="mut
     const goneC=live.filter(f=>/^(poi_[A-Z]{2}\.json(\.gz)?|(vec|dem)_[A-Z]{2}\.pmtiles)$/.test(f.name)&&!usedC.has(ccOf(f.name)));const goneId=new Set(goneC.map(f=>f.id));
     grp("POI-Dateien","werden gebraucht",live.filter(f=>/^poi_[A-Z]{2}\.json(\.gz)?$/.test(f.name)&&!goneId.has(f.id)),{keep:true});
     grp("Länder, die kein Gerät mehr verwendet",[...new Set(goneC.map(f=>countryName(ccOf(f.name))))].join(", ")+" – Vektorkarte/Höhendaten/POI auf Drive, nur löschen, wenn du das Land nicht mehr brauchst",goneC,{del:true,sel:false});
-    const sOk=live.filter(f=>/^surf_.+\.json(\.gz)?$/.test(f.name)&&pids.has(f.name.replace(/^surf_|\.json(\.gz)?$/g,""))),sOld=live.filter(f=>/^surf_.+\.json(\.gz)?$/.test(f.name)&&!sOk.includes(f));
+    const sOk=live.filter(f=>/^surf_.+\.json(\.gz)?$/.test(f.name)&&pids.has(surfPid(f.name))),sOld=live.filter(f=>/^surf_.+\.json(\.gz)?$/.test(f.name)&&!sOk.includes(f));
     grp("Strassenoberfläche deiner Gebiete","wird gebraucht",sOk,{keep:true});
     grp("Strassenoberfläche gelöschter Gebiete","gehört zu keinem Gebiet mehr",sOld,{del:true,sel:true});
     Object.entries(TL_SLUG).forEach(([lay,slug])=>{if(slug==="dem")return;const l=live.filter(f=>f.name.startsWith(`tiles_${slug}_`));
