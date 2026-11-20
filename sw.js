@@ -1,16 +1,14 @@
-const APP="reisebuch-app-v6.9",TILES="reisebuch-tiles-v4",OFFLINE="reisebuch-offline",DEM="reisebuch-dem",LIBS="reisebuch-libs",MAXTILES=3000;
+const APP="reisebuch-app-v7.2",TILES="reisebuch-tiles-v4",OFFLINE="reisebuch-offline",DEM="reisebuch-dem",LIBS="reisebuch-libs",MAXTILES=3000;
 const SHELL=["./","index.html","topo.svg","manifest.webmanifest","icon-192.png","icon-512.png","icon-maskable-512.png","favicon.png",
 "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css",
 "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(APP).then(c=>Promise.all(SHELL.map(u=>fetch(u,{cache:"no-store"}).then(r=>{if(r.ok)return c.put(u,r);})))).then(()=>self.skipWaiting()));});
-/* früheres Aufräumen ging beim Aktivieren durch alle Offline-Kacheln und blockierte den ersten Start nach jedem Update – entfernt */
-async function cleanOpaque(){try{const c=await caches.open(OFFLINE);for(const k of await c.keys()){const r=await c.match(k);if(r&&r.type==="opaque")await c.delete(k);}}catch(e){}}
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(n=>![APP,TILES,OFFLINE,DEM,LIBS].includes(n)).map(n=>caches.delete(n)))).then(()=>self.clients.claim()));});
 /* Zwischenspeicher nur jedes 50. Mal aufräumen (das Durchzählen ist langsam) */
 let putN=0;async function trim(){if(++putN%50)return;const c=await caches.open(TILES);const k=await c.keys();for(let i=0;i<k.length-MAXTILES;i++)await c.delete(k[i]);}
 self.addEventListener("fetch",e=>{const u=new URL(e.request.url);
  if(/googleapis\.com$|accounts\.google\.com$|overpass/.test(u.hostname))return;
- /* Vektorkarte (Test): Kartendatei-Abfragen nie zwischenspeichern (Teilabfragen einer grossen Datei) */
+ /* Protomaps-Weltkarte: Kartendatei-Abfragen nie zwischenspeichern (Teilabfragen einer grossen Datei) */
  if(u.hostname==="build.protomaps.com")return;
  /* Bausteine der Vektorkarte (MapLibre, Schriften, Symbole): einmal laden, danach aus dem Speicher – auch offline */
  if(u.hostname==="unpkg.com"||u.hostname==="protomaps.github.io"){e.respondWith((async()=>{const c=await caches.open(LIBS);const hit=await c.match(e.request.url);if(hit)return hit;

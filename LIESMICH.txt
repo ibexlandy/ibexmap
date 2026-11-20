@@ -1,4 +1,4 @@
-IbexMap – v6.9 (privates Projekt)
+IbexMap – v7.2 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -356,7 +356,7 @@ NEU IN v6.5
 NEU IN v6.6
 - Vektorkarte automatisch: Sobald auf einem Gerät eine Länderdatei liegt, schaltet die App einmal auf «Vektor (offline)» um; danach gilt die eigene Wahl.
 - Fahrmodus (Knopf unten links mit Lenkrad, oder Menü › Unterwegs): grosse Knöpfe «Punkt hier», «Foto-Punkt», «Fahne», «Aufnahme», «Beenden»; Karte folgt dem Standort, Bildschirm bleibt an; Anzeige km/h, km heute, GPS-Genauigkeit. «Punkt hier»: Art antippen = sofort gespeichert (Titel mit Datum/Zeit, später ergänzbar).
-- Fahrspur aufzeichnen: solange die App offen ist (im Fahrmodus), pro Tag eine Spur; auf der Karte orange, antippen für km, Zeit, GPX-Export, Löschen; Menü › Fahrspuren. Abgleich über Google Drive (eine Datei pro Tag, zwei Geräte am selben Tag werden zusammengeführt). Familienseite zeigt die gefahrene Strecke statt der Verbindungslinie.
+- Fahrspur aufzeichnen: solange die App offen ist (im Fahrmodus), pro Tag eine Spur; auf der Karte orange, antippen für km, Zeit, GPX-Export, Löschen; Menü › Fahrspuren. Abgleich über Google Drive (eine Datei pro Tag, zwei Geräte am selben Tag werden zusammengeführt).
 - Automatischer Abgleich: beim Start, 30 s nach Änderungen, alle 10 Minuten und beim Zurückkehren in die App – solange die Google-Anmeldung gültig ist. Abgelaufen: rotes «!» am Abgleich-Knopf, ein Tipp meldet neu an. Ausschalten: Menü › Unterwegs.
 - Suche: zusätzlich Fahnen und Notizen der Punkte; neue POI-Gruppe «Ortschaften» (Städte, Dörfer, Weiler) – nach dem Neuladen des POI-Overlays findet die Suche auch Orte offline.
 - Nachtmodus (Menü › Unterwegs): aus / ein / automatisch 20–6 Uhr; dunkle Bedienung, Kartenbilder abgedunkelt, Vektorkarte im dunklen Stil.
@@ -369,6 +369,15 @@ NEU IN v6.7
 NEU IN v6.8
 - Fehler behoben: «this._on is not a function» – die Vektorkarten-Ebene überschrieb einen internen Namen der Kartenbibliothek; das blockierte beim Start den Rest der App.
 
-NEU IN v6.9
+NEU IN v7.1
 - Vektorkarte erstellen per Doppelklick: Offline-Daten › Land › «Karte erstellen (PC)» › «Startdatei herunterladen». Die Datei <Land>_laden.bat holt das Programm pmtiles, sucht die neueste Weltkarte von Protomaps und schneidet das Land heraus (Ordner IbexMap-Karten im Benutzerordner); danach in IbexMap «Datei laden». Kein cmd, kein Befehl, kein Datum mehr. Der Befehl von Hand bleibt unter «Von Hand (für Fortgeschrittene)».
 - Geprüft: Ganz in der App geht es nicht – der Protomaps-Server sperrt den Zugriff aus dem Browser (CORS).
+
+NEU IN v7.2
+- POI, Ortschaften und Strassenoberfläche ohne Overpass – wie bei OsmAnd: Die Startdatei (Offline-Daten › Land › «Startdatei (PC)») lädt zusätzlich zur Vektorkarte die Rohdaten des Landes als eine Datei von Geofabrik (<Land>-rohdaten.osm.pbf, Download setzt nach Abbruch fort; Vektorkarte wird bei erneutem Start nicht nochmals erstellt, wenn sie jünger als 7 Tage ist).
+- «Dateien laden (PC)»: beide Dateien auf einmal wählen (vec_XX.pmtiles und XX-rohdaten.osm.pbf). IbexMap liest die Rohdaten am PC im Hintergrund aus (POI mit allen Details, Flächen wie Campingplätze, Ortschaften, Strassen und Pisten mit Belag, Pistenqualität, Befahrbarkeit) und stellt alles auf Google Drive. Handys und Tablet: «Hier vervollständigen».
+- Offline-Daten › «Speicher prüfen und aufräumen»: listet pro Gerät und auf Google Drive auf, was gespeichert ist (mit MB), und wählt Unnötiges vor: Kartenbilder (Topo/Strassen) von Ländern mit Vektorkarte, Testdateien aus dem Prototyp, Strassenoberfläche ausserhalb der Gebiete, abgebrochene Overpass-Downloads; auf Drive Kartenpakete ohne Verwendung, Strassenoberfläche gelöschter Gebiete, doppelte Dateien (neueste bleibt). Optional: Satellit, Zwischenspeicher. Löschen erst nach Bestätigung mit Liste. Nie gelöscht: Punkte, Fotos, Fahrspuren, Vektorkarten, Höhendaten, aktuelle POI.
+- Neues App-Logo (IBEX MAP auf Höhenlinien mit Steinbock); App-Symbole für Startbildschirm, Browser und Android neu.
+- Aufgeräumt: «Hier vervollständigen» holt POI und Strassenoberfläche ganzer Länder nur noch von Google Drive (keine stundenlangen Overpass-Versuche mehr; fehlt etwas, sagt die App, dass es am PC aus den Rohdaten erstellt werden muss). Veraltete Texte und Menüverweise angepasst, unbenutzter Code entfernt, alte Einstellung rb_mapshere entfernt.
+- Land entfernen: Papierkorb-Symbol beim Land in den Offline-Daten löscht auf diesem Gerät Vektorkarte, Höhendaten, Kartenbilder, Strassenoberfläche und POI des Landes und blendet es aus (Punkte, Fotos, Fahrspuren und Google Drive bleiben). «Speicher prüfen» bietet Drive-Dateien von Ländern an, die kein Gerät mehr verwendet.
+- Fahrspur wird nicht auf der Familienseite gezeigt (nur in der App).
