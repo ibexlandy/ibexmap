@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <!-- Sicherheitsregeln: Code nur von hier (Fingerabdruck), cdnjs und unpkg (mit Prüfsumme). Fingerabdruck setzt /home/claude/tools/csp.py -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-PP1WKjiIX3Mf4F54MvlTAfsRHoGEXEwvY4JNfUe0K10=' https://cdnjs.cloudflare.com https://unpkg.com; worker-src 'self' blob:; child-src blob:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; font-src 'self' data: https:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-RxdvEPaWNKLMB8pW76uulxQiq0a9MJYVHAYWFc6p2b0=' https://cdnjs.cloudflare.com https://unpkg.com; worker-src 'self' blob:; child-src blob:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; font-src 'self' data: https:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#92b78c">
 <title>IbexMap</title>
@@ -480,6 +480,18 @@ onmessage=async ev=>{if(ev.data&&ev.data.t==="ack"){if(ackR){const r=ackR;ackR=n
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" integrity="sha384-NElt3Op+9NBMCYaef5HxeJmU4Xeard/Lku8ek6hoPTvYkQPh3zLIrJP7KiRocsxO" crossorigin="anonymous"></script>
 <script>
 "use strict";
+/* Google-Anmeldung im kleinen Fenster: kommt dieses Fenster von Google zurück, nur den Zugang an die App weitergeben und schliessen – die App startet hier nicht */
+(()=>{const h=location.hash;if(!/access_token=|error=/.test(h))return;const q=new URLSearchParams(h.slice(1));let pop="",want="";
+  try{pop=localStorage.getItem("rb_gpopup")||"";want=localStorage.getItem("rb_gstate")||"";}catch(e){}
+  if(!pop||q.get("state")!==pop)return;
+  let msg;try{localStorage.removeItem("rb_gpopup");localStorage.removeItem("rb_gstate");}catch(e){}
+  if(q.get("state")!==want)msg={err:"state"};
+  else if(q.get("error"))msg={err:q.get("error")};
+  else{const exp=Date.now()+(+q.get("expires_in")||3600)*1000;try{localStorage.setItem("rb_gtok",JSON.stringify({tok:q.get("access_token"),exp}));localStorage.setItem("rb_gconn","1");}catch(e){}msg={ok:1};}
+  msg.t=Date.now();try{new BroadcastChannel("ibex-gauth").postMessage(msg);}catch(e){}try{localStorage.setItem("rb_gauthmsg",JSON.stringify(msg));}catch(e){}
+  history.replaceState(null,"",location.pathname);
+  document.body.innerHTML=`<p style="font:16px system-ui;padding:24px">${msg.ok?"Angemeldet – dieses Fenster schliesst sich.":"Anmeldung nicht möglich – Fenster schliessen und in IbexMap nochmals ⟳ tippen."}</p>`;
+  setTimeout(()=>{try{window.close();}catch(e){}},msg.ok?200:4000);throw new Error("IbexMap: Anmeldefenster");})();
 /* ---------- Konstanten ---------- */
 const CATS={
   wild:{n:"Stellplatz",c:"#2e7d32",i:"🌲"},
@@ -656,7 +668,7 @@ const ADM=(()=>{try{if(new URLSearchParams(location.search).has("admin")){sessio
   return sessionStorage.getItem("rb_admin")==="1"&&matchMedia("(min-width:900px)").matches;}catch(e){return false;}})();
 if(ADM)document.body.classList.add("adm");
 const GROUP="IbexMap";
-const VERSION="v7.15";
+const VERSION="v7.16";
 /* Startzeit-Messung: Sekunden seit dem Öffnen der App (im Menü › Gerät › Startzeit) */
 const ST_MARKS=[];function stMark(t){if(ST_MARKS.some(m=>m.t===t))return;ST_MARKS.push({t,s:performance.now()/1000});}
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
@@ -1151,9 +1163,10 @@ async function syncDot(){const b=$("#syncBtn");if(!b||!gdClient())return;const l
   try{pend=(await getAll("points")).some(p=>(p.updated||0)>last+2000);}catch(e){}
   try{if(!pend){const m=await getOne("meta","flags");pend=!!(m&&(m.updated||0)>last+2000)||trips.some(t=>(t.updated||0)>last+2000);}}catch(e){}
   if(pend)autoSyncSoon();
-  b.classList.toggle("expired",!gdOk());
+  /* «!» nur, wenn wirklich etwas wartet (Änderungen nicht auf Drive) und die Anmeldung abgelaufen ist – sonst ist der Ablauf unwichtig */
+  b.classList.toggle("expired",!gdOk()&&pend);
   const on=pend||Date.now()-last>864e5;let d=b.querySelector(".sdot");if(!d){d=document.createElement("span");d.className="sdot";b.appendChild(d);}
-  d.style.display=on?"block":"none";b.title=!gdOk()?"Google-Anmeldung abgelaufen – antippen, um neu anzumelden und abzugleichen":on?(pend?"Änderungen noch nicht abgeglichen – antippen":"Länger nicht abgeglichen – antippen"):"Mit Google Drive abgleichen";}
+  d.style.display=on?"block":"none";b.title=!gdOk()&&pend?"Änderungen warten, Google-Anmeldung abgelaufen – antippen, um neu anzumelden und abzugleichen":on?(pend?"Änderungen noch nicht abgeglichen – antippen":"Länger nicht abgeglichen – antippen"):"Mit Google Drive abgleichen";}
 /* ---------- Automatischer Abgleich ----------
    Solange die Google-Anmeldung gültig ist (ca. 1 Stunde nach dem Anmelden): beim Start, 30 s nach Änderungen,
    alle 10 Minuten und beim Zurückkehren in die App. Läuft still im Hintergrund; ist die Anmeldung abgelaufen,
@@ -2486,7 +2499,24 @@ function gdFromRedirect(){if(!/access_token=|error=/.test(location.hash))return 
   gdToken=q.get("access_token");gdExp=Date.now()+(+q.get("expires_in")||3600)*1000;ls("rb_gconn","1");
   try{localStorage.setItem("rb_gtok",JSON.stringify({tok:gdToken,exp:gdExp}));}catch(e){}return true;}
 function gdState(){const v=[...crypto.getRandomValues(new Uint8Array(16))].map(b=>b.toString(16).padStart(2,"0")).join("");ls("rb_gstate",v);return v;}
+const gdStandalone=()=>{try{return matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;}catch(e){return false;}};
+function gdPopupWait(w){return new Promise((res,rej)=>{let done=false,bc=null;const fin=m=>{if(done||!m||!m.t)return;done=true;clearInterval(iv);clearTimeout(to);try{bc&&bc.close();}catch(e){}window.removeEventListener("storage",st);m.ok?res():rej(new Error(m.err||"abgebrochen"));};
+  try{bc=new BroadcastChannel("ibex-gauth");bc.onmessage=e=>fin(e.data);}catch(e){}
+  const st=e=>{if(e.key==="rb_gauthmsg")try{fin(JSON.parse(e.newValue));}catch(x){}};window.addEventListener("storage",st);
+  const t0=Date.now();const iv=setInterval(()=>{try{const m=JSON.parse(localStorage.getItem("rb_gauthmsg")||"null");if(m&&m.t>=t0)fin(m);}catch(e){}
+    try{if(w.closed&&!done&&Date.now()-t0>1500)setTimeout(()=>{if(!done){done=true;clearInterval(iv);rej(new Error("Fenster geschlossen"));}},1500);}catch(e){}},500);
+  const to=setTimeout(()=>{if(!done){done=true;clearInterval(iv);rej(new Error("Zeit abgelaufen"));}},180000);});}
 async function gdAuth(force){if(!force&&gdToken&&Date.now()<gdExp-60000)return gdToken;
+  /* PC/Browser: kleines Google-Fenster, die App bleibt wo sie ist (kein Neuladen) */
+  if(!force&&ls("rb_gconn")&&!gdStandalone()){const st=gdState();ls("rb_gpopup",st);
+    const p=new URL("https://accounts.google.com/o/oauth2/v2/auth");
+    p.search=new URLSearchParams({client_id:gdClient(),redirect_uri:GD_REDIRECT(),response_type:"token",scope:GD_SCOPE,include_granted_scopes:"true",state:st,prompt:"none",
+      ...(ls("rb_gmail")?{login_hint:ls("rb_gmail")}:{})}).toString();
+    const w=window.open(p.toString(),"ibexgauth","popup,width=500,height=650");
+    if(w){toast("Google-Anmeldung …",4000);
+      try{await gdPopupWait(w);gdRestore();if(gdToken){toast("Angemeldet",2000);return gdToken;}}
+      catch(e){ls("rb_gpopup",null);if(!/interaction_required|login_required|consent_required/.test(e.message)){toast("Anmeldung nicht abgeschlossen ("+e.message+") – ⟳ nochmals tippen",6000);throw e;}}}
+    else ls("rb_gpopup",null);}
   const u=new URL("https://accounts.google.com/o/oauth2/v2/auth");
   u.search=new URLSearchParams({client_id:gdClient(),redirect_uri:GD_REDIRECT(),response_type:"token",scope:GD_SCOPE,
     include_granted_scopes:"true",state:gdState(),prompt:ls("rb_gconn")&&!force?"none":"select_account",...(ls("rb_gmail")?{login_hint:ls("rb_gmail")}:{})}).toString();
