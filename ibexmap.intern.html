@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-FwwQD6yJIV2P0Id+vBaPIkNMeIgyMkyMqIV9f3MRb84=' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; connect-src 'self'; font-src 'self' data: https:; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-hmVdas6WUFtV2NdO358QRUcXsFl7aM9VYRaB58/YEhg=' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; connect-src 'self'; font-src 'self' data: https:; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#92b78c">
@@ -26,33 +26,34 @@ input[type=password]{width:100%;font:inherit;font-size:16px;padding:12px 14px;bo
 .err{color:#b00020;font-size:14px;margin-top:10px;min-height:1.2em}
 /* Aufbau */
 #app{display:none;height:100vh;height:100dvh}
-#side{display:flex;flex-direction:column;min-height:0;background:#f6f8f5}
+/* Seitenband: Steinbock-Hintergrund aus der App (steht still, die Einträge gleiten darüber) */
+#side{display:flex;flex-direction:column;min-height:0;background:#a1bb9b url(https://ibexlandy.github.io/ibexmap/ibex-bg.webp) center/cover no-repeat;--muted2:#2c3a29}
 #tl{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;scroll-behavior:smooth}
 #map{background:#dfe6dc}
 @media (min-width:900px){#app{grid-template-columns:480px 1fr}#side{height:100%;border-right:1px solid var(--line);box-shadow:4px 0 20px rgba(0,0,0,.06);z-index:2}#map{height:100%}}
 @media (max-width:899px){#app{grid-template-rows:40vh 1fr}#map{order:-1}.hero h1{font-size:20px}.hero img{width:38px;height:38px}.ib{width:34px;height:34px}}
 /* Kopf mit Statistik */
-.hero{background:var(--g) var(--topo) repeat;padding:18px 20px 16px;color:var(--dk);position:relative}
+.hero{background:transparent;padding:18px 20px 16px;color:var(--dk);position:relative}
 .hero .top{display:flex;align-items:center;gap:12px}
 .hero img{width:44px;height:44px;border-radius:10px;box-shadow:0 0 0 1px rgba(0,0,0,.2)}
-.hero h1{margin:0;font-size:24px;line-height:1.15;flex:1;text-shadow:0 0 8px var(--g)}
+.hero h1{margin:0;font-size:24px;line-height:1.15;flex:1;text-shadow:0 0 8px #a1bb9b}
 .hero .acts{display:flex;gap:6px}
 .ib{width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.75);color:var(--dk);display:flex;align-items:center;justify-content:center}
 .ib:hover{background:#fff}
-.dates{font-size:14px;margin-top:8px;font-weight:600;text-shadow:0 0 6px var(--g)}
+.dates{font-size:14px;margin-top:8px;font-weight:600;text-shadow:0 0 6px #a1bb9b}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
 .st{background:rgba(255,255,255,.85);border-radius:12px;padding:9px 6px;text-align:center}
 .st b{display:block;font-size:20px;line-height:1.1}.st span{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
-.upd{font-size:12px;color:var(--muted);padding:10px 20px 0}
+.upd{font-size:12px;color:var(--muted2);padding:10px 20px 0}
 .ord{display:flex;gap:6px;padding:10px 20px 0}
 .ord button{font:inherit;font-size:12.5px;padding:5px 11px;border-radius:999px;border:1px solid var(--g);background:#fff;color:var(--muted);cursor:pointer}
-.ord button.on{background:var(--g);color:#fff;font-weight:600}
+.ord button.on{background:#3f5a39;border-color:#3f5a39;color:#fff;font-weight:600}
 .now{display:inline-block;background:#c8742c;color:#fff;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 8px;border-radius:999px;margin-bottom:6px}
 /* Zeitleiste */
 .steps{position:relative;padding:8px 16px 40px 16px}
-.steps::before{content:"";position:absolute;left:35px;top:20px;bottom:40px;width:3px;background:repeating-linear-gradient(var(--g) 0 8px,transparent 8px 14px);border-radius:2px}
-.leg{display:flex;align-items:center;gap:10px;margin:14px 0 6px 8px;font-size:12.5px;color:var(--muted);position:relative}
-.leg i{width:26px;height:26px;border-radius:50%;background:#fff;border:2px solid var(--g);display:flex;align-items:center;justify-content:center;font-style:normal;font-size:12px;flex:none;z-index:1}
+.steps::before{content:"";position:absolute;left:35px;top:20px;bottom:40px;width:3px;background:repeating-linear-gradient(#4f6b49 0 8px,transparent 8px 14px);border-radius:2px}
+.leg{display:flex;align-items:center;gap:10px;margin:14px 0 6px 8px;font-size:12.5px;color:var(--muted2);font-weight:600;position:relative}
+.leg i{width:26px;height:26px;border-radius:50%;background:#fff;border:2px solid #4f6b49;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:12px;flex:none;z-index:1}
 .step{position:relative;margin:6px 0 18px 52px;background:#fff;border-radius:16px;box-shadow:0 2px 12px rgba(19,32,15,.08);overflow:hidden;cursor:pointer;transition:box-shadow .2s,transform .2s}
 .step::before{content:"";position:absolute;left:-28px;top:20px;width:14px;height:14px;border-radius:50%;background:var(--acc);border:3px solid #fff;box-shadow:0 0 0 2px var(--acc)}
 .step.on{box-shadow:0 0 0 2px var(--acc),0 6px 20px rgba(19,32,15,.15)}
@@ -68,7 +69,7 @@ input[type=password]{width:100%;font:inherit;font-size:16px;padding:12px 14px;bo
 .pics.n3 div:not(:first-child){grid-column:span 3}
 .pics.n4 div:not(:first-child){grid-column:span 2}
 .pics .more{position:absolute;inset:0;background:rgba(0,0,0,.45);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px}
-.end{margin:10px 0 0 52px;font-size:13px;color:var(--muted)}
+.end{margin:10px 0 0 52px;font-size:13px;color:var(--muted2);font-weight:600}
 /* Karte */
 .mk{width:38px;height:38px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4);background:var(--acc) center/cover;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;transition:transform .2s}
 .mk.on{transform:scale(1.45);border-color:var(--acc);z-index:1000}
@@ -103,7 +104,7 @@ input[type=password]{width:100%;font:inherit;font-size:16px;padding:12px 14px;bo
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
-const IC={reload:'<path d="M20 12a8 8 0 1 1-2.3-5.7L20 8.5M20 4v4.5h-4.5"/>',out:'<path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 16l-4-4 4-4M6 12h10"/>',last:'<path d="M12 4v14M6 12l6 6 6-6M5 21h14"/>'};
+const IC={reload:'<path d="M20 12a8 8 0 1 1-2.3-5.7L20 8.5M20 4v4.5h-4.5"/>',out:'<path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 16l-4-4 4-4M6 12h10"/>',last:'<path d="M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0 1 13 0c0 4.8-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>'};
 const ic=k=>`<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${IC[k]}</svg>`;
 let key=null,data=null,map=null,layer=null,marks={},steps=[],cur="";
 let newFirst=true;try{newFirst=localStorage.getItem("fam_order")!=="old";}catch(e){}const urls={};
@@ -138,9 +139,8 @@ function render(){
   const nPh=steps.reduce((a,p)=>a+(p.photos||[]).length,0);
   const dayNo=p=>first?Math.round((D(p.date)-D(first.date))/864e5)+1:1;
   let h=`<div class="hero"><div class="top"><img src="https://ibexlandy.github.io/ibexmap/icon-192.png" alt=""><h1>${esc(data.title)}</h1>
-     <div class="acts"><button class="ib" id="bLast" title="Zum neusten Eintrag">${ic("last")}</button><button class="ib" id="bRe" title="Aktualisieren">${ic("reload")}</button><button class="ib" id="bOut" title="Abmelden">${ic("out")}</button></div></div>
-     ${first?`<div class="dates">${esc(fmtS(first.date))} – ${esc(fmtS(last.to||last.date))}${ccs.length?" · "+ccs.map(flag).join(" "):""}</div>`:""}
-     <div class="stats"><div class="st"><b>${days}</b><span>Tage</span></div><div class="st"><b>${nf(dist)}</b><span>km</span></div><div class="st"><b>${ccs.length||"–"}</b><span>Länder</span></div><div class="st"><b>${steps.length}</b><span>Orte</span></div></div></div>
+     <div class="acts"><button class="ib" id="bLast" title="Aktueller Ort auf der Karte" aria-label="Aktueller Ort auf der Karte">${ic("last")}</button><button class="ib" id="bRe" title="Aktualisieren">${ic("reload")}</button><button class="ib" id="bOut" title="Abmelden">${ic("out")}</button></div></div>
+     ${first?`<div class="dates">${esc(fmtS(first.date))} – ${esc(fmtS(last.to||last.date))}${ccs.length?" · "+ccs.map(flag).join(" "):""}</div>`:""}</div>
    <div class="upd">Zuletzt aktualisiert ${new Date(data.updated).toLocaleString("de-CH",{dateStyle:"medium",timeStyle:"short"})}${nPh?` · ${nPh} Fotos`:""}</div>
    <div class="ord"><button data-o="new" class="${newFirst?"on":""}">Neueste zuerst</button><button data-o="old" class="${newFirst?"":"on"}">Älteste zuerst</button></div>
    <div class="steps">`;
