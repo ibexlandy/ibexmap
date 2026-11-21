@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-9q29y1W8Nye932hC3nt3/4fuSVGS+Wv4Jh2UsWdTFoE=' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; connect-src 'self'; font-src 'self' data: https:; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-FwwQD6yJIV2P0Id+vBaPIkNMeIgyMkyMqIV9f3MRb84=' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; connect-src 'self'; font-src 'self' data: https:; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#92b78c">
@@ -44,6 +44,10 @@ input[type=password]{width:100%;font:inherit;font-size:16px;padding:12px 14px;bo
 .st{background:rgba(255,255,255,.85);border-radius:12px;padding:9px 6px;text-align:center}
 .st b{display:block;font-size:20px;line-height:1.1}.st span{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 .upd{font-size:12px;color:var(--muted);padding:10px 20px 0}
+.ord{display:flex;gap:6px;padding:10px 20px 0}
+.ord button{font:inherit;font-size:12.5px;padding:5px 11px;border-radius:999px;border:1px solid var(--g);background:#fff;color:var(--muted);cursor:pointer}
+.ord button.on{background:var(--g);color:#fff;font-weight:600}
+.now{display:inline-block;background:#c8742c;color:#fff;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 8px;border-radius:999px;margin-bottom:6px}
 /* Zeitleiste */
 .steps{position:relative;padding:8px 16px 40px 16px}
 .steps::before{content:"";position:absolute;left:35px;top:20px;bottom:40px;width:3px;background:repeating-linear-gradient(var(--g) 0 8px,transparent 8px 14px);border-radius:2px}
@@ -101,7 +105,8 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 const IC={reload:'<path d="M20 12a8 8 0 1 1-2.3-5.7L20 8.5M20 4v4.5h-4.5"/>',out:'<path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 16l-4-4 4-4M6 12h10"/>',last:'<path d="M12 4v14M6 12l6 6 6-6M5 21h14"/>'};
 const ic=k=>`<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${IC[k]}</svg>`;
-let key=null,data=null,map=null,layer=null,marks={},steps=[],cur="";const urls={};
+let key=null,data=null,map=null,layer=null,marks={},steps=[],cur="";
+let newFirst=true;try{newFirst=localStorage.getItem("fam_order")!=="old";}catch(e){}const urls={};
 async function deriveKey(pw,salt,iter){const base=await crypto.subtle.importKey("raw",new TextEncoder().encode(pw),"PBKDF2",false,["deriveKey"]);
   return crypto.subtle.deriveKey({name:"PBKDF2",salt,iterations:iter,hash:"SHA-256"},base,{name:"AES-GCM",length:256},false,["decrypt"]);}
 async function dec(k,bytes){return crypto.subtle.decrypt({name:"AES-GCM",iv:bytes.slice(0,12)},k,bytes.slice(12));}
@@ -137,18 +142,22 @@ function render(){
      ${first?`<div class="dates">${esc(fmtS(first.date))} – ${esc(fmtS(last.to||last.date))}${ccs.length?" · "+ccs.map(flag).join(" "):""}</div>`:""}
      <div class="stats"><div class="st"><b>${days}</b><span>Tage</span></div><div class="st"><b>${nf(dist)}</b><span>km</span></div><div class="st"><b>${ccs.length||"–"}</b><span>Länder</span></div><div class="st"><b>${steps.length}</b><span>Orte</span></div></div></div>
    <div class="upd">Zuletzt aktualisiert ${new Date(data.updated).toLocaleString("de-CH",{dateStyle:"medium",timeStyle:"short"})}${nPh?` · ${nPh} Fotos`:""}</div>
+   <div class="ord"><button data-o="new" class="${newFirst?"on":""}">Neueste zuerst</button><button data-o="old" class="${newFirst?"":"on"}">Älteste zuerst</button></div>
    <div class="steps">`;
-  steps.forEach((p,i)=>{
+  /* Reihenfolge: standardmässig der neueste Eintrag zuoberst (Familie sieht sofort, wo wir sind) */
+  const order=steps.map((p,i)=>i);if(newFirst)order.reverse();
+  order.forEach(i=>{const p=steps[i];
     if(i>0){const d=km(steps[i-1],p);h+=`<div class="leg"><i>${i+1}</i>${d>=1?`${nf(d)} km`:"gleich nebenan"}${p.date!==steps[i-1].date?` · ${Math.round((D(p.date)-D(steps[i-1].date))/864e5)} Tag${Math.round((D(p.date)-D(steps[i-1].date))/864e5)==1?"":"e"} später`:""}</div>`;}
     else h+=`<div class="leg"><i>1</i>Start</div>`;
     const n=(p.photos||[]).length,nights=p.to?Math.round((D(p.to)-D(p.date))/864e5):0;
     h+=`<div class="step" id="s_${p.id}" data-id="${p.id}">
       ${n?`<div class="pics n${Math.min(n,4)}">${p.photos.slice(0,4).map((ph,k)=>`<div data-ph="${ph}" data-k="${k}">${k===3&&n>4?`<span class="more">+${n-4}</span>`:""}</div>`).join("")}</div>`:""}
-      <div class="sh"><div class="sday">Tag ${dayNo(p)} · ${esc(fmtL(p.date))}${nights>0?` · ${nights} ${nights==1?"Nacht":"Nächte"}`:""}</div>
+      <div class="sh">${newFirst&&i===steps.length-1&&steps.length>1?`<span class="now">Aktuell</span>`:""}<div class="sday">Tag ${dayNo(p)} · ${esc(fmtL(p.date))}${nights>0?` · ${nights} ${nights==1?"Nacht":"Nächte"}`:""}</div>
       <h3>${esc(p.title)}</h3><div class="sloc">${p.country?flag(p.country)+" ":""}${esc([p.region,cName(p.country)].filter(Boolean).join(", "))}${p.cat?` · ${esc(p.cat)}`:""}</div></div>
       ${p.text?`<div class="stxt">${esc(p.text)}</div>`:`<div style="height:12px"></div>`}</div>`;});
-  h+=steps.length?`<div class="end">Fortsetzung folgt …</div></div>`:`<p style="padding:20px" class="upd">Noch keine Einträge.</p></div>`;
+  h+=steps.length?`${newFirst?"":`<div class="end">Fortsetzung folgt …</div>`}</div>`:`<p style="padding:20px" class="upd">Noch keine Einträge.</p></div>`;
   $("#tl").innerHTML=h;
+  $("#tl").querySelectorAll("[data-o]").forEach(b=>b.onclick=()=>{newFirst=b.dataset.o==="new";try{localStorage.setItem("fam_order",b.dataset.o);}catch(e){}render();});
   $("#bOut").onclick=()=>{try{localStorage.removeItem("fam_pw");sessionStorage.removeItem("fam_s");}catch(e){}location.reload();};
   $("#bRe").onclick=async()=>{const pw=sessionStorage.getItem("fam_s")||localStorage.getItem("fam_pw");if(pw){await load(pw);render();}};
   $("#bLast").onclick=()=>{if(last)go(last.id,true);};
@@ -168,7 +177,7 @@ function render(){
   if(allLL.length)map.fitBounds(L.latLngBounds(allLL),{padding:[40,40],maxZoom:11});else map.setView([31.8,-6.5],5);
   setTimeout(()=>map.invalidateSize(),50);
   /* Fotos laden (Zeitleiste und Kartenpunkte) */
-  (async()=>{for(const p of steps){const ids=p.photos||[];
+  (async()=>{for(const p of newFirst?[...steps].reverse():steps){const ids=p.photos||[];
     for(const el of document.querySelectorAll(`#s_${p.id} [data-ph]`)){const u=await photo(el.dataset.ph);if(u)el.style.backgroundImage=`url(${u})`;}
     if(ids[0]){const u=await photo(ids[0]);const mk=document.getElementById("m_"+p.id);if(u&&mk){mk.style.backgroundImage=`url(${u})`;mk.textContent="";}}}})();
   /* Klicks */
