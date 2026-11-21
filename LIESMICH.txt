@@ -1,4 +1,4 @@
-IbexMap – v8.2 (privates Projekt)
+IbexMap – v8.3 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -376,6 +376,16 @@ NEU IN v6.8
 NEU IN v7.1
 - Vektorkarte erstellen per Doppelklick: Offline-Daten › Land › «Karte erstellen (PC)» › «Startdatei herunterladen». Die Datei <Land>_laden.bat holt das Programm pmtiles, sucht die neueste Weltkarte von Protomaps und schneidet das Land heraus (Ordner IbexMap-Karten im Benutzerordner); danach in IbexMap «Datei laden». Kein cmd, kein Befehl, kein Datum mehr. Der Befehl von Hand bleibt unter «Von Hand (für Fortgeschrittene)».
 - Geprüft: Ganz in der App geht es nicht – der Protomaps-Server sperrt den Zugriff aus dem Browser (CORS).
+
+NEU IN v8.3
+- «Dateien laden (PC)»: oben steht jetzt die ganze Schrittliste (Vektorkarte einlesen, auf Google Drive, Höhendaten einlesen, auf Google Drive, Rohdaten auslesen) mit ✓ erledigt, ▶ läuft, ○ kommt noch – und «Schritt 3 von 5».
+- Neues Logo und neue App-Symbole: Schriftzug «IBEX MAP» mit einem Steinbock-Horn aus Höhenlinien, das die Schrift umrahmt (auch Logo der Familienseite).
+- Neues Tab-Symbol (favicon): nur das Steinbock-Horn, freigestellt in Grün #5E8257 – im Browser-Tab gut wiedererkennbar. Das Symbol auf dem Startbildschirm des Handys aktualisiert Android selbst, das kann einige Tage dauern.
+- Familienseite auf dem Handy: Einträge oben, Karte unten (38 % der Höhe).
+- Familienseite: Beim Tippen auf «Aktualisieren» dreht sich das Symbol, danach erscheint kurz «Keine neuen Einträge», «2 neue Einträge» o. ä.
+- Speicher auf Google Drive: In «Offline-Daten» und «Google Drive» steht, wie voll das Konto ist (z. B. 9.4 von 15 GB, Balken orange ab 80 %, rot ab 95 %) und wie viel davon IbexMap belegt. Der Speicher wird mit Gmail und Google Fotos geteilt. Vor dem Hochladen grosser Karten prüft die App wie bisher, ob genug frei ist.
+- Eigene Punkte gruppieren: nach Abstand statt nach festem Raster (nahe Punkte kommen immer zusammen). Weit herausgezoomt (unter Stufe 9) werden alle Kategorien gemeinsam gruppiert – dunkelgrüne Blase mit Anzahl; ab Stufe 9 nach Kategorie, ab Stufe 13 einzeln. Wichtige Punkte nie gruppiert.
+- Familienseite: Rest-Code für eine Fahrspur entfernt – auf der Familienseite gibt es nur die Verbindungslinie zwischen den veröffentlichten Orten (Fahrspuren werden nie veröffentlicht).
 
 NEU IN v8.2
 - Familienseite: Knopf «Aktueller Ort» zeigt jetzt eine Standort-Nadel statt eines Pfeils nach unten (sah aus wie Herunterladen).
