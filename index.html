@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <!-- Sicherheitsregeln: Code nur von hier (Fingerabdruck), cdnjs und unpkg (mit Prüfsumme). Fingerabdruck setzt /home/claude/tools/csp.py -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-VvIWdpGrCztIgpwhTbEZZ/nuGmVVS/eyH2ovrI29Dc0=' https://cdnjs.cloudflare.com https://unpkg.com; worker-src 'self' blob:; child-src blob:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; font-src 'self' data: https:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-u7nLUday/9hT5Ni45zbjWhZqoS00x9qBxz8HXmZ7zI0=' https://cdnjs.cloudflare.com https://unpkg.com; worker-src 'self' blob:; child-src blob:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; font-src 'self' data: https:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#92b78c">
 <title>IbexMap</title>
@@ -502,6 +502,7 @@ const CATS={
   sight:{n:"Sehenswürdigkeit",c:"#8e24aa",i:"★"},
   hike:{n:"Wanderung",c:"#6d4c41",i:"🏔️"},
   shop:{n:"Einkauf",c:"#00897b",i:"🛒"},
+  food:{n:"Restaurant",c:"#c2185b",i:"🍴"},
   fuel:{n:"Tankstelle",c:"#ef6c00",i:"⛽"},
   service:{n:"Auto",c:"#546e7a",i:"🔧"},
   water:{n:"Wasser",c:"#0288d1",i:"💧"},
@@ -647,6 +648,7 @@ const WATERQ={trink:"Trinkwasser",brauch:"Nur Brauchwasser (abkochen/filtern)",u
 const RATE={
   wild:[["umgebung","Umgebung"],["wohl","Wohlfühlen"],["wasser","Am Wasser","ja"]],
   sight:[],
+  food:[["ambiente","Ambiente"],["qual","Qualität"]],
   camp:[["sanitaer","Sanitär"],["platz","Stellplatz"],["preis","Kosten/Nutzen"],["resto","Restaurant"],["wasser","Am Wasser","ja"]]
 };
 /* Einheitliches Datumsformat überall: 06.04.2025 bzw. 15.11.2026 07:18 */
@@ -671,7 +673,7 @@ const ADM=(()=>{try{if(new URLSearchParams(location.search).has("admin")){sessio
   return sessionStorage.getItem("rb_admin")==="1"&&matchMedia("(min-width:900px)").matches;}catch(e){return false;}})();
 if(ADM)document.body.classList.add("adm");
 const GROUP="IbexMap";
-const VERSION="v9.1";
+const VERSION="v9.2";
 /* Startzeit-Messung: Sekunden seit dem Öffnen der App (im Menü › Gerät › Startzeit) */
 const ST_MARKS=[];function stMark(t){if(ST_MARKS.some(m=>m.t===t))return;ST_MARKS.push({t,s:performance.now()/1000});}
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
@@ -4048,7 +4050,7 @@ async function trkSync(files){const rem={};files.forEach(f=>{const m=f.name.matc
 /* ---------- Fahrmodus ----------
    Grosse Knöpfe für unterwegs: Karte folgt dem Standort, Bildschirm bleibt an, Punkt mit einem Tipp, Foto-Punkt, Fahne, Aufzeichnung. */
 let driveOn=false,driveWL=null;
-const QUICK=[["wild","Stellplatz"],["camp","Camping"],["water","Wasser"],["fuel","Tanken"],["shop","Einkauf"],["sight","Sehenswert"],["service","Auto"],["warn","Achtung"]];
+const QUICK=[["wild","Stellplatz"],["camp","Camping"],["water","Wasser"],["fuel","Tanken"],["shop","Einkauf"],["food","Restaurant"],["sight","Sehenswert"],["service","Auto"],["warn","Achtung"]];
 function driveUI(){let bar=$("#driveBar");
   if(!driveOn){if(bar)bar.style.display="none";document.body.classList.remove("drive");return;}
   document.body.classList.add("drive");
