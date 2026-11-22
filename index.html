@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <!-- Sicherheitsregeln: Code nur von hier (Fingerabdruck), cdnjs und unpkg (mit Prüfsumme). Fingerabdruck setzt /home/claude/tools/csp.py -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-eGGPskwkbi9Arsu/dcKQLJhcqyA1YK20B8Yl1OmabkU=' https://cdnjs.cloudflare.com https://unpkg.com; worker-src 'self' blob:; child-src blob:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; font-src 'self' data: https:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-WULj+gKRrSJMpv2m1YzOshqsrKh9JMfkPBvSwNIYpig=' https://cdnjs.cloudflare.com https://unpkg.com; worker-src 'self' blob:; child-src blob:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; font-src 'self' data: https:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#92b78c">
 <title>IbexMap</title>
@@ -685,7 +685,7 @@ const ADM=(()=>{try{if(new URLSearchParams(location.search).has("admin")){sessio
   return sessionStorage.getItem("rb_admin")==="1"&&matchMedia("(min-width:900px)").matches;}catch(e){return false;}})();
 if(ADM)document.body.classList.add("adm");
 const GROUP="IbexMap";
-const VERSION="v9.7";
+const VERSION="v9.8";
 /* Startzeit-Messung: Sekunden seit dem Öffnen der App (im Menü › Gerät › Startzeit) */
 const ST_MARKS=[];function stMark(t){if(ST_MARKS.some(m=>m.t===t))return;ST_MARKS.push({t,s:performance.now()/1000});}
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
@@ -3368,7 +3368,11 @@ async function famPublish(){if(!famReady())return famSettings();
       $("#fpOk").onclick=closePanel;$("#fpAny").onclick=()=>famPublishNow();return;}}
   return famPublishNow();}
 async function famPublishNow(){const c=famCfg();
+  try{await loadPoints();}catch(e){}/* frisch aus dem Speicher – z. B. wenn die Verwaltung in einem anderen Tab geändert hat */
   const sp=points.filter(p=>p.story&&(!c.trip||p.trip===c.trip));
+  /* Storypoints anderer Reisen: erscheinen nicht – im Ergebnis darauf hinweisen */
+  const other={};points.filter(p=>p.story&&c.trip&&p.trip!==c.trip).forEach(p=>{const n=tripName(p.trip)||"ohne Reise";other[n]=(other[n]||0)+1;});
+  const otherTxt=Object.keys(other).length?`<div class="wznote"><b>${Object.values(other).reduce((a,b)=>a+b,0)} weitere Storypoints</b> gehören nicht zur Reise «${esc(tripName(c.trip)||"")}» und erscheinen darum nicht: ${Object.entries(other).map(([n,k])=>`${esc(n)} (${k})`).join(", ")}. Die Reise der Familienseite stellst du unter Menü › Familienseite ein, die Reise eines Punkts in der Verwaltung (Spalte Reise).</div>`:"";
   try{
     if(!c.salt){c.salt=b64(crypto.getRandomValues(new Uint8Array(16)));c.upd=Date.now();famSave(c);}
     const tag=hex(unb64(c.salt)).slice(0,8);
@@ -3398,7 +3402,7 @@ async function famPublishNow(){const c=famCfg();
     /* 4. Nicht mehr verwendete Fotos entfernen */
     let rm=0;for(const[fn,sha]of Object.entries(remote))if(!need.has(fn)){await gh(c,"p/"+fn,"DELETE",{message:"Foto entfernt",sha}).catch(()=>{});rm++;}
     c.last=Date.now();famSave(c);if(gdClient())syncDrive();
-    openPanel(`<h2>Veröffentlicht ✓</h2><p style="font-size:16px">${sp.length} Storypoints${up?`, ${up} neue Fotos`:""}${rm?`, ${rm} Fotos entfernt`:""}.</p>
+    openPanel(`<h2>Veröffentlicht ✓</h2><p style="font-size:16px">${sp.length} Storypoints${c.trip?` der Reise «${esc(tripName(c.trip)||"")}»`:""}${up?`, ${up} neue Fotos`:""}${rm?`, ${rm} Fotos entfernt`:""}.</p>${otherTxt}
       <p class="muted">Die Familienseite zeigt den neuen Stand in ca. 1–2 Minuten (Seite dann neu laden).</p>
       <div class="actions"><a class="btn" href="${famURL(c)}" target="_blank" rel="noopener" style="text-decoration:none">Familienseite öffnen</a><button class="btn sec" id="fpCopy">Link + Passwort kopieren</button><button class="btn sec" id="fpOk">Schliessen</button></div>`);
     $("#fpOk").onclick=closePanel;$("#fpCopy").onclick=async()=>{const t=`${c.title||"Unsere Reise"}\n${famURL(c)}\nPasswort: ${c.pw}`;try{await navigator.clipboard.writeText(t);toast("Kopiert",2500);}catch(e){toast(famURL(c)+"  Passwort: "+c.pw,10000);}};
