@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <!-- Sicherheitsregeln: Code nur von hier (Fingerabdruck), cdnjs und unpkg (mit Prüfsumme). Fingerabdruck setzt /home/claude/tools/csp.py -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-sRlaR3Nxx3y1gqDdh/Erkyk6/bbKCGywMiEv77wENUM=' https://cdnjs.cloudflare.com https://unpkg.com; worker-src 'self' blob:; child-src blob:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; font-src 'self' data: https:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-VvIWdpGrCztIgpwhTbEZZ/nuGmVVS/eyH2ovrI29Dc0=' https://cdnjs.cloudflare.com https://unpkg.com; worker-src 'self' blob:; child-src blob:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; font-src 'self' data: https:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#92b78c">
 <title>IbexMap</title>
@@ -671,7 +671,7 @@ const ADM=(()=>{try{if(new URLSearchParams(location.search).has("admin")){sessio
   return sessionStorage.getItem("rb_admin")==="1"&&matchMedia("(min-width:900px)").matches;}catch(e){return false;}})();
 if(ADM)document.body.classList.add("adm");
 const GROUP="IbexMap";
-const VERSION="v8.4";
+const VERSION="v9.1";
 /* Startzeit-Messung: Sekunden seit dem Öffnen der App (im Menü › Gerät › Startzeit) */
 const ST_MARKS=[];function stMark(t){if(ST_MARKS.some(m=>m.t===t))return;ST_MARKS.push({t,s:performance.now()/1000});}
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
@@ -2321,7 +2321,9 @@ async function exifInfo(file){/* Aufnahmeort und -zeit aus dem Foto */
 function wizardStart(){openPanel(`<h2>Neue Punkte aus Fotos</h2>
    <p>Fotos auswählen – IbexMap liest Aufnahmeort und -datum, fasst Fotos vom gleichen Ort und Tag zusammen und zeigt dir jeden Ort auf einer grossen Seite zum Vervollständigen.</p>
    <div class="actions"><button class="btn" id="wzF">${mi("photo",16)} Fotos auswählen</button>${"webkitdirectory" in document.createElement("input")&&matchMedia("(min-width:900px)").matches?`<button class="btn sec" id="wzD">Ganzen Ordner wählen</button>`:""}</div>
-   <p class="muted">Am besten am PC: Fotos vom Handy per USB kopieren (Ordner DCIM/Camera) – Android entfernt beim Auswählen im Browser oft den Aufnahmeort. Fotos ohne Aufnahmeort setzt du auf der Karte von Hand.</p>`);
+   <label style="display:flex;gap:8px;align-items:center;font-size:15px;color:var(--ink);margin-top:14px"><input type="checkbox" id="wzG" style="width:auto;margin:0" ${ls("rb_wzGps")==="0"?"":"checked"}> Nur Fotos mit Aufnahmeort übernehmen</label>
+   <p class="muted">Am besten am PC: Fotos vom Handy per USB kopieren (Ordner DCIM/Camera) – Android entfernt beim Auswählen im Browser oft den Aufnahmeort. Ohne Häkchen kommen auch Fotos ohne Aufnahmeort, die du auf der Karte von Hand setzt.</p>`);
+  $("#wzG").onchange=e=>ls("rb_wzGps",e.target.checked?"1":"0");
   const pick=dir=>{const i=document.createElement("input");i.type="file";i.accept="image/jpeg,image/*";i.multiple=true;if(dir)i.webkitdirectory=true;
     i.onchange=()=>{const fl=[...i.files].filter(f=>/^image\//.test(f.type)||/\.jpe?g$/i.test(f.name));if(!fl.length)return toast("Keine Fotos gefunden");photoWizard(fl);};i.click();};
   $("#wzF").onclick=()=>pick(false);const d=$("#wzD");if(d)d.onclick=()=>pick(true);}
@@ -2334,6 +2336,16 @@ async function photoWizard(files){if(!files.length)return toast("Keine Fotos");
     let src=f;try{if(f.lazy)src=await f.lazy();}catch(e){}const ex=await exifInfo(src);if(!ex.ll){const g=nameGPS(f.name);if(g)ex.ll=g;}
     if(!ex.date&&f.lastModified)ex.date=new Date(f.lastModified).toISOString().slice(0,10);
     items.push({f,src,ll:ex.ll,date:ex.date,time:ex.time||f.lastModified||0});}
+  const noLL=items.filter(it=>!it.ll).length;
+  if(noLL&&ls("rb_wzGps")!=="0"&&!files.allLL){
+    if(noLL===items.length){
+      openPanel(`<h2>Kein Aufnahmeort gefunden</h2><p>Keines der ${items.length} Fotos enthält einen Aufnahmeort (GPS).</p>
+        <p class="muted">Häufige Gründe: Fotos am Handy im Browser ausgewählt (Android entfernt den Ort), Kamera ohne GPS, per WhatsApp verschickt oder HEIC-Format.</p>
+        <div class="actions"><button class="btn" id="wzAll">Trotzdem alle von Hand setzen</button><button class="btn sec" id="wzCan">Abbrechen</button></div>`);
+      $("#wzAll").onclick=()=>{files.allLL=1;wzRun(items);};$("#wzCan").onclick=()=>navBack();return;}
+    toast(`${items.length-noLL} Fotos mit Aufnahmeort übernommen · ${noLL} ohne Ort ausgelassen`,6000);}
+  wzRun(ls("rb_wzGps")!=="0"&&!files.allLL?items.filter(it=>it.ll):items);}
+function wzRun(items){
   /* Fotos vom gleichen Ort (≤ 250 m) und gleichen Tag zu einem Punkt zusammenfassen */
   items.sort((a,b)=>a.time-b.time);const groups=[];
   for(const it of items){const g=it.ll&&groups.find(g=>g.ll&&g.date===it.date&&distKm({lat:g.ll[0],lon:g.ll[1]},{lat:it.ll[0],lon:it.ll[1]})<=0.25);
