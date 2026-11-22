@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <!-- Sicherheitsregeln: Code nur von hier (Fingerabdruck), cdnjs und unpkg (mit Prüfsumme). Fingerabdruck setzt /home/claude/tools/csp.py -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-c+2IgxZijc3CETdh3OdnVTTB8k0KZKcgQm4nIPcA8n8=' https://cdnjs.cloudflare.com https://unpkg.com; worker-src 'self' blob:; child-src blob:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; font-src 'self' data: https:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-cUEdmy9xk1mswSk4v8N8B0ZPdcZLpqpKjGYSYyVw+I8=' https://cdnjs.cloudflare.com https://unpkg.com; worker-src 'self' blob:; child-src blob:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; font-src 'self' data: https:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#92b78c">
 <title>IbexMap</title>
@@ -232,6 +232,7 @@ body.adm #locBtn{display:flex !important}
 .wzform input:not([type=checkbox]),.wzform select,.wzform textarea{width:100%;font:inherit;padding:9px 10px;border:1px solid #c9d4c5;border-radius:8px;background:#fff}
 .wzform .row{display:flex;gap:8px}.wzform .row>div{flex:1;min-width:0}
 .wzcat{grid-template-columns:repeat(auto-fill,minmax(92px,1fr))}
+.wzex{display:flex;flex-wrap:wrap;gap:6px}.wzex img{width:84px;height:84px;object-fit:cover;border-radius:8px}
 .wznote{background:#fff6ec;border:1px solid #ecd3b8;border-radius:10px;padding:8px 10px;font-size:13.5px;margin:6px 0}
 @media (max-width:899px){.wzbody{display:block;overflow:auto}.wzpics{height:46vh}.wzform{overflow:visible}.wzbar b{width:100%;order:-1}}
 .fbadge{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;border-radius:10px;background:var(--accent2);color:#fff;font-size:12px;font-weight:700;align-items:center;justify-content:center;padding:0 5px;border:2px solid #fff}
@@ -299,6 +300,7 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 .placebar{position:absolute;left:8px;right:8px;bottom:calc(16px + var(--sb));z-index:650;background:#fff;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.35);padding:10px;display:none}
 .placebar .actions{margin-top:6px;flex-wrap:nowrap}
 .rteend{width:24px;height:24px;border-radius:50%;color:#fff;font:700 13px/20px system-ui,sans-serif;text-align:center;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);display:inline-block;flex:none}
+.rteend.sm{width:18px;height:18px;font-size:10px;line-height:14px}
 .rtenum{position:relative;width:20px;height:20px;border-radius:50%;background:#13200f;color:#fff;font:700 11px/16px system-ui,sans-serif;text-align:center;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.4);display:inline-block;flex:none}.placebar .btn{padding:10px 12px}
 #map.placing .fab{display:none}
 .leaflet-popup-content .btn{font-size:14px;padding:8px 12px}
@@ -675,7 +677,7 @@ const ADM=(()=>{try{if(new URLSearchParams(location.search).has("admin")){sessio
   return sessionStorage.getItem("rb_admin")==="1"&&matchMedia("(min-width:900px)").matches;}catch(e){return false;}})();
 if(ADM)document.body.classList.add("adm");
 const GROUP="IbexMap";
-const VERSION="v9.3";
+const VERSION="v9.4";
 /* Startzeit-Messung: Sekunden seit dem Öffnen der App (im Menü › Gerät › Startzeit) */
 const ST_MARKS=[];function stMark(t){if(ST_MARKS.some(m=>m.t===t))return;ST_MARKS.push({t,s:performance.now()/1000});}
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
@@ -1388,7 +1390,7 @@ const growAll=root=>requestAnimationFrame(()=>(root||document).querySelectorAll(
 let NAV=[],navOver=false,NAV_CUR=null,navDepth=0;
 const NAV_PAGES=["vecHelp","showPoi","showOsm","myPosPanel","showSearch","showFlag","showFlags","showMapFilter","showDetail","showList","appVersionDialog","photoMenu",
   "manageSections","manageTrips","gdSettings","offOverview","offlineDialog","offCountryPick","offConfig","famPublish","famSettings","poiOffDialog","trashDialog",
-  "readyDialog","storageDialog","showTrack","tracksDialog","routesDialog","showRoute","routeNew","routeSpurDays","routeSpurCut"];
+  "readyDialog","storageDialog","showTrack","tracksDialog","routesDialog","showRoute","routeNew","routeSpurDays","routeSpurCut","rteAddDialog"];
 /* Arbeits- und Fortschrittsanzeigen, Bestätigungen und Formulare: werden nicht als Ziel für «Zurück» gemerkt */
 const NAV_TRANSIENT=["progress","pickWait","offRunPack","famPublishNow","poiJobPanel","osfError","writeGPX","exportGPX","assignPhotos","importGoogle","importOsmandFav",
   "poiFromDrive","admBulk","pbfImportUI","vecImportUI","vecShareUI","countryRemoveUI","quickPoint","editPoint","wizardStart"];
@@ -1428,7 +1430,7 @@ function openPanel(html,kind=""){
   $("#sheet").classList.add("open");$("#panel").scrollTop=0;
   $("#pX").onclick=closePanel;const b=$("#pBack");if(b)b.onclick=navBack;growAll($("#panel"));addGmBtns($("#panel"));
   if(!panelHist){try{history.pushState({rbPanel:1},"");panelHist=true;}catch(e){}}}
-$("#panel").addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-rteo]");if(b)showRoute(b.dataset.rteo);});
+$("#panel").addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-rteo]");if(b)showRoute(b.dataset.rteo);const a=e.target.closest&&e.target.closest("[data-rtea]");if(a)rteAddDialog(a.dataset.rtea);});
 /* Knöpfe «Zurück» / «Zurück zum Menü» in den Seiten: eine Seite zurück, wenn es eine gibt */
 $("#panel").addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("button");if(!b||!/^Zurück( zum Menü)?$/.test(b.textContent.trim())||!navCanBack())return;
   e.preventDefault();e.stopImmediatePropagation();navBack();},true);
@@ -1828,6 +1830,7 @@ async function showDetail(id){const p=points.find(x=>x.id===id);if(!p)return;con
       ${p.imp?`<div class="mrow"><span class="vimp" style="position:static;display:inline-block;width:22px;height:22px;line-height:18px">!</span><span><b>Wichtig</b></span></div>`:""}
       ${p.story?`<div class="mrow"><span class="lstory" style="width:22px;height:22px;margin:0">${storyI(13)}</span><span>Storypoint – wird publiziert</span></div>`:""}
       ${rteOf(p.id).map(r=>`<button class="mrow" data-rteo="${r.id}" style="padding:4px 0">${mi("route")}<span>Teil der Strecke <b>${esc(r.name||"Strecke")}</b> ›</span></button>`).join("")}
+      ${rteAlive().some(r=>!(r.pts||[]).includes(p.id))?`<button class="mrow" data-rtea="${p.id}" style="padding:4px 0">${mi("route")}<span class="muted">＋ Zu einer Strecke hinzufügen</span></button>`:""}
     </div>
     ${RATE[p.cat]&&(p.stars||Object.keys(p.rate||{}).length)?`<div class="rate">${p.stars?`<div class="rrow"><b>Gesamt</b><span class="sv" style="font-size:20px">${starTxt(p.stars)}</span></div>`:""}
       ${RATE[p.cat].map(([k,l,ty])=>{const v=(p.rate||{})[k];if(ty)return isOn(v)?`<div class="rrow"><b>${icoBadge("lake","#0288d1",22)} ${l}</b><span>✓</span></div>${v.t?`<div class="muted">${esc(v.t)}</div>`:""}`:"";return v&&(v.s||v.t)?`<div class="rrow"><b>${l}</b><span class="sv">${starTxt(v.s)}</span></div>${v.t?`<div class="muted">${esc(v.t)}</div>`:""}`:"";}).join("")}</div>`:""}
@@ -1937,7 +1940,9 @@ async function editPoint(p,isNew=false){await loadGeo();
     if(p.status==="besucht")p.visited=$("#fVisited").value||p.visited||new Date().toISOString().slice(0,10);
     {const t=$("#fVisTo").value;if(p.status==="besucht"&&STAY.includes(p.cat)&&t&&nights(p.visited,t)>0)p.visitedTo=t;else delete p.visitedTo;}
     await put("points",p);try{navigator.storage?.persist?.();}catch(e){}
-    await loadPoints();toast("Gespeichert");showDetail(p.id);};
+    await loadPoints();toast("Gespeichert");await showDetail(p.id);
+    if(isNew){const nr=rteNearList(p.lat,p.lon).filter(r=>!(r.pts||[]).includes(p.id))[0];
+      if(nr)confirmBox(`Punkt liegt an der Strecke «${esc(nr.name||"Strecke")}». Zur Strecke hinzufügen?`,async()=>{await rteAddPoint(nr,p.id);toast("Zur Strecke hinzugefügt",2500);showDetail(p.id);});}};
   const d=$("#fDel");if(d)d.onclick=()=>confirmBox(`«${esc(ptTitle(p))}» in den Papierkorb legen? (30 Tage wiederherstellbar)`,async()=>{await trashPoint(p);await loadPoints();closePanel();toast("Gelöscht");});
 }
 async function renderDraftPhotos(){const box=$("#fPhotos");if(!box)return;let h="";
@@ -2340,8 +2345,11 @@ let wz=null,wzKeep=false;
 function photoWizardKeep(files,closeOld){wzKeep=closeOld;photoWizard(files);}
 async function photoWizard(files){if(!files.length)return toast("Keine Fotos");
   const prg=(a,b)=>{if(wzKeep)toast(`Fotos lesen … ${a} / ${b}`,60000);else progress("Fotos lesen",a,b,"Aufnahmeort und -datum …");};
-  prg(0,files.length);const items=[];let k=0;
-  for(const f of files){k++;if(k%5===0||k===files.length)prg(k,files.length);
+  prg(0,files.length);const items=[];let k=0;const own=!wzKeep;
+  for(const f of files){k++;
+    /* ✕ oder Zurück während des Lesens = abbrechen (das Fortschrittsfenster nicht wieder öffnen) */
+    if(own&&!isPanelOpen()){toast(`Foto-Import abgebrochen (${k-1} von ${files.length} gelesen)`,4000);return;}
+    if(k%5===0||k===files.length)prg(k,files.length);
     let src=f;try{if(f.lazy)src=await f.lazy();}catch(e){}const ex=await exifInfo(src);if(!ex.ll){const g=nameGPS(f.name);if(g)ex.ll=g;}
     if(!ex.date&&f.lastModified)ex.date=new Date(f.lastModified).toISOString().slice(0,10);
     items.push({f,src,ll:ex.ll,date:ex.date,time:ex.time||f.lastModified||0});}
@@ -2375,15 +2383,20 @@ function wizOpen(){let w=$("#wiz");if(!w){w=document.createElement("div");w.id="
   $("#wzX").onclick=()=>wizClose();$("#wzP").onclick=()=>{if(wz.i>0){wz.i--;wizShow();}};$("#wzS").onclick=()=>wizNext();
   $("#wzOk").onclick=wizSave;}
 function wizClose(fromPop){if(!fromPop&&ovl.length){ovlClose();return;}const w=$("#wiz");if(w){w.style.display="none";w.innerHTML="";}document.body.classList.remove("wzopen");
-  if(wz){if(wz.url)URL.revokeObjectURL(wz.url);if(wz.map)wz.map.remove();toast(`${wz.saved} neue Punkte gespeichert`,3500);}wz=null;loadPoints();}
+  if(wz){if(wz.url)URL.revokeObjectURL(wz.url);if(wz.map)wz.map.remove();toast(`${wz.saved} neue Punkte gespeichert${wz.added?` · ${wz.added} Fotos an bestehende Punkte angehängt`:""}`,3500);}wz=null;loadPoints();}
 function wizNext(){if(wz.i<wz.groups.length-1){wz.i++;wizShow();}else{wizClose();}}
 function wizMarker(){const g=wz.groups[wz.i];if(wz.mk){wz.map.removeLayer(wz.mk);wz.mk=null;}
   if(!g.ll)return;wz.mk=L.marker(g.ll,{draggable:true}).addTo(wz.map);wz.mk.on("dragend",()=>{const ll=wz.mk.getLatLng();g.ll=[ll.lat,ll.lng];wizNear();});}
-function wizNear(){const g=wz.groups[wz.i],box=$("#wzNear");if(!g.ll){box.innerHTML=`<div class="wznote">Kein Aufnahmeort im Foto – auf der Karte an die richtige Stelle tippen.</div>`;return;}
-  const n=points.filter(p=>!p.deleted).map(p=>({p,d:distKm({lat:g.ll[0],lon:g.ll[1]},p)})).filter(x=>x.d<=0.3).sort((a,b)=>a.d-b.d)[0];
-  box.innerHTML=n?`<div class="wznote">In der Nähe gibt es schon <b>${esc(ptTitle(n.p))}</b> (${Math.round(n.d*1000)} m). <button class="alink" id="wzAdd">Fotos dort anhängen statt neuen Punkt</button></div>`:"";
-  const a=$("#wzAdd");if(a)a.onclick=async()=>{const sel=g.items.filter(x=>!x.off);for(const it of sel){const b=await resize(it.src);const id=uid();await put("photos",{id,blob:b});n.p.photos=n.p.photos||[];n.p.photos.push(id);}
-    n.p.updated=Date.now();await put("points",n.p);g.done="add";toast(`${sel.length} Fotos an «${ptTitle(n.p)}» angehängt`,3000);wizNext();};}
+/* Punkt in der Nähe (≤ 300 m): Fotos standardmässig dort anhängen – mit Link «stattdessen neuen Punkt erfassen» */
+function wizNear(){const g=wz.groups[wz.i],box=$("#wzNear");
+  if(!g.ll){g.near=[];box.innerHTML=`<div class="wznote">Kein Aufnahmeort im Foto – auf der Karte an die richtige Stelle tippen.</div>`;wizForm();return;}
+  g.near=points.filter(p=>!p.deleted).map(p=>({p,d:distKm({lat:g.ll[0],lon:g.ll[1]},p)})).filter(x=>x.d<=0.3).sort((a,b)=>a.d-b.d);
+  if(!g.near.some(x=>x.p.id===g.tgt))g.tgt=g.near.length?g.near[0].p.id:"";
+  if(!g.mode)g.mode=g.near.length?"add":"new";if(g.mode==="add"&&!g.near.length)g.mode="new";
+  const n=g.near.find(x=>x.p.id===g.tgt);
+  box.innerHTML=g.mode==="new"&&n?`<div class="wznote">In der Nähe gibt es schon <b>${esc(ptTitle(n.p))}</b> (${Math.round(n.d*1000)} m). <button class="alink" id="wzAdd">Fotos dort anhängen statt neuen Punkt</button></div>`:"";
+  const a=$("#wzAdd");if(a)a.onclick=()=>{g.mode="add";wizNear();};
+  wizForm();}
 async function wizShow(){const g=wz.groups[wz.i];const N=wz.groups.length;
   $("#wzT").textContent=`Neue Punkte aus Fotos · ${wz.i+1} von ${N}${g.done?" · erledigt":""}`;$("#wzP").disabled=wz.i===0;
   $("#wzOk").textContent=wz.i<N-1?"Speichern und weiter ›":"Speichern und fertig ✓";
@@ -2397,12 +2410,47 @@ async function wizShow(){const g=wz.groups[wz.i];const N=wz.groups.length;
   await big(0);
   /* Karte */
   wz.map.invalidateSize();wizMarker();if(g.ll)wz.map.setView(g.ll,15);else{const prev=wz.groups.slice(0,wz.i).reverse().find(x=>x.ll);wz.map.setView(prev?prev.ll:map.getCenter(),prev?12:6);}
-  wizNear();
+  wizNear();}
+async function wizExisting(g){const n=g.near.find(x=>x.p.id===g.tgt);if(!n){g.mode="new";return wizForm();}const p=n.p,c=CATS[p.cat]||CATS.other;
+  const N=wz.groups.length,sel=g.items.filter(x=>!x.off).length;
+  $("#wzOk").textContent=g.done==="add"?(wz.i<N-1?"Weiter ›":"Fertig ✓"):(wz.i<N-1?`${sel} Foto${sel>1?"s":""} anhängen und weiter ›`:`${sel} Foto${sel>1?"s":""} anhängen und fertig ✓`);
+  const rt=rateText(p)||(p.stars?"Gesamt "+starTxt(p.stars):"");const F=$("#wzF");F.oninput=F.onchange=F.onclick=null;
+  F.innerHTML=`<div class="wznote" style="background:#eef5ec;border-color:#c5dcc0">${g.done==="add"?"✓ Fotos sind hier angehängt.":"Hier gibt es schon einen Punkt – die Fotos werden dort angehängt."}</div>
+   <div class="mrow" style="cursor:default;gap:10px;padding:6px 0">${icoBadge(p.cat in CATS?p.cat:"other",c.c,34)}<span class="mtx"><b style="font-size:17px">${esc(ptTitle(p))}</b>
+     <small>${esc(c.n)} · ${esc(STATUS[p.status||"idee"])}${p.visited?" · besucht "+esc(visTxt(p)):""} · ${Math.round(n.d*1000)} m vom Foto</small></span></div>
+   ${rt?`<div class="muted" style="white-space:pre-line">${esc(rt)}</div>`:""}
+   ${p.desc?`<div class="desc" style="white-space:pre-line">${esc(p.desc)}</div>`:""}
+   ${p.note?`<label>Notiz</label><div class="desc">${esc(p.note)}</div>`:""}
+   <label>Schon erfasste Fotos (${(p.photos||[]).length})</label><div class="wzex" id="wzExPh">${(p.photos||[]).length?"":`<span class="muted">Noch keine</span>`}</div>
+   ${p.status!=="besucht"&&g.done!=="add"?`<label style="display:flex;gap:8px;align-items:center;font-size:15px;color:var(--ink);margin-top:12px"><input type="checkbox" id="wzVis" style="width:auto;margin:0" checked> Als besucht markieren${g.date?" ("+fmtD(g.date)+")":""}</label>`:""}
+   ${g.near.length>1?`<label>Andere Punkte in der Nähe</label>${g.near.filter(x=>x.p.id!==p.id).map(x=>`<button class="alink" data-tgt="${x.p.id}" style="display:block;margin:4px 0">${esc(ptTitle(x.p))} (${Math.round(x.d*1000)} m)</button>`).join("")}`:""}
+   ${g.done==="add"?"":`<div style="margin-top:14px"><button class="btn sec" id="wzNew">＋ Stattdessen neuen Punkt erfassen</button></div>`}`;
+  $("#wzF").querySelectorAll("[data-tgt]").forEach(b=>b.onclick=()=>{g.tgt=b.dataset.tgt;wizForm();});
+  const nb=$("#wzNew");if(nb)nb.onclick=()=>{g.mode="new";wizNear();};
+  wz.rd=()=>{const v=$("#wzVis");g.markVis=v?v.checked:false;};const v=$("#wzVis");if(v)v.onchange=wz.rd;wz.rd();
+  const box=$("#wzExPh");for(const id of (p.photos||[]).slice(0,12)){const u=await photoURL(id);if(u&&box&&wz&&wz.groups[wz.i]===g)box.insertAdjacentHTML("beforeend",`<img src="${u}">`);}
+  if((p.photos||[]).length>12&&box)box.insertAdjacentHTML("beforeend",`<span class="muted">+${p.photos.length-12}</span>`);}
+function wizForm(){const g=wz.groups[wz.i];const N=wz.groups.length;
+  if(g.mode==="add")return wizExisting(g);
+  $("#wzOk").textContent=wz.i<N-1?"Speichern und weiter ›":"Speichern und fertig ✓";
   /* Formular */
   const f=g.form||(g.form={title:"",cat:wz.last.cat,status:"besucht",visited:g.date||"",visitedTo:"",trip:wz.last.trip||curTrip,section:"",desc:"",note:"",stars:0});
   if(!f.section&&g.ll&&f.trip===curTrip)f.section=sectorOf(g.ll[0],g.ll[1]);
+  /* Strecke in der Nähe (bis 200 m): Punkt gleich zuordnen */
+  const nr=g.ll?rteNearList(g.ll[0],g.ll[1]):[];if(f.rte===undefined||(f.rte&&!nr.some(r=>r.id===f.rte)))f.rte=nr.length?nr[0].id:"";
+  const rteSel=nr.length?`<label>Strecke</label><select id="wRte"><option value="">– keiner Strecke zuordnen –</option>${nr.map(r=>`<option value="${r.id}" ${f.rte===r.id?"selected":""}>${esc(r.name||"Strecke")}</option>`).join("")}</select>`:"";
+  const F=$("#wzF");F.oninput=F.onchange=F.onclick=null;
+  if(ls("rb_wzSimple")!=="0"){f.simple=true;
+    F.innerHTML=`<label>Bemerkung</label><textarea id="wDesc" style="min-height:120px" placeholder="Was ist hier? z. B. Furt, Aussicht, schwierige Stelle …">${esc(f.desc)}</textarea>${rteSel}
+     <p class="muted">Wird als besuchter Punkt${g.date?" vom "+fmtD(g.date):""} mit den Fotos gespeichert.</p>
+     <button class="alink" id="wMode">Ausführlich erfassen (Titel, Kategorie, Bewertung) ›</button>`;
+    growAll($("#wiz"));
+    const rd=()=>{f.desc=$("#wDesc").value;const r=$("#wRte");f.rte=r?r.value:"";};
+    F.oninput=rd;F.onchange=rd;wz.rd=rd;
+    $("#wMode").onclick=()=>{rd();ls("rb_wzSimple","0");wizForm();};return;}
+  f.simple=false;
   const t=tripOf(f.trip);
-  $("#wzF").innerHTML=`<label>Titel <span class="muted">(freiwillig)</span></label><input id="wTitle" value="${esc(f.title)}" placeholder="z. B. Stellplatz am See">
+  F.innerHTML=`<button class="alink" id="wMode" style="float:right">Einfach (nur Bemerkung)</button><label>Titel <span class="muted">(freiwillig)</span></label><input id="wTitle" value="${esc(f.title)}" placeholder="z. B. Stellplatz am See">
    <label>Kategorie</label><div class="catgrid wzcat">${Object.entries(CATS).map(([k,v])=>`<button type="button" data-cat="${k}" class="${f.cat===k?"on":""}">${icoBadge(k,v.c,30)}<span>${esc(v.n)}</span></button>`).join("")}</div>
    <div class="row"><div><label>Status</label><select id="wSt">${Object.entries(STATUS).map(([k,v])=>`<option value="${k}" ${f.status===k?"selected":""}>${v}</option>`).join("")}</select></div>
      <div><label id="wVisL">${STAY.includes(f.cat)?"Von":"Besucht am"}</label><input id="wVis" type="date" value="${esc(f.visited)}"></div>
@@ -2411,25 +2459,35 @@ async function wizShow(){const g=wz.groups[wz.i];const N=wz.groups.length;
      <div style="display:none"><label>Abschnitt</label><select id="wSec" ${t?"":"disabled"}><option value="">–</option>${(t?t.sections:[]).map(x=>`<option ${f.section===x?"selected":""}>${esc(x)}</option>`).join("")}</select></div></div>
    <div id="wRate">${RATE[f.cat]?`<label>Bewertung gesamt</label>${starsWidget("__w",f.stars)}`:""}</div>
    <label>Beschreibung</label><textarea id="wDesc" style="min-height:90px">${esc(f.desc)}</textarea>
-   <label>Notiz</label><textarea id="wNote" style="min-height:60px">${esc(f.note)}</textarea>
+   <label>Notiz</label><textarea id="wNote" style="min-height:60px">${esc(f.note)}</textarea>${rteSel}
    <p class="muted">Detaillierte Bewertung (Sanitär, Umgebung …) später im Punkt über «Bearbeiten».</p>`;
-  const F=$("#wzF");bindStars(F);
+  bindStars(F);
   growAll($("#wiz"));
+  $("#wMode").onclick=()=>{wz.rd();ls("rb_wzSimple","1");wizForm();};
   const rd=()=>{f.title=$("#wTitle").value;f.status=$("#wSt").value;f.visited=$("#wVis").value;f.visitedTo=$("#wTo").value;f.trip=$("#wTrip").value;f.section=$("#wSec").value;f.desc=$("#wDesc").value;f.note=$("#wNote").value;
-    const s=F.querySelector('[data-name="__w"]');if(s)f.stars=+s.dataset.v;};
-  F.querySelectorAll("[data-cat]").forEach(b=>b.onclick=()=>{rd();f.cat=b.dataset.cat;wizShow();});
-  $("#wTrip").onchange=()=>{rd();f.section="";wizShow();};
+    const s=F.querySelector('[data-name="__w"]');if(s)f.stars=+s.dataset.v;const r=$("#wRte");f.rte=r?r.value:"";};
+  F.querySelectorAll("[data-cat]").forEach(b=>b.onclick=()=>{rd();f.cat=b.dataset.cat;wizForm();});
+  $("#wTrip").onchange=()=>{rd();f.section="";wizForm();};
   F.oninput=rd;F.onchange=rd;F.onclick=()=>setTimeout(rd,0);wz.rd=rd;}
 async function wizSave(){const g=wz.groups[wz.i];wz.rd();const f=g.form;
   if(!g.ll)return toast("Bitte zuerst auf der Karte die Stelle antippen",3500);
-  if(g.done==="new"){wizNext();return;}
+  if(g.done==="new"||g.done==="add"){wizNext();return;}
   const sel=g.items.filter(x=>!x.off);$("#wzOk").disabled=true;
+  if(g.mode==="add"){const p=points.find(x=>x.id===g.tgt);
+    try{if(!p)throw new Error("Punkt nicht gefunden");p.photos=p.photos||[];
+      for(const it of sel){const b=await resize(it.src);const id=uid();await put("photos",{id,blob:b});p.photos.push(id);}
+      if(g.markVis&&p.status!=="besucht"){p.status="besucht";if(!p.visited&&g.date)p.visited=g.date;}
+      p.updated=Date.now();await put("points",p);g.done="add";wz.added=(wz.added||0)+sel.length;toast(`${sel.length} Foto${sel.length>1?"s":""} an «${ptTitle(p)}» angehängt`,2500);}
+    catch(e){toast("Anhängen fehlgeschlagen: "+e.message,5000);}
+    $("#wzOk").disabled=false;wizNext();return;}
+  if(f.simple){const l=(f.desc||"").trim().split("\n")[0];Object.assign(f,{title:l.length>50?l.slice(0,48).trim()+" …":l,cat:"sight",status:"besucht",visited:g.date||"",visitedTo:"",note:""});}
   try{const p=newPoint(+g.ll[0].toFixed(6),+g.ll[1].toFixed(6),{title:f.title.trim(),cat:f.cat,status:f.status,trip:f.trip,section:f.section,desc:f.desc,note:f.note,source:"Foto",
       created:sel[0]&&sel[0].time?sel[0].time:Date.now()});
     if(f.status==="besucht"&&f.visited){p.visited=f.visited;if(STAY.includes(f.cat)&&f.visitedTo&&f.visitedTo>f.visited)p.visitedTo=f.visitedTo;}
     if(RATE[f.cat]&&f.stars)p.stars=f.stars;
     for(const it of sel){const b=await resize(it.src);const id=uid();await put("photos",{id,blob:b});p.photos.push(id);}
-    await put("points",p);g.done="new";wz.saved++;wz.last={cat:f.cat,trip:f.trip};ls("rb_wzCat",f.cat);ls("rb_wzTrip",f.trip);
+    await put("points",p);g.done="new";wz.saved++;if(!f.simple){wz.last={cat:f.cat,trip:f.trip};ls("rb_wzCat",f.cat);ls("rb_wzTrip",f.trip);}
+    if(f.rte){const r=rtes.find(x=>x.id===f.rte);if(r){points.push(p);await rteAddPoint(r,p.id);}}
     toast(`Gespeichert: ${ptTitle(p)}`,2000);}
   catch(e){toast("Speichern fehlgeschlagen: "+e.message,5000);}
   $("#wzOk").disabled=false;wizNext();}
@@ -4076,10 +4134,19 @@ function lineNear(l,lat,lon){const kx=111320*Math.cos(lat*Math.PI/180),ky=110540
 function rteOrder(r){const l=r.line||[];r.pts=(r.pts||[]).filter(id=>points.some(p=>p.id===id));
   r.pts.sort((a,b)=>{const pa=points.find(p=>p.id===a),pb=points.find(p=>p.id===b);return lineNear(l,pa.lat,pa.lon).pos-lineNear(l,pb.lat,pb.lon).pos;});}
 const rteOf=pid=>rteAlive().filter(r=>(r.pts||[]).includes(pid));
+const rteNearList=(lat,lon,m=200)=>rteAlive().map(r=>({r,m:lineNear(r.line,lat,lon).m})).filter(x=>x.m<=m).sort((a,b)=>a.m-b.m).map(x=>x.r);
+async function rteAddPoint(r,pid){r.pts=[...new Set([...(r.pts||[]),pid])];rteOrder(r);r.updated=Date.now();await put("routes",r);autoSyncSoon(30000);syncDotSoon();drawRoutes();}
+/* «Zu Strecke hinzufügen» aus der Punktansicht: Strecken nach Abstand, nächste zuerst */
+function rteAddDialog(pid){const p=points.find(x=>x.id===pid);if(!p)return;
+  const l=rteAlive().filter(r=>!(r.pts||[]).includes(pid)).map(r=>({r,m:lineNear(r.line,p.lat,p.lon).m})).sort((a,b)=>a.m-b.m);
+  openPanel(`<h2>Zu Strecke hinzufügen</h2><p class="muted">«${esc(ptTitle(p))}» einer Strecke zuordnen – nächste zuerst.</p>
+   <div class="mgrp">${l.length?l.map(({r,m})=>`<button class="mrow" data-ra="${r.id}"><span class="mic" style="color:${r.status==="gefahren"?"#6a1b9a":"#1565c0"}">${mi("route",20)}</span><span class="mtx"><b>${esc(r.name||"Strecke")}</b><small>${m<1000?Math.round(m)+" m":(m/1000).toFixed(1)+" km"} von der Linie · ${lineKm(r.line).toFixed(1)} km</small></span><span class="mchev">${mi("chev",18)}</span></button>`).join("")
+     :`<div class="mrow" style="cursor:default"><span class="mtx"><small>Keine (weiteren) Strecken vorhanden – Menü › Unterwegs › Strecken.</small></span></div>`}</div>`);
+  $("#panel").querySelectorAll("[data-ra]").forEach(b=>b.onclick=async()=>{const r=rtes.find(x=>x.id===b.dataset.ra);await rteAddPoint(r,pid);toast(`Zur Strecke «${r.name||"Strecke"}» hinzugefügt`,2500);showDetail(pid);});}
 /* Linie vereinfachen: Punkte näher als 8 m am Vorgänger weglassen (GPX-Tracks haben oft zehntausende Punkte) */
 function lineThin(l){if(l.length<3)return l;const o=[l[0]];for(let i=1;i<l.length-1;i++){const a=o[o.length-1];if(distKm({lat:a[0],lon:a[1]},{lat:l[i][0],lon:l[i][1]})>=.008)o.push(l[i]);}o.push(l[l.length-1]);
   return o.map(p=>[+p[0].toFixed(5),+p[1].toFixed(5)]);}
-const endIcon=(t,c)=>L.divIcon({className:"",iconSize:[24,24],iconAnchor:[12,12],html:`<div class="rteend" style="background:${c}">${t}</div>`});
+const endIcon=(t,c,sm)=>L.divIcon({className:"",iconSize:sm?[18,18]:[24,24],iconAnchor:sm?[9,9]:[12,12],html:`<div class="rteend${sm?" sm":""}" style="background:${c}">${t}</div>`});
 const numIcon=n=>L.divIcon({className:"",iconSize:[20,20],iconAnchor:[-6,40],html:`<div class="rtenum">${n}</div>`});
 function drawRoutes(){rteLayer.clearLayers();if(ADM)return;
   const show=ls("rb_rteshow")!=="0";
@@ -4087,8 +4154,11 @@ function drawRoutes(){rteLayer.clearLayers();if(ADM)return;
     const plan=r.status!=="gefahren",col=plan?"#1565c0":"#6a1b9a";
     L.polyline(r.line,{color:"#fff",weight:foc?9:7,opacity:.8,interactive:false}).addTo(rteLayer);
     L.polyline(r.line,{color:col,weight:foc?5:3.5,opacity:.95,dashArray:plan?"9 7":null}).addTo(rteLayer).on("click",ev=>{L.DomEvent.stopPropagation(ev);if(rteDraw)return;showRoute(r.id);});
-    if(foc){const a=r.line[0],b=r.line[r.line.length-1];
-      L.marker(a,{icon:endIcon("S","#2e7d32"),zIndexOffset:900}).addTo(rteLayer);L.marker(b,{icon:endIcon("Z","#c62828"),zIndexOffset:900}).addTo(rteLayer);
+    /* Start (S) und Ziel (Z) immer zeigen – klein, gross wenn die Strecke gewählt ist; antippen öffnet die Strecke */
+    {const a=r.line[0],b=r.line[r.line.length-1],go=ev=>{L.DomEvent.stopPropagation(ev);if(!rteDraw)showRoute(r.id);};
+      L.marker(a,{icon:endIcon("S","#2e7d32",!foc),zIndexOffset:900,title:"Start: "+(r.name||"Strecke")}).addTo(rteLayer).on("click",go);
+      L.marker(b,{icon:endIcon("Z","#c62828",!foc),zIndexOffset:900,title:"Ziel: "+(r.name||"Strecke")}).addTo(rteLayer).on("click",go);}
+    if(foc){
       (r.pts||[]).forEach((id,i)=>{const p=points.find(x=>x.id===id);if(p)L.marker([p.lat,p.lon],{icon:numIcon(i+1),zIndexOffset:1500,interactive:false}).addTo(rteLayer);});}}}
 function rteSetFocus(id){if(rteFocus===id)return;rteFocus=id;drawRoutes();drawPoints();}
 /* ---- Liste ---- */
@@ -4197,13 +4267,24 @@ function rteDrawEnd(){rteDraw=null;rteDrawLayer.clearLayers();const b=$("#rteBar
 map.on("click",e=>{if(rteDraw)rteDrawAdd(e.latlng.lat,e.latlng.lng,null);});
 /* ---- Linie online an Wege anpassen (BRouter, kostenlos, OSM-Daten) ---- */
 const RTE_PROF={"car-fast":"Strassen (Auto)",trekking:"Auch Pisten und Feldwege"};
-async function rteRoute(wp,prof){if(!navigator.onLine)throw new Error("offline");
+async function rteRoute1(wp,prof){
   const ll=wp.map(p=>`${p[1].toFixed(6)},${p[0].toFixed(6)}`).join("|");
   const ctl=new AbortController();const tm=setTimeout(()=>ctl.abort(),45000);
   try{const res=await fetch(`https://brouter.de/brouter?lonlats=${ll}&profile=${prof}&alternativeidx=0&format=geojson`,{signal:ctl.signal});
     const tx=await res.text();if(!res.ok)throw new Error(tx.slice(0,160)||("HTTP "+res.status));
     const g=JSON.parse(tx);const c=g.features&&g.features[0]&&g.features[0].geometry.coordinates;if(!c||c.length<2)throw new Error("keine Route");
-    return lineThin(c.map(p=>[p[1],p[0]]));}finally{clearTimeout(tm);}}
+    return c.map(p=>[p[1],p[0]]);}finally{clearTimeout(tm);}}
+/* Ganze Linie auf einmal; klappt das nicht (z. B. «target island»: Punkt liegt abseits jedes befahrbaren Weges),
+   Abschnitt für Abschnitt – Abschnitte ohne Weg bleiben gerade Linien. */
+async function rteRoute(wp,prof,onStep){if(!navigator.onLine)throw new Error("offline");
+  try{return {line:lineThin(await rteRoute1(wp,prof)),fail:[]};}
+  catch(e){if(e.name==="AbortError")throw e;}
+  const out=[],fail=[];
+  for(let i=0;i<wp.length-1;i++){if(onStep)onStep(i+1,wp.length-1);let seg;
+    try{seg=await rteRoute1([wp[i],wp[i+1]],prof);}catch(e){if(e.name==="AbortError")throw e;seg=[wp[i],wp[i+1]];fail.push(i+1);}
+    if(out.length)seg=seg.slice(1);out.push(...seg);}
+  if(fail.length===wp.length-1)throw new Error("island");
+  return {line:lineThin(out),fail};}
 /* ---- Bearbeiten ---- */
 function routeEdit(r0,isNew){const r=JSON.parse(JSON.stringify(r0));rteSetFocus("");
   const cand=()=>{const set=new Set(r.pts||[]);return points.filter(p=>!p.deleted&&(set.has(p.id)||lineNear(r.line,p.lat,p.lon).m<=200))
@@ -4240,8 +4321,9 @@ function routeEdit(r0,isNew){const r=JSON.parse(JSON.stringify(r0));rteSetFocus(
   const wpb=$("#reWp");if(wpb)wpb.onclick=()=>{read();clr();rteDrawStart(r);};
   const pf=$("#reProf");if(pf)pf.onchange=()=>ls("rb_rteprof",pf.value);
   const fb=$("#reFit");if(fb)fb.onclick=async()=>{read();const prof=$("#reProf").value;fb.disabled=true;fb.textContent="Wird berechnet …";
-    try{r.line=await rteRoute(r.wp,prof);r.mode="wege";toast(`Linie an Wege angepasst: ${lineKm(r.line).toFixed(1)} km`,4000);}
-    catch(e){toast(e.message==="offline"?"Kein Internet – Anpassung geht nur online":"Anpassung nicht möglich: "+(e.name==="AbortError"?"keine Antwort von BRouter":e.message),6000);}
+    try{const res=await rteRoute(r.wp,prof,(i,n)=>{fb.textContent=`Abschnitt ${i} von ${n} …`;});r.line=res.line;r.mode="wege";
+      toast(res.fail.length?`Angepasst: ${lineKm(r.line).toFixed(1)} km – Abschnitt ${res.fail.join(", ")} ohne befahrbaren Weg, dort gerade Linie. Punkt näher an einen Weg setzen oder «Auch Pisten und Feldwege» wählen.`:`Linie an Wege angepasst: ${lineKm(r.line).toFixed(1)} km`,res.fail.length?9000:4000);}
+    catch(e){toast(e.message==="offline"?"Kein Internet – Anpassung geht nur online":e.message==="island"?"Kein befahrbarer Weg gefunden – die Punkte liegen abseits von Strassen/Pisten. Punkte näher an Wege setzen oder «Auch Pisten und Feldwege» wählen.":"Anpassung nicht möglich: "+(e.name==="AbortError"?"keine Antwort von BRouter":e.message),9000);}
     render();};
   const sb=$("#reStraight");if(sb)sb.onclick=()=>{read();r.line=r.wp.map(p=>[...p]);r.mode="punkte";render();};
   $("#reCancel").onclick=()=>{clr();if(!isNew)showRoute(r.id);else navBack();};

@@ -1,4 +1,4 @@
-IbexMap – v9.3 (privates Projekt)
+IbexMap – v9.4 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -376,6 +376,17 @@ NEU IN v6.8
 NEU IN v7.1
 - Vektorkarte erstellen per Doppelklick: Offline-Daten › Land › «Karte erstellen (PC)» › «Startdatei herunterladen». Die Datei <Land>_laden.bat holt das Programm pmtiles, sucht die neueste Weltkarte von Protomaps und schneidet das Land heraus (Ordner IbexMap-Karten im Benutzerordner); danach in IbexMap «Datei laden». Kein cmd, kein Befehl, kein Datum mehr. Der Befehl von Hand bleibt unter «Von Hand (für Fortgeschrittene)».
 - Geprüft: Ganz in der App geht es nicht – der Protomaps-Server sperrt den Zugriff aus dem Browser (CORS).
+
+NEU IN v9.4
+  - Neue Punkte aus Fotos «Einfach»: nur Bemerkung (Standard) – Punkt wird als besucht mit Datum aus dem Foto gespeichert;
+    «Ausführlich» mit Titel, Kategorie, Bewertung. Liegt der Ort an einer Strecke, wird er ihr gleich zugeordnet.
+  - Punktansicht: «Zu einer Strecke hinzufügen». Neuer Punkt nahe einer Strecke: Frage, ob er dazugehört.
+  - Strecken: Start (S) und Ziel (Z) immer auf der Karte, gross bei der gewählten Strecke; antippen öffnet sie.
+  - Neue Punkte aus Fotos: Lesen der Fotos lässt sich mit ✕ abbrechen.
+  - Strecken «An Wege anpassen»: klappt die ganze Linie nicht (Punkt abseits befahrbarer Wege), wird Abschnitt
+    für Abschnitt angepasst; Abschnitte ohne Weg bleiben gerade, mit verständlicher Meldung.
+  - Neue Punkte aus Fotos: Gibt es bis 300 m entfernt schon einen Punkt, zeigt die Seite diesen mit Daten und Fotos;
+    die Fotos werden dort angehängt (optional «als besucht markieren»). Link «Stattdessen neuen Punkt erfassen».
 
 NEU IN v9.3
   - Strecken (Menü › Unterwegs › Strecken): Offroad-Strecken planen oder im Nachhinein festhalten.
