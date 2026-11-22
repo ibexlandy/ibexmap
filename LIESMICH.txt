@@ -1,4 +1,4 @@
-IbexMap – v9.4 (privates Projekt)
+IbexMap – v9.5 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -376,6 +376,17 @@ NEU IN v6.8
 NEU IN v7.1
 - Vektorkarte erstellen per Doppelklick: Offline-Daten › Land › «Karte erstellen (PC)» › «Startdatei herunterladen». Die Datei <Land>_laden.bat holt das Programm pmtiles, sucht die neueste Weltkarte von Protomaps und schneidet das Land heraus (Ordner IbexMap-Karten im Benutzerordner); danach in IbexMap «Datei laden». Kein cmd, kein Befehl, kein Datum mehr. Der Befehl von Hand bleibt unter «Von Hand (für Fortgeschrittene)».
 - Geprüft: Ganz in der App geht es nicht – der Protomaps-Server sperrt den Zugriff aus dem Browser (CORS).
+
+NEU IN v9.5
+  - Fotos antippen = Vollbild: blättern (wischen, ‹ ›, Pfeiltasten), zoomen (zwei Finger, Mausrad, Doppeltipp), verschieben.
+    In Punktansicht, Bearbeiten und beim Foto-Import (bestehender Punkt).
+  - Neue Fotos werden mit max. 1600 px gespeichert (vorher 1280 px) – schärfer im Vollbild, ca. 60 % mehr Speicher.
+  - Punkte einer Strecke: runde Marke in der Streckenfarbe (violett gefahren, blau geplant) mit Kamera-Symbol
+    (ohne Fotos: Kategorie-Symbol) statt der normalen Nadel.
+  - Neue Punkte aus Fotos: bestehende Punkte auf der kleinen Karte antippen = Fotos dort anhängen, auch wenn weiter entfernt
+    (gestrichelte Linie Foto → Punkt).
+  - Neue Punkte aus Fotos: Knöpfe oben immer gleich breit und am gleichen Ort (Handy: Hauptknopf über die ganze Breite).
+  - «Strassen (online)» jetzt auch auf Handy und Tablet in der Kartenauswahl.
 
 NEU IN v9.4
   - Neue Punkte aus Fotos «Einfach»: nur Bemerkung (Standard) – Punkt wird als besucht mit Datum aus dem Foto gespeichert;

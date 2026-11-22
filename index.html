@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <!-- Sicherheitsregeln: Code nur von hier (Fingerabdruck), cdnjs und unpkg (mit Prüfsumme). Fingerabdruck setzt /home/claude/tools/csp.py -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-cUEdmy9xk1mswSk4v8N8B0ZPdcZLpqpKjGYSYyVw+I8=' https://cdnjs.cloudflare.com https://unpkg.com; worker-src 'self' blob:; child-src blob:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; font-src 'self' data: https:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-sNbxHbSXvyyoIdVlcPR0G/T4M9pKfk9NgOIxL5v8emA=' https://cdnjs.cloudflare.com https://unpkg.com; worker-src 'self' blob:; child-src blob:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; font-src 'self' data: https:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#92b78c">
 <title>IbexMap</title>
@@ -201,6 +201,10 @@ body.adm #locBtn{display:flex !important}
 .pth{width:64px;height:64px;flex:none;border-radius:8px;background:#e3e9e1 center/cover;cursor:zoom-in;display:flex;align-items:center;justify-content:center;color:#888}
 .panel select.pnew{width:auto;max-width:175px;flex:none;font-size:13px;padding:6px 6px}.panel select.pnew.on{border-color:var(--accent2);background:#fff6ec;font-weight:600}
 .pbx{position:absolute;top:calc(12px + env(safe-area-inset-top));right:12px;width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,255,255,.2);color:#fff;font-size:20px}
+.pbig.gal{cursor:default;touch-action:none;overflow:hidden;background:#000;z-index:6000}.gal img{max-width:100vw;max-height:100vh;border-radius:0;transform-origin:center;user-select:none;-webkit-user-select:none;transition:none}
+.gal .gcnt{position:absolute;top:calc(20px + env(safe-area-inset-top));left:16px;color:#fff;font:600 15px system-ui,sans-serif;text-shadow:0 1px 3px #000}
+.gnav{position:absolute;top:50%;transform:translateY(-50%);width:48px;height:64px;border:0;border-radius:10px;background:rgba(255,255,255,.18);color:#fff;font-size:34px;line-height:1;cursor:pointer}.gp{left:10px}.gn{right:10px}.gal.zoomed .gnav{display:none}
+.detail img.big[data-gal]{cursor:zoom-in}
 .pbig{position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,.9);display:flex;align-items:center;justify-content:center;cursor:zoom-out}.pbig img{max-width:96vw;max-height:94vh;border-radius:6px}
 .bigpage{position:fixed;inset:0;z-index:1400;background:#eef3ec;display:none;flex-direction:column}
 .bpbody{flex:1;overflow:auto;padding:12px 14px 30px}
@@ -218,7 +222,10 @@ body.adm #locBtn{display:flex !important}
 @media (max-width:899px){.bpgrid{grid-template-columns:repeat(2,1fr);gap:8px}.wzbar .bpopt{font-size:12.5px}}
 #wiz{position:fixed;inset:0;z-index:1400;background:#eef3ec;display:none;flex-direction:column}
 .wzbar{flex:none;display:flex;align-items:center;gap:8px;padding:calc(8px + env(safe-area-inset-top)) 12px 8px;background:#92b78c url(topo.svg) repeat;background-size:360px;border-bottom:1px solid #6f9469;flex-wrap:wrap}
-.wzbar b{font-size:16px;color:#13200f}.wzbar .btn{padding:9px 14px}.abtn:disabled{opacity:.4}
+.wzbar b{font-size:16px;color:#13200f}.wzbar .btn{padding:9px 14px}
+/* Knöpfe immer gleich breit und am gleichen Ort – beim schnellen Durchklicken nichts Falsches treffen */
+#wzOk{width:230px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}#wzP,#wzS{width:118px;text-align:center}
+@media (max-width:899px){.wzbar>span{display:none}#wzX,#wzP,#wzS{width:auto;flex:1 1 0;text-align:center;white-space:nowrap}#wzOk{width:100%;order:5;padding:11px 14px}}.abtn:disabled{opacity:.4}
 .wzbody{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(360px,1fr);gap:0}
 .wzpics{display:flex;flex-direction:column;min-height:0;background:#1b2219}
 .wzbig{flex:1;min-height:0;background:#1b2219 center/contain no-repeat}
@@ -300,6 +307,7 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 .placebar{position:absolute;left:8px;right:8px;bottom:calc(16px + var(--sb));z-index:650;background:#fff;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.35);padding:10px;display:none}
 .placebar .actions{margin-top:6px;flex-wrap:nowrap}
 .rteend{width:24px;height:24px;border-radius:50%;color:#fff;font:700 13px/20px system-ui,sans-serif;text-align:center;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);display:inline-block;flex:none}
+.rpin{width:26px;height:26px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;box-sizing:border-box}
 .rteend.sm{width:18px;height:18px;font-size:10px;line-height:14px}
 .rtenum{position:relative;width:20px;height:20px;border-radius:50%;background:#13200f;color:#fff;font:700 11px/16px system-ui,sans-serif;text-align:center;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.4);display:inline-block;flex:none}.placebar .btn{padding:10px 12px}
 #map.placing .fab{display:none}
@@ -677,7 +685,7 @@ const ADM=(()=>{try{if(new URLSearchParams(location.search).has("admin")){sessio
   return sessionStorage.getItem("rb_admin")==="1"&&matchMedia("(min-width:900px)").matches;}catch(e){return false;}})();
 if(ADM)document.body.classList.add("adm");
 const GROUP="IbexMap";
-const VERSION="v9.4";
+const VERSION="v9.5";
 /* Startzeit-Messung: Sekunden seit dem Öffnen der App (im Menü › Gerät › Startzeit) */
 const ST_MARKS=[];function stMark(t){if(ST_MARKS.some(m=>m.t===t))return;ST_MARKS.push({t,s:performance.now()/1000});}
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
@@ -1114,15 +1122,15 @@ async function vecHelp(cc,back){await loadGeo();const n=countryName(cc);openPane
 /* Kartenarten: Vektorkarte (offline, Hauptkarte), Topo (online, für Gebiete ohne Länderdatei), Satellit, swisstopo.
    «Strassen» (Esri) ist nicht mehr wählbar – die Vektorkarte ersetzt sie; alte Einstellung wird umgestellt. */
 const BASE_LABEL={"Topo":"Topo (online)","Strassen":"Strassen (online)"};
-/* Strassenkarte (Esri) nur am PC zum Planen – lädt schneller als Topo; auf Handy und Tablet nicht in der Auswahl */
+/* Strassenkarte (Esri, online) auf allen Geräten wählbar – lädt schneller als Topo */
 const IS_PC=(()=>{try{return matchMedia("(pointer:fine) and (min-width:900px)").matches;}catch(e){return false;}})();const baseKey=lbl=>Object.keys(BASE).find(k=>(BASE_LABEL[k]||k)===lbl)||lbl;
 let baseName="Topo";try{baseName=localStorage.getItem("rb_base")||"";}catch(e){}
-baseName=baseKey(baseName);if(!baseName||(baseName==="Strassen"&&!IS_PC))baseName=ls("rb_vecauto")==="1"?VEC_NAME:"Topo";
+baseName=baseKey(baseName);if(!baseName)baseName=ls("rb_vecauto")==="1"?VEC_NAME:"Topo";
 function setBase(name){const l=name===VEC_NAME?VEC:BASE[name];if(!l||map.hasLayer(l))return;[VEC,...Object.values(BASE)].forEach(x=>{if(map.hasLayer(x))map.removeLayer(x);});l.addTo(map);map.fire("baselayerchange",{layer:l,name});try{layCtl._update();}catch(e){}}
 (baseName===VEC_NAME?VEC:(BASE[baseName]||BASE["Topo"])).addTo(map);
 /* Massstab unten links, neben dem Fahrmodus-Knopf (nur metrisch) */
 L.control.scale({position:"bottomleft",metric:true,imperial:false,maxWidth:130}).addTo(map);
-const layCtl=L.control.layers({[VEC_NAME]:VEC,...Object.fromEntries(Object.entries(BASE).filter(([k])=>k!=="Strassen"||IS_PC).map(([k,l])=>[BASE_LABEL[k]||k,l]))},null,{position:"topright"}).addTo(map);
+const layCtl=L.control.layers({[VEC_NAME]:VEC,...Object.fromEntries(Object.entries(BASE).map(([k,l])=>[BASE_LABEL[k]||k,l]))},null,{position:"topright"}).addTo(map);
 /* Kartenwahl nur per Klick öffnen (nicht schon beim Darüberfahren mit der Maus); nach Auswahl wieder schliessen */
 try{L.DomEvent.off(layCtl.getContainer(),{mouseenter:layCtl._expandSafely||layCtl.expand,mouseleave:layCtl.collapse},layCtl);}catch(e){}
 map.on("baselayerchange",()=>setTimeout(()=>layCtl.collapse(),150));
@@ -1130,7 +1138,11 @@ map.on("baselayerchange",e=>{try{localStorage.setItem("rb_base",baseKey(e.name))
 const layer=L.layerGroup().addTo(map);
 let points=[];const thumbs={};
 
-function pinIcon(p){const c=CATS[p.cat]||CATS.other;const S=p.imp?40:30;
+/* Punkte einer Strecke: runde Marke in der Streckenfarbe (violett gefahren, blau geplant) mit Kamera bzw. Kategorie-Symbol */
+function rtePinIcon(p,r){const col=r.status==="gefahren"?"#6a1b9a":"#1565c0",S=26,ph=(p.photos||[]).length;
+  return L.divIcon({className:"",iconSize:[S,S],iconAnchor:[S/2,S/2],popupAnchor:[0,-S/2],
+    html:`<div class="rpin" style="background:${col}" title="Strecke: ${esc(r.name||"")}">${ph?`<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${MI.photo}</svg>`:svgI(p.cat in CATS?p.cat:"other",14)}</div>`});}
+function pinIcon(p,r){if(r)return rtePinIcon(p,r);const c=CATS[p.cat]||CATS.other;const S=p.imp?40:30;
   return L.divIcon({className:"",iconSize:[S,S],iconAnchor:[S/2,S],popupAnchor:[0,-S+2],
     html:`<div class="pinw${p.imp?" imp":""}">${p.imp?`<span class="vimp">!</span>`:""}<div class="pin ${p.status==="besucht"?"visited":""}" style="background:${c.c}"><span>${svgI(p.cat in CATS?p.cat:"other",16)}</span></div>${p.status==="besucht"?`<span class="vchk">✓</span>`:""}${p.story?`<span class="vstory">${storyI(9)}</span>`:""}</div>`});}
 let hiddenCats=[];try{hiddenCats=JSON.parse(localStorage.getItem("rb_hidden")||"[]");}catch(e){}
@@ -1167,7 +1179,8 @@ function clusterPts(list0,z,proj){const R=48,mix=z<CLUSTER_MIXZOOM,B=new Map(),i
 function drawPoints(){layer.clearLayers();
   filtState();
   const vis=ADM?points.filter(p=>admShown.has(p.id)):rteFocus?points.filter(p=>(rtes.find(r=>r.id===rteFocus)||{pts:[]}).pts.includes(p.id)):points.filter(p=>!hiddenCats.includes(p.cat in CATS?p.cat:"other")&&!hiddenStat.includes(p.status||"idee")&&(!mapTrip.length||mapTrip.includes(p.trip))&&(mapTrip.includes(p.trip)||!tripHidden(p.trip))&&(!mapCountry.length||mapCountry.includes(p.country))&&(!mapStars||(p.stars||0)>=mapStars));
-  const z=map.getZoom(),single=p=>L.marker([p.lat,p.lon],{icon:pinIcon(p),zIndexOffset:p.imp?1000:0}).addTo(layer).on("click",()=>{if(rteDraw){rteDrawAdd(p.lat,p.lon,p.id);return;}if(ADM){const tr=admFocus(p.id,false);if(tr)tr.scrollIntoView({block:"center",behavior:"smooth"});}showDetail(p.id);});
+  const rm=new Map();if(!ADM)rtes.filter(r=>!r.del&&r.line&&r.line.length>1).forEach(r=>(r.pts||[]).forEach(id=>{if(!rm.has(id)||r.id===rteFocus)rm.set(id,r);}));
+  const z=map.getZoom(),single=p=>L.marker([p.lat,p.lon],{icon:pinIcon(p,rm.get(p.id)),zIndexOffset:p.imp?1000:rm.has(p.id)?800:0}).addTo(layer).on("click",()=>{if(rteDraw){rteDrawAdd(p.lat,p.lon,p.id);return;}if(ADM){const tr=admFocus(p.id,false);if(tr)tr.scrollIntoView({block:"center",behavior:"smooth"});}showDetail(p.id);});
   if(z>=CLUSTER_MAXZOOM||!clusterOn){vis.forEach(single);return;}
   /* Gruppieren nach Abstand (nicht nach festem Raster): Punkte bis 48 px auseinander kommen zusammen.
      Weit herausgezoomt (unter Stufe 9) alle Kategorien gemeinsam in einer neutralen Blase, darüber nur gleiche Kategorie. */
@@ -1367,7 +1380,7 @@ function distKm(a,b){const R=6371,r=x=>x*Math.PI/180;const dLa=r(b.lat-a.lat),dL
   const h=Math.sin(dLa/2)**2+Math.cos(r(a.lat))*Math.cos(r(b.lat))*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.sqrt(h));}
 
 /* ---------- Fotos ---------- */
-function resize(file,max=1280,q=.8){return new Promise((res,rej)=>{const img=new Image();const u=URL.createObjectURL(file);
+function resize(file,max=1600,q=.8){return new Promise((res,rej)=>{const img=new Image();const u=URL.createObjectURL(file);
   img.onload=()=>{let w=img.naturalWidth,h=img.naturalHeight;const s=Math.min(1,max/Math.max(w,h));w=Math.round(w*s);h=Math.round(h*s);
     const cv=document.createElement("canvas");cv.width=w;cv.height=h;cv.getContext("2d").drawImage(img,0,0,w,h);URL.revokeObjectURL(u);
     cv.toBlob(b=>b?res(b):rej(new Error("Bild")),"image/jpeg",q);};
@@ -1444,6 +1457,41 @@ function ovlPush(close){try{history.pushState({rbOvl:1},"");}catch(e){}ovl.push(
 function ovlClose(){if(ovl.length){try{history.back();}catch(e){ovl.pop()();}}}
 function showBig(src){const u=URL.createObjectURL(src);const w=document.createElement("div");w.className="pbig";w.innerHTML=`<img src="${u}"><button class="pbx" aria-label="Schliessen">✕</button>`;
   document.body.appendChild(w);ovlPush(()=>{URL.revokeObjectURL(u);w.remove();});w.onclick=e=>{e.stopPropagation();ovlClose();};}
+/* Foto-Vollbild: blättern (wischen, Pfeile, Pfeiltasten), zoomen (zwei Finger, Mausrad, Doppeltipp), verschieben wenn gezoomt */
+async function showGallery(ids,start=0){ids=(ids||[]).filter(Boolean);if(!ids.length)return;let i=Math.max(0,Math.min(start,ids.length-1)),url="";
+  const w=document.createElement("div");w.className="pbig gal";
+  w.innerHTML=`<img draggable="false"><div class="gcnt"></div>${ids.length>1?`<button class="gnav gp" aria-label="Vorheriges">‹</button><button class="gnav gn" aria-label="Nächstes">›</button>`:""}<button class="pbx" aria-label="Schliessen">✕</button>`;
+  document.body.appendChild(w);const img=w.querySelector("img");let s=1,tx=0,ty=0;
+  const ap=()=>{img.style.transform=`translate(${tx}px,${ty}px) scale(${s})`;w.classList.toggle("zoomed",s>1.01);};
+  const reset=()=>{s=1;tx=0;ty=0;ap();};
+  const show=async()=>{reset();w.querySelector(".gcnt").textContent=ids.length>1?`${i+1} / ${ids.length}`:"";
+    try{const ph=await getOne("photos",ids[i]);if(url)URL.revokeObjectURL(url);url=ph&&ph.blob?URL.createObjectURL(ph.blob):"";img.src=url;}catch(e){}};
+  const go=d=>{if(ids.length<2)return;i=(i+d+ids.length)%ids.length;show();};
+  const key=e=>{if(e.key==="ArrowRight")go(1);else if(e.key==="ArrowLeft")go(-1);else if(e.key==="Escape")ovlClose();};
+  document.addEventListener("keydown",key);
+  ovlPush(()=>{document.removeEventListener("keydown",key);if(url)URL.revokeObjectURL(url);w.remove();});
+  w.querySelector(".pbx").onclick=e=>{e.stopPropagation();ovlClose();};
+  const gp=w.querySelector(".gp"),gn=w.querySelector(".gn");if(gp){gp.onclick=e=>{e.stopPropagation();go(-1);};gn.onclick=e=>{e.stopPropagation();go(1);};}
+  const zoomAt=(ns,cx,cy)=>{ns=Math.max(1,Math.min(5,ns));const r=w.getBoundingClientRect(),ox=cx-r.width/2,oy=cy-r.height/2;
+    tx=ox-(ox-tx)*ns/s;ty=oy-(oy-ty)*ns/s;s=ns;if(s<=1.01){s=1;tx=0;ty=0;}ap();};
+  w.addEventListener("wheel",e=>{e.preventDefault();zoomAt(s*(e.deltaY<0?1.2:1/1.2),e.clientX,e.clientY);},{passive:false});
+  const P=new Map();let st=null,lastTap=0,moved=false;
+  w.addEventListener("pointerdown",e=>{if(e.target.closest("button"))return;w.setPointerCapture(e.pointerId);P.set(e.pointerId,{x:e.clientX,y:e.clientY});moved=false;
+    const a=[...P.values()];st=a.length===2?{d:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y),s,cx:(a[0].x+a[1].x)/2,cy:(a[0].y+a[1].y)/2}:{x:e.clientX,y:e.clientY,tx,ty};});
+  w.addEventListener("pointermove",e=>{if(!P.has(e.pointerId))return;P.set(e.pointerId,{x:e.clientX,y:e.clientY});const a=[...P.values()];
+    if(a.length===2&&st&&st.d){zoomAt(st.s*Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)/st.d,st.cx,st.cy);moved=true;return;}
+    if(a.length===1&&st&&st.x!==undefined){const dx=e.clientX-st.x,dy=e.clientY-st.y;if(Math.abs(dx)+Math.abs(dy)>8)moved=true;
+      if(s>1){tx=st.tx+dx;ty=st.ty+dy;ap();}else{img.style.transform=`translateX(${dx}px)`;}}});
+  const up=e=>{if(!P.has(e.pointerId))return;const one=P.size===1;P.delete(e.pointerId);
+    if(one&&st&&st.x!==undefined){const dx=e.clientX-st.x;
+      if(!moved){const now=Date.now();if(now-lastTap<320){lastTap=0;if(s>1)reset();else zoomAt(2.5,e.clientX,e.clientY);}
+        else{lastTap=now;if(e.target===w&&s===1)setTimeout(()=>{if(lastTap===now&&document.body.contains(w))ovlClose();},330);}}
+      else if(s===1){if(Math.abs(dx)>60)go(dx<0?1:-1);else ap();}}
+    st=null;if(P.size===1){const a=[...P.values()][0];st={x:a.x,y:a.y,tx,ty};moved=true;}};
+  w.addEventListener("pointerup",up);w.addEventListener("pointercancel",up);
+  show();}
+document.addEventListener("click",e=>{const im=e.target.closest&&e.target.closest("img[data-gal]");if(!im)return;e.preventDefault();e.stopPropagation();
+  showGallery(im.dataset.gal.split(","),+im.dataset.gi||0);},true);
 window.addEventListener("popstate",()=>{if(ovl.length){ovl.pop()();return;}if(ignorePop){ignorePop=false;return;}if(panelHist||isPanelOpen()){if(isPanelOpen()&&navCanBack()){navBack();try{history.pushState({rbPanel:1},"");panelHist=true;}catch(e){}return;}panelHist=false;hidePanel();}});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&isPanelOpen())closePanel();});
 /* Klick neben das Fenster schliesst es – aber nur, wenn auch das Drücken daneben begann (nicht beim Markieren von Text, das über den Rand hinausgeht)
@@ -1816,7 +1864,7 @@ function showMapFilter(){
 
 /* ---------- Detail ---------- */
 async function showDetail(id){const p=points.find(x=>x.id===id);if(!p)return;const c=CATS[p.cat]||CATS.other;
-  let imgs="";for(const ph of p.photos||[]){const u=await photoURL(ph);if(u)imgs+=`<img class="big" src="${u}">`;}
+  let imgs="";const gal=(p.photos||[]).join(",");for(const [gi,ph] of (p.photos||[]).entries()){const u=await photoURL(ph);if(u)imgs+=`<img class="big" src="${u}" data-gal="${gal}" data-gi="${gi}" title="Antippen = gross anzeigen">`;}
   const d=me?` · ${distKm(me,p).toFixed(1)} km Luftlinie`:"";
   openPanel(`<div class="detail">
     <h2 class="dtitle">${esc(ptTitle(p))}</h2>
@@ -1946,7 +1994,7 @@ async function editPoint(p,isNew=false){await loadGeo();
   const d=$("#fDel");if(d)d.onclick=()=>confirmBox(`«${esc(ptTitle(p))}» in den Papierkorb legen? (30 Tage wiederherstellbar)`,async()=>{await trashPoint(p);await loadPoints();closePanel();toast("Gelöscht");});
 }
 async function renderDraftPhotos(){const box=$("#fPhotos");if(!box)return;let h="";
-  for(const id of draftPhotos){const u=await photoURL(id);h+=`<div class="ph"><img src="${u}"><button data-id="${id}">✕</button></div>`;}
+  for(const [gi,id] of draftPhotos.entries()){const u=await photoURL(id);h+=`<div class="ph"><img src="${u}" data-gal="${draftPhotos.join(",")}" data-gi="${gi}"><button data-id="${id}">✕</button></div>`;}
   box.innerHTML=h||`<span class="muted">Noch keine Fotos</span>`;
   box.querySelectorAll("button").forEach(b=>b.onclick=()=>{draftPhotos=draftPhotos.filter(x=>x!==b.dataset.id);renderDraftPhotos();});}
 
@@ -2380,8 +2428,13 @@ function wizOpen(){let w=$("#wiz");if(!w){w=document.createElement("div");w.id="
   const m=L.map("wzMap",{zoomControl:true});const lay=BASE[baseName]||BASE["Topo"];
   L.tileLayer(lay._url,Object.assign({},lay.options)).addTo(m);wz.map=m;wz.mk=null;
   m.on("click",e=>{const g=wz.groups[wz.i];g.ll=[e.latlng.lat,e.latlng.lng];wizMarker();wizNear();});
+  /* bestehende Punkte auf der Karte: antippen = Fotos dort anhängen (auch wenn weiter entfernt) */
+  wz.pl=L.layerGroup().addTo(m);
+  points.filter(p=>!p.deleted).forEach(p=>L.marker([p.lat,p.lon],{icon:pinIcon(p),title:ptTitle(p)}).addTo(wz.pl).on("click",ev=>{L.DomEvent.stopPropagation(ev);wizPick(p);}));
   $("#wzX").onclick=()=>wizClose();$("#wzP").onclick=()=>{if(wz.i>0){wz.i--;wizShow();}};$("#wzS").onclick=()=>wizNext();
   $("#wzOk").onclick=wizSave;}
+function wizPick(p){const g=wz.groups[wz.i];if(g.done)return toast("Diese Fotos sind schon gespeichert",2500);
+  g.tgt=p.id;g.pick=p.id;g.mode="add";if(!g.ll){g.ll=[p.lat,p.lon];wizMarker();}wizNear();}
 function wizClose(fromPop){if(!fromPop&&ovl.length){ovlClose();return;}const w=$("#wiz");if(w){w.style.display="none";w.innerHTML="";}document.body.classList.remove("wzopen");
   if(wz){if(wz.url)URL.revokeObjectURL(wz.url);if(wz.map)wz.map.remove();toast(`${wz.saved} neue Punkte gespeichert${wz.added?` · ${wz.added} Fotos an bestehende Punkte angehängt`:""}`,3500);}wz=null;loadPoints();}
 function wizNext(){if(wz.i<wz.groups.length-1){wz.i++;wizShow();}else{wizClose();}}
@@ -2391,10 +2444,15 @@ function wizMarker(){const g=wz.groups[wz.i];if(wz.mk){wz.map.removeLayer(wz.mk)
 function wizNear(){const g=wz.groups[wz.i],box=$("#wzNear");
   if(!g.ll){g.near=[];box.innerHTML=`<div class="wznote">Kein Aufnahmeort im Foto – auf der Karte an die richtige Stelle tippen.</div>`;wizForm();return;}
   g.near=points.filter(p=>!p.deleted).map(p=>({p,d:distKm({lat:g.ll[0],lon:g.ll[1]},p)})).filter(x=>x.d<=0.3).sort((a,b)=>a.d-b.d);
+  if(g.pick&&!g.near.some(x=>x.p.id===g.pick)){const p=points.find(x=>x.id===g.pick&&!x.deleted);if(p)g.near.unshift({p,d:distKm({lat:g.ll[0],lon:g.ll[1]},p)});}
+  /* gestrichelte Linie vom Foto zum gewählten Punkt */
+  if(wz.tl){wz.map.removeLayer(wz.tl);wz.tl=null;}
   if(!g.near.some(x=>x.p.id===g.tgt))g.tgt=g.near.length?g.near[0].p.id:"";
   if(!g.mode)g.mode=g.near.length?"add":"new";if(g.mode==="add"&&!g.near.length)g.mode="new";
   const n=g.near.find(x=>x.p.id===g.tgt);
-  box.innerHTML=g.mode==="new"&&n?`<div class="wznote">In der Nähe gibt es schon <b>${esc(ptTitle(n.p))}</b> (${Math.round(n.d*1000)} m). <button class="alink" id="wzAdd">Fotos dort anhängen statt neuen Punkt</button></div>`:"";
+  if(g.mode==="add"&&n&&n.d>0.01)wz.tl=L.polyline([g.ll,[n.p.lat,n.p.lon]],{color:"#d84315",weight:3,dashArray:"6 6",interactive:false}).addTo(wz.map);
+  box.innerHTML=g.mode==="new"&&n?`<div class="wznote">In der Nähe gibt es schon <b>${esc(ptTitle(n.p))}</b> (${Math.round(n.d*1000)} m). <button class="alink" id="wzAdd">Fotos dort anhängen statt neuen Punkt</button></div>`
+    :g.mode==="new"?`<div class="muted" style="font-size:12.5px;margin:4px 0">Tipp: Einen bestehenden Punkt auf der Karte antippen, um die Fotos dort anzuhängen.</div>`:"";
   const a=$("#wzAdd");if(a)a.onclick=()=>{g.mode="add";wizNear();};
   wizForm();}
 async function wizShow(){const g=wz.groups[wz.i];const N=wz.groups.length;
@@ -2413,11 +2471,11 @@ async function wizShow(){const g=wz.groups[wz.i];const N=wz.groups.length;
   wizNear();}
 async function wizExisting(g){const n=g.near.find(x=>x.p.id===g.tgt);if(!n){g.mode="new";return wizForm();}const p=n.p,c=CATS[p.cat]||CATS.other;
   const N=wz.groups.length,sel=g.items.filter(x=>!x.off).length;
-  $("#wzOk").textContent=g.done==="add"?(wz.i<N-1?"Weiter ›":"Fertig ✓"):(wz.i<N-1?`${sel} Foto${sel>1?"s":""} anhängen und weiter ›`:`${sel} Foto${sel>1?"s":""} anhängen und fertig ✓`);
+  $("#wzOk").textContent=g.done==="add"?(wz.i<N-1?"Weiter ›":"Fertig ✓"):(wz.i<N-1?"Anhängen und weiter ›":"Anhängen und fertig ✓");$("#wzOk").title=g.done==="add"?"":`${sel} Foto${sel>1?"s":""} an den bestehenden Punkt anhängen`;
   const rt=rateText(p)||(p.stars?"Gesamt "+starTxt(p.stars):"");const F=$("#wzF");F.oninput=F.onchange=F.onclick=null;
-  F.innerHTML=`<div class="wznote" style="background:#eef5ec;border-color:#c5dcc0">${g.done==="add"?"✓ Fotos sind hier angehängt.":"Hier gibt es schon einen Punkt – die Fotos werden dort angehängt."}</div>
+  F.innerHTML=`<div class="wznote" style="background:#eef5ec;border-color:#c5dcc0">${g.done==="add"?"✓ Fotos sind hier angehängt.":g.pick===p.id&&n.d>0.3?"Auf der Karte gewählter Punkt – die Fotos werden dort angehängt.":"Hier gibt es schon einen Punkt – die Fotos werden dort angehängt."}</div>
    <div class="mrow" style="cursor:default;gap:10px;padding:6px 0">${icoBadge(p.cat in CATS?p.cat:"other",c.c,34)}<span class="mtx"><b style="font-size:17px">${esc(ptTitle(p))}</b>
-     <small>${esc(c.n)} · ${esc(STATUS[p.status||"idee"])}${p.visited?" · besucht "+esc(visTxt(p)):""} · ${Math.round(n.d*1000)} m vom Foto</small></span></div>
+     <small>${esc(c.n)} · ${esc(STATUS[p.status||"idee"])}${p.visited?" · besucht "+esc(visTxt(p)):""} · ${n.d<1?Math.round(n.d*1000)+" m":n.d.toFixed(1)+" km"} vom Foto</small></span></div>
    ${rt?`<div class="muted" style="white-space:pre-line">${esc(rt)}</div>`:""}
    ${p.desc?`<div class="desc" style="white-space:pre-line">${esc(p.desc)}</div>`:""}
    ${p.note?`<label>Notiz</label><div class="desc">${esc(p.note)}</div>`:""}
@@ -2426,9 +2484,9 @@ async function wizExisting(g){const n=g.near.find(x=>x.p.id===g.tgt);if(!n){g.mo
    ${g.near.length>1?`<label>Andere Punkte in der Nähe</label>${g.near.filter(x=>x.p.id!==p.id).map(x=>`<button class="alink" data-tgt="${x.p.id}" style="display:block;margin:4px 0">${esc(ptTitle(x.p))} (${Math.round(x.d*1000)} m)</button>`).join("")}`:""}
    ${g.done==="add"?"":`<div style="margin-top:14px"><button class="btn sec" id="wzNew">＋ Stattdessen neuen Punkt erfassen</button></div>`}`;
   $("#wzF").querySelectorAll("[data-tgt]").forEach(b=>b.onclick=()=>{g.tgt=b.dataset.tgt;wizForm();});
-  const nb=$("#wzNew");if(nb)nb.onclick=()=>{g.mode="new";wizNear();};
+  const nb=$("#wzNew");if(nb)nb.onclick=()=>{g.mode="new";g.pick="";wizNear();};
   wz.rd=()=>{const v=$("#wzVis");g.markVis=v?v.checked:false;};const v=$("#wzVis");if(v)v.onchange=wz.rd;wz.rd();
-  const box=$("#wzExPh");for(const id of (p.photos||[]).slice(0,12)){const u=await photoURL(id);if(u&&box&&wz&&wz.groups[wz.i]===g)box.insertAdjacentHTML("beforeend",`<img src="${u}">`);}
+  const box=$("#wzExPh");for(const [gi,id] of (p.photos||[]).slice(0,12).entries()){const u=await photoURL(id);if(u&&box&&wz&&wz.groups[wz.i]===g)box.insertAdjacentHTML("beforeend",`<img src="${u}" data-gal="${p.photos.join(",")}" data-gi="${gi}" style="cursor:zoom-in">`);}
   if((p.photos||[]).length>12&&box)box.insertAdjacentHTML("beforeend",`<span class="muted">+${p.photos.length-12}</span>`);}
 function wizForm(){const g=wz.groups[wz.i];const N=wz.groups.length;
   if(g.mode==="add")return wizExisting(g);
@@ -4147,7 +4205,7 @@ function rteAddDialog(pid){const p=points.find(x=>x.id===pid);if(!p)return;
 function lineThin(l){if(l.length<3)return l;const o=[l[0]];for(let i=1;i<l.length-1;i++){const a=o[o.length-1];if(distKm({lat:a[0],lon:a[1]},{lat:l[i][0],lon:l[i][1]})>=.008)o.push(l[i]);}o.push(l[l.length-1]);
   return o.map(p=>[+p[0].toFixed(5),+p[1].toFixed(5)]);}
 const endIcon=(t,c,sm)=>L.divIcon({className:"",iconSize:sm?[18,18]:[24,24],iconAnchor:sm?[9,9]:[12,12],html:`<div class="rteend${sm?" sm":""}" style="background:${c}">${t}</div>`});
-const numIcon=n=>L.divIcon({className:"",iconSize:[20,20],iconAnchor:[-6,40],html:`<div class="rtenum">${n}</div>`});
+const numIcon=n=>L.divIcon({className:"",iconSize:[20,20],iconAnchor:[-4,26],html:`<div class="rtenum">${n}</div>`});
 function drawRoutes(){rteLayer.clearLayers();if(ADM)return;
   const show=ls("rb_rteshow")!=="0";
   for(const r of rteAlive()){const foc=rteFocus===r.id;if(rteFocus&&!foc)continue;if(!foc&&(!show||(mapTrip.length&&r.trip&&!mapTrip.includes(r.trip))))continue;
