@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <!-- Sicherheitsregeln: Code nur von hier (Fingerabdruck), cdnjs und unpkg (mit Prüfsumme). Fingerabdruck setzt /home/claude/tools/csp.py -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-u7nLUday/9hT5Ni45zbjWhZqoS00x9qBxz8HXmZ7zI0=' https://cdnjs.cloudflare.com https://unpkg.com; worker-src 'self' blob:; child-src blob:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; font-src 'self' data: https:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-c+2IgxZijc3CETdh3OdnVTTB8k0KZKcgQm4nIPcA8n8=' https://cdnjs.cloudflare.com https://unpkg.com; worker-src 'self' blob:; child-src blob:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; font-src 'self' data: https:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#92b78c">
 <title>IbexMap</title>
@@ -297,7 +297,9 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 .xh .grip{position:absolute;left:12px;top:70px;width:40px;height:40px;border-radius:50%;background:rgba(200,116,44,.9);border:3px solid #fff;box-shadow:0 1px 6px rgba(0,0,0,.5);color:#fff;font-size:20px;display:flex;align-items:center;justify-content:center}
 .xh .stem{position:absolute;left:31px;top:52px;width:2px;height:20px;background:#fff;box-shadow:0 0 2px #000}
 .placebar{position:absolute;left:8px;right:8px;bottom:calc(16px + var(--sb));z-index:650;background:#fff;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.35);padding:10px;display:none}
-.placebar .actions{margin-top:6px;flex-wrap:nowrap}.placebar .btn{padding:10px 12px}
+.placebar .actions{margin-top:6px;flex-wrap:nowrap}
+.rteend{width:24px;height:24px;border-radius:50%;color:#fff;font:700 13px/20px system-ui,sans-serif;text-align:center;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);display:inline-block;flex:none}
+.rtenum{position:relative;width:20px;height:20px;border-radius:50%;background:#13200f;color:#fff;font:700 11px/16px system-ui,sans-serif;text-align:center;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.4);display:inline-block;flex:none}.placebar .btn{padding:10px 12px}
 #map.placing .fab{display:none}
 .leaflet-popup-content .btn{font-size:14px;padding:8px 12px}
 #map.placing,#map.placing .leaflet-grab,#map.placing .leaflet-interactive,#map.placing .leaflet-dragging .leaflet-grab{cursor:crosshair !important}
@@ -673,7 +675,7 @@ const ADM=(()=>{try{if(new URLSearchParams(location.search).has("admin")){sessio
   return sessionStorage.getItem("rb_admin")==="1"&&matchMedia("(min-width:900px)").matches;}catch(e){return false;}})();
 if(ADM)document.body.classList.add("adm");
 const GROUP="IbexMap";
-const VERSION="v9.2";
+const VERSION="v9.3";
 /* Startzeit-Messung: Sekunden seit dem Öffnen der App (im Menü › Gerät › Startzeit) */
 const ST_MARKS=[];function stMark(t){if(ST_MARKS.some(m=>m.t===t))return;ST_MARKS.push({t,s:performance.now()/1000});}
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
@@ -704,10 +706,11 @@ window.addEventListener("error",ev=>{try{if(ev&&ev.message&&!/ResizeObserver|Scr
 
 /* ---------- IndexedDB ---------- */
 let db;
-function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open("reisebuch",3);
+function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open("reisebuch",4);
   r.onupgradeneeded=()=>{const d=r.result;for(const st of ["points","photos"])if(!d.objectStoreNames.contains(st))d.createObjectStore(st,{keyPath:"id"});
     if(!d.objectStoreNames.contains("meta"))d.createObjectStore("meta",{keyPath:"id"});
-    if(!d.objectStoreNames.contains("tracks"))d.createObjectStore("tracks",{keyPath:"id"});};
+    if(!d.objectStoreNames.contains("tracks"))d.createObjectStore("tracks",{keyPath:"id"});
+    if(!d.objectStoreNames.contains("routes"))d.createObjectStore("routes",{keyPath:"id"});};
   r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
 function tx(store,mode,fn){return new Promise((res,rej)=>{const t=db.transaction(store,mode);const s=t.objectStore(store);const out=fn(s);t.oncomplete=()=>res(out&&out.result!==undefined?out.result:out);t.onerror=()=>rej(t.error);});}
 const getAll=st=>new Promise((res,rej)=>{const r=db.transaction(st).objectStore(st).getAll();r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});
@@ -717,6 +720,7 @@ const put=(st,v)=>tx(st,"readwrite",s=>s.put(v));
 const del=(st,id)=>tx(st,"readwrite",s=>s.delete(id));
 /* ---------- Reisen (jede Reise hat eigene Abschnitte) ---------- */
 let trips=[],curTrip="",sections=[],delTrips=[];
+let rtes=[],rteFocus="",rteDraw=null;/* Strecken, siehe unten */
 const MIG_TRIP="t-marokko-2027";
 const tripOf=id=>trips.find(t=>t.id===id);
 const curTripObj=()=>tripOf(curTrip)||trips[0];
@@ -1160,8 +1164,8 @@ function clusterPts(list0,z,proj){const R=48,mix=z<CLUSTER_MIXZOOM,B=new Map(),i
   return out;}
 function drawPoints(){layer.clearLayers();
   filtState();
-  const vis=ADM?points.filter(p=>admShown.has(p.id)):points.filter(p=>!hiddenCats.includes(p.cat in CATS?p.cat:"other")&&!hiddenStat.includes(p.status||"idee")&&(!mapTrip.length||mapTrip.includes(p.trip))&&(mapTrip.includes(p.trip)||!tripHidden(p.trip))&&(!mapCountry.length||mapCountry.includes(p.country))&&(!mapStars||(p.stars||0)>=mapStars));
-  const z=map.getZoom(),single=p=>L.marker([p.lat,p.lon],{icon:pinIcon(p),zIndexOffset:p.imp?1000:0}).addTo(layer).on("click",()=>{if(ADM){const tr=admFocus(p.id,false);if(tr)tr.scrollIntoView({block:"center",behavior:"smooth"});}showDetail(p.id);});
+  const vis=ADM?points.filter(p=>admShown.has(p.id)):rteFocus?points.filter(p=>(rtes.find(r=>r.id===rteFocus)||{pts:[]}).pts.includes(p.id)):points.filter(p=>!hiddenCats.includes(p.cat in CATS?p.cat:"other")&&!hiddenStat.includes(p.status||"idee")&&(!mapTrip.length||mapTrip.includes(p.trip))&&(mapTrip.includes(p.trip)||!tripHidden(p.trip))&&(!mapCountry.length||mapCountry.includes(p.country))&&(!mapStars||(p.stars||0)>=mapStars));
+  const z=map.getZoom(),single=p=>L.marker([p.lat,p.lon],{icon:pinIcon(p),zIndexOffset:p.imp?1000:0}).addTo(layer).on("click",()=>{if(rteDraw){rteDrawAdd(p.lat,p.lon,p.id);return;}if(ADM){const tr=admFocus(p.id,false);if(tr)tr.scrollIntoView({block:"center",behavior:"smooth"});}showDetail(p.id);});
   if(z>=CLUSTER_MAXZOOM||!clusterOn){vis.forEach(single);return;}
   /* Gruppieren nach Abstand (nicht nach festem Raster): Punkte bis 48 px auseinander kommen zusammen.
      Weit herausgezoomt (unter Stufe 9) alle Kategorien gemeinsam in einer neutralen Blase, darüber nur gleiche Kategorie. */
@@ -1183,7 +1187,7 @@ map.on("zoomend",()=>drawPoints());
 let syncDotT=null;function syncDotSoon(){clearTimeout(syncDotT);syncDotT=setTimeout(syncDot,2500);}
 async function syncDot(){const b=$("#syncBtn");if(!b||!gdClient())return;const last=+ls("rb_lastsync")||0;let pend=false;
   try{pend=(await getAll("points")).some(p=>(p.updated||0)>last+2000);}catch(e){}
-  try{if(!pend){const m=await getOne("meta","flags");pend=!!(m&&(m.updated||0)>last+2000)||trips.some(t=>(t.updated||0)>last+2000);}}catch(e){}
+  try{if(!pend){const m=await getOne("meta","flags");pend=!!(m&&(m.updated||0)>last+2000)||trips.some(t=>(t.updated||0)>last+2000)||rtes.some(r=>(r.updated||0)>last+2000&&(r.synced||0)<(r.updated||0));}}catch(e){}
   if(pend)autoSyncSoon();
   /* «!» nur, wenn wirklich etwas wartet (Änderungen nicht auf Drive) und die Anmeldung abgelaufen ist – sonst ist der Ablauf unwichtig */
   b.classList.toggle("expired",!gdOk()&&pend);
@@ -1384,7 +1388,7 @@ const growAll=root=>requestAnimationFrame(()=>(root||document).querySelectorAll(
 let NAV=[],navOver=false,NAV_CUR=null,navDepth=0;
 const NAV_PAGES=["vecHelp","showPoi","showOsm","myPosPanel","showSearch","showFlag","showFlags","showMapFilter","showDetail","showList","appVersionDialog","photoMenu",
   "manageSections","manageTrips","gdSettings","offOverview","offlineDialog","offCountryPick","offConfig","famPublish","famSettings","poiOffDialog","trashDialog",
-  "readyDialog","storageDialog","showTrack","tracksDialog"];
+  "readyDialog","storageDialog","showTrack","tracksDialog","routesDialog","showRoute","routeNew","routeSpurDays","routeSpurCut"];
 /* Arbeits- und Fortschrittsanzeigen, Bestätigungen und Formulare: werden nicht als Ziel für «Zurück» gemerkt */
 const NAV_TRANSIENT=["progress","pickWait","offRunPack","famPublishNow","poiJobPanel","osfError","writeGPX","exportGPX","assignPhotos","importGoogle","importOsmandFav",
   "poiFromDrive","admBulk","pbfImportUI","vecImportUI","vecShareUI","countryRemoveUI","quickPoint","editPoint","wizardStart"];
@@ -1424,11 +1428,12 @@ function openPanel(html,kind=""){
   $("#sheet").classList.add("open");$("#panel").scrollTop=0;
   $("#pX").onclick=closePanel;const b=$("#pBack");if(b)b.onclick=navBack;growAll($("#panel"));addGmBtns($("#panel"));
   if(!panelHist){try{history.pushState({rbPanel:1},"");panelHist=true;}catch(e){}}}
+$("#panel").addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-rteo]");if(b)showRoute(b.dataset.rteo);});
 /* Knöpfe «Zurück» / «Zurück zum Menü» in den Seiten: eine Seite zurück, wenn es eine gibt */
 $("#panel").addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("button");if(!b||!/^Zurück( zum Menü)?$/.test(b.textContent.trim())||!navCanBack())return;
   e.preventDefault();e.stopImmediatePropagation();navBack();},true);
 const isPanelOpen=()=>$("#sheet").classList.contains("open");
-function hidePanel(){$("#sheet").classList.remove("open");panelKind="";NAV=[];navOver=false;}
+function hidePanel(){$("#sheet").classList.remove("open");try{rteClearTemp();if(rteFocus)rteSetFocus("");}catch(e){}panelKind="";NAV=[];navOver=false;}
 let ignorePop=false;
 function closePanel(){if(!isPanelOpen())return;hidePanel();if(panelHist){panelHist=false;ignorePop=true;try{history.back();}catch(e){ignorePop=false;}}}
 /* Überlagerungen (Fotovorschau, «Neue Punkte aus Fotos»): Zurück-Taste schliesst nur die oberste Ebene */
@@ -1822,6 +1827,7 @@ async function showDetail(id){const p=points.find(x=>x.id===id);if(!p)return;con
       ${p.cat==="water"?`<div class="mrow">${icoBadge("water","#0288d1",24)}<span><b>${esc(WATERQ[p.water||"unklar"])}</b></span></div>`:""}
       ${p.imp?`<div class="mrow"><span class="vimp" style="position:static;display:inline-block;width:22px;height:22px;line-height:18px">!</span><span><b>Wichtig</b></span></div>`:""}
       ${p.story?`<div class="mrow"><span class="lstory" style="width:22px;height:22px;margin:0">${storyI(13)}</span><span>Storypoint – wird publiziert</span></div>`:""}
+      ${rteOf(p.id).map(r=>`<button class="mrow" data-rteo="${r.id}" style="padding:4px 0">${mi("route")}<span>Teil der Strecke <b>${esc(r.name||"Strecke")}</b> ›</span></button>`).join("")}
     </div>
     ${RATE[p.cat]&&(p.stars||Object.keys(p.rate||{}).length)?`<div class="rate">${p.stars?`<div class="rrow"><b>Gesamt</b><span class="sv" style="font-size:20px">${starTxt(p.stars)}</span></div>`:""}
       ${RATE[p.cat].map(([k,l,ty])=>{const v=(p.rate||{})[k];if(ty)return isOn(v)?`<div class="rrow"><b>${icoBadge("lake","#0288d1",22)} ${l}</b><span>✓</span></div>${v.t?`<div class="muted">${esc(v.t)}</div>`:""}`:"";return v&&(v.s||v.t)?`<div class="rrow"><b>${l}</b><span class="sv">${starTxt(v.s)}</span></div>${v.t?`<div class="muted">${esc(v.t)}</div>`:""}`:"";}).join("")}</div>`:""}
@@ -2062,6 +2068,7 @@ $("#navMenu").onclick=async()=>{
      +(matchMedia("(min-width:900px)").matches&&!ADM?row("mAdm","table","Verwaltung (Tabelle)","Alle Punkte am PC sortieren, filtern und bearbeiten",{act:"Öffnen"}):""))}
    ${!ADM?grp("Unterwegs",
      row("mDrive","wheel","Fahrmodus","Grosse Knöpfe, Karte folgt dir, Punkt oder Foto mit einem Tipp, Bildschirm bleibt an",{act:driveOn?"aktiv":"Starten"})
+     +row("mRte","route","Strecken",`Offroad-Strecken planen oder festhalten · ${rteAlive().length} Strecken`)
      +row("mTrk","route","Fahrspuren",`${trkOn()?"Aufzeichnung ein":"Aufzeichnung aus"} · ${trks.filter(t=>!t.del&&t.pts.length>1).length} Tage`)
      +row("mNight","moon","Nachtmodus",{off:"Aus",on:"Ein",auto:"Automatisch (20–6 Uhr)"}[nightMode()],{act:"Ändern"})):""}
    ${grp("Karte",
@@ -2078,7 +2085,7 @@ $("#navMenu").onclick=async()=>{
   $("#mTrips").onclick=manageTrips;
   $("#mFamSet").onclick=famSettings;const fp=$("#mFamPub");if(fp)fp.onclick=famPublish;
   $("#mGset").onclick=gdSettings;const ms=$("#mSync");if(ms)ms.onclick=syncDrive;$("#mOff").onclick=offOverview;
-  const md=$("#mDrive");if(md)md.onclick=()=>driveMode(!driveOn);const mt=$("#mTrk");if(mt)mt.onclick=tracksDialog;
+  const md=$("#mDrive");if(md)md.onclick=()=>driveMode(!driveOn);const mt=$("#mTrk");if(mt)mt.onclick=tracksDialog;const mr=$("#mRte");if(mr)mr.onclick=routesDialog;
   const mn=$("#mNight");if(mn)mn.onclick=()=>{const o=["off","on","auto"];const n=o[(o.indexOf(nightMode())+1)%3];ls("rb_night",n);nightApply();toast("Nachtmodus: "+{off:"aus",on:"ein",auto:"automatisch (20–6 Uhr)"}[n],3000);$("#navMenu").onclick();};
   $("#mPhotos").onclick=photoMenu;$("#mReady").onclick=readyDialog;$("#mTrash").onclick=trashDialog;
   $("#mExport").onclick=exportPackage;$("#mGpx").onclick=exportGPX;$("#mImport").onclick=()=>pickWait($("#fileImport"),"Datei importieren","GPX, OsmAnd-.osf, Google-Orte oder eine Sicherung (IbexMap_Paket_….json) auswählen. Google-Orte vorher über Google Takeout «Maps (Meine Orte)» bzw. «Gespeichert» als .json oder .csv exportieren.");
@@ -2631,6 +2638,7 @@ async function syncDrive(quiet){if(syncing||offRun)return false;let ok=false;qui
     try{surfDriveSet(files);}catch(e){}
     try{tlDriveSet(files);}catch(e){}try{vecDriveSet(files);}catch(e){}
     try{await trkSync(files);}catch(e){}
+    try{await rteSync(files);}catch(e){}
     try{poiDriveSet(files);await loadPoiOff();
       for(const p of poiOff){const r=poiDrive().find(x=>x.cc===p.cc);if(!r||(p.loaded||0)>(r.loaded||0)+1000){tq(`POI ${countryName(p.cc)} auf Google Drive speichern …`,120000);await poiToDrive(p,r&&r.id);}}
       poiDriveSet(await gdList());}catch(e){}
@@ -4047,6 +4055,207 @@ async function trkSync(files){const rem={};files.forEach(f=>{const m=f.name.matc
     try{await gdUpload(`trk_${t.id}.json`,new Blob([JSON.stringify({id:t.id,trip:t.trip,pts:t.pts,updated:t.updated,del:!!t.del})],{type:"application/json"}),r&&r.id,{upd:String(t.updated||0)});
       t.synced=t.updated;await put("tracks",t);}catch(e){}}
   drawTracks();}
+/* ---------- Strecken (Offroad-Strecken: geplant oder gefahren) ----------
+   Eine Strecke = Linie (genau aus GPX/Fahrspur, gerade von Punkt zu Punkt oder online an Wege angepasst)
+   + zugehörige eigene Punkte (Start, Fotopunkte, Ende) + eigene Bewertung. Eine Datei pro Strecke auf Google Drive. */
+const rteLayer=L.layerGroup().addTo(map),rteDrawLayer=L.layerGroup().addTo(map);
+const RTE_ST={geplant:"Geplant",gefahren:"Gefahren"};
+const RTE_BELAG={"":"– offen –",asphalt:"Asphalt",schotter:"Schotter",piste:"Piste",sand:"Sand",fels:"Fels / Steine",gemischt:"Gemischt"};
+const RTE_RATE=[["land","Landschaft"],["zust","Pistenzustand"],["schw","Schwierigkeit","1 = leicht · 5 = sehr schwer"]];
+const RTE_LINE={gpx:"Genau (GPX-Track)",spur:"Genau (aus der Fahrspur)",punkte:"Gerade Linien von Punkt zu Punkt",wege:"An Wege angepasst (BRouter)"};
+const rteAlive=()=>rtes.filter(r=>!r.del&&r.line&&r.line.length>1);
+async function loadRoutes(){try{rtes=await getAll("routes");}catch(e){rtes=[];}drawRoutes();}
+function lineKm(l){let k=0;for(let i=1;i<l.length;i++)k+=distKm({lat:l[i-1][0],lon:l[i-1][1]},{lat:l[i][0],lon:l[i][1]});return k;}
+/* Abstand Punkt–Linie in Metern und Lage entlang der Linie (für Zuordnung und Reihenfolge) */
+function lineNear(l,lat,lon){const kx=111320*Math.cos(lat*Math.PI/180),ky=110540;let best=1e12,pos=0;
+  for(let i=0;i<l.length;i++){const ax=(l[i][1]-lon)*kx,ay=(l[i][0]-lat)*ky;
+    if(i===l.length-1||l.length===1){const d=ax*ax+ay*ay;if(d<best){best=d;pos=i;}break;}
+    const bx=(l[i+1][1]-lon)*kx,by=(l[i+1][0]-lat)*ky,dx=bx-ax,dy=by-ay,L2=dx*dx+dy*dy;
+    let t=L2?-(ax*dx+ay*dy)/L2:0;t=Math.max(0,Math.min(1,t));const x=ax+t*dx,y=ay+t*dy,d=x*x+y*y;if(d<best){best=d;pos=i+t;}}
+  return {m:Math.sqrt(best),pos};}
+function rteOrder(r){const l=r.line||[];r.pts=(r.pts||[]).filter(id=>points.some(p=>p.id===id));
+  r.pts.sort((a,b)=>{const pa=points.find(p=>p.id===a),pb=points.find(p=>p.id===b);return lineNear(l,pa.lat,pa.lon).pos-lineNear(l,pb.lat,pb.lon).pos;});}
+const rteOf=pid=>rteAlive().filter(r=>(r.pts||[]).includes(pid));
+/* Linie vereinfachen: Punkte näher als 8 m am Vorgänger weglassen (GPX-Tracks haben oft zehntausende Punkte) */
+function lineThin(l){if(l.length<3)return l;const o=[l[0]];for(let i=1;i<l.length-1;i++){const a=o[o.length-1];if(distKm({lat:a[0],lon:a[1]},{lat:l[i][0],lon:l[i][1]})>=.008)o.push(l[i]);}o.push(l[l.length-1]);
+  return o.map(p=>[+p[0].toFixed(5),+p[1].toFixed(5)]);}
+const endIcon=(t,c)=>L.divIcon({className:"",iconSize:[24,24],iconAnchor:[12,12],html:`<div class="rteend" style="background:${c}">${t}</div>`});
+const numIcon=n=>L.divIcon({className:"",iconSize:[20,20],iconAnchor:[-6,40],html:`<div class="rtenum">${n}</div>`});
+function drawRoutes(){rteLayer.clearLayers();if(ADM)return;
+  const show=ls("rb_rteshow")!=="0";
+  for(const r of rteAlive()){const foc=rteFocus===r.id;if(rteFocus&&!foc)continue;if(!foc&&(!show||(mapTrip.length&&r.trip&&!mapTrip.includes(r.trip))))continue;
+    const plan=r.status!=="gefahren",col=plan?"#1565c0":"#6a1b9a";
+    L.polyline(r.line,{color:"#fff",weight:foc?9:7,opacity:.8,interactive:false}).addTo(rteLayer);
+    L.polyline(r.line,{color:col,weight:foc?5:3.5,opacity:.95,dashArray:plan?"9 7":null}).addTo(rteLayer).on("click",ev=>{L.DomEvent.stopPropagation(ev);if(rteDraw)return;showRoute(r.id);});
+    if(foc){const a=r.line[0],b=r.line[r.line.length-1];
+      L.marker(a,{icon:endIcon("S","#2e7d32"),zIndexOffset:900}).addTo(rteLayer);L.marker(b,{icon:endIcon("Z","#c62828"),zIndexOffset:900}).addTo(rteLayer);
+      (r.pts||[]).forEach((id,i)=>{const p=points.find(x=>x.id===id);if(p)L.marker([p.lat,p.lon],{icon:numIcon(i+1),zIndexOffset:1500,interactive:false}).addTo(rteLayer);});}}}
+function rteSetFocus(id){if(rteFocus===id)return;rteFocus=id;drawRoutes();drawPoints();}
+/* ---- Liste ---- */
+function routesDialog(){rteSetFocus("");rteClearTemp();const l=rteAlive().sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.updated||0)-(a.updated||0));
+  const tot=l.filter(r=>r.status==="gefahren").reduce((s,r)=>s+lineKm(r.line),0);
+  openPanel(`<h2>${mi("route",22)} Strecken</h2><p class="muted">${l.length} Strecken · ${fmtN(Math.round(tot))} km gefahren. Strecke antippen = auf der Karte mit ihren Punkten zeigen.</p>
+   <div class="actions"><button class="btn" id="rtNew">＋ Neue Strecke</button></div>
+   <div class="mgrp"><label class="mrow" style="cursor:pointer"><span class="mic">${mi("eye",20)}</span><span class="mtx"><b>Strecken auf der Karte zeigen</b><small>Geplant gestrichelt blau, gefahren violett</small></span><input type="checkbox" id="rtShow" style="width:22px;height:22px" ${ls("rb_rteshow")!=="0"?"checked":""}></label></div>
+   <div class="mgrp">${l.length?l.map(r=>`<button class="mrow" data-rt="${r.id}"><span class="mic" style="color:${r.status==="gefahren"?"#6a1b9a":"#1565c0"}">${mi("route",20)}</span><span class="mtx"><b>${esc(r.name||"Strecke")}</b><small>${lineKm(r.line).toFixed(1)} km · ${RTE_ST[r.status]||"Geplant"}${r.date?" · "+fmtD(r.date):""}${(r.pts||[]).length?" · "+r.pts.length+" Punkte":""}${r.stars?" · "+starTxt(r.stars):""}</small></span><span class="mchev">${mi("chev",18)}</span></button>`).join("")
+     :`<div class="mrow" style="cursor:default"><span class="mtx"><small>Noch keine Strecken. Mit «Neue Strecke» einen GPX-Track laden, ein Stück aus der Fahrspur nehmen oder Punkte verbinden.</small></span></div>`}</div>`);
+  $("#rtNew").onclick=routeNew;
+  $("#rtShow").onchange=e=>{ls("rb_rteshow",e.target.checked?"1":"0");drawRoutes();};
+  $("#panel").querySelectorAll("[data-rt]").forEach(b=>b.onclick=()=>showRoute(b.dataset.rt));}
+/* ---- Ansicht einer Strecke ---- */
+function showRoute(id){const r=rtes.find(x=>x.id===id);if(!r||r.del)return;rteClearTemp();rteOrder(r);rteSetFocus(id);
+  try{map.fitBounds(L.latLngBounds(r.line),{padding:[40,40],maxZoom:15});}catch(e){}
+  const pl=(r.pts||[]).map(i=>points.find(p=>p.id===i)).filter(Boolean);const km=lineKm(r.line);
+  const at=p=>{const n=lineNear(r.line,p.lat,p.lon);const part=r.line.slice(0,Math.floor(n.pos)+1);return lineKm(part);};
+  const rows=[`<div class="mrow" style="cursor:default"><span class="rteend" style="background:#2e7d32">S</span><span class="mtx"><b>Start</b><small>0.0 km</small></span></div>`]
+    .concat(pl.map((p,i)=>`<button class="mrow" data-pt="${p.id}"><span class="rtenum" style="position:static">${i+1}</span><span class="mtx"><b>${esc(ptTitle(p))}</b><small>${at(p).toFixed(1)} km${(p.photos||[]).length?" · "+p.photos.length+" Fotos":""}</small></span><span class="mchev">${mi("chev",18)}</span></button>`))
+    .concat([`<div class="mrow" style="cursor:default"><span class="rteend" style="background:#c62828">Z</span><span class="mtx"><b>Ende</b><small>${km.toFixed(1)} km</small></span></div>`]);
+  const rt=[r.stars?`<div class="rrow"><b>Gesamt</b><span class="sv" style="font-size:20px">${starTxt(r.stars)}</span></div>`:""]
+    .concat(RTE_RATE.map(([k,l])=>{const v=(r.rate||{})[k];return v&&(v.s||v.t)?`<div class="rrow"><b>${l}</b><span class="sv">${starTxt(v.s)}</span></div>${v.t?`<div class="muted">${esc(v.t)}</div>`:""}`:"";})).join("");
+  openPanel(`<h2>${mi("route",22)} ${esc(r.name||"Strecke")}</h2>
+   <div class="meta"><div class="mrow">${mi("ruler")}<span><b>${km.toFixed(1)} km</b> · ${RTE_ST[r.status]||"Geplant"}${r.belag?" · "+esc(RTE_BELAG[r.belag]):""}</span></div>
+    ${r.date?`<div class="mrow">${mi("cal")}<span>${fmtD(r.date)}</span></div>`:""}
+    ${r.trip&&tripName(r.trip)?`<div class="mrow">${mi("book")}<span>${esc(tripName(r.trip))}</span></div>`:""}
+    <div class="mrow">${mi("route")}<span class="muted">Linie: ${esc(RTE_LINE[r.mode]||"")}</span></div></div>
+   ${rt?`<div class="rate">${rt}</div>`:""}
+   ${r.note?`<div class="desc">${esc(r.note)}</div>`:""}
+   <label>Strecke mit Punkten</label><div class="mgrp">${rows.join("")}</div>
+   <div class="actions"><button class="btn" id="rtEd">Bearbeiten</button><button class="btn sec" id="rtGpx">${mi("download",18)} GPX</button><button class="btn sec" id="rtAll">Alle Strecken</button></div>`);
+  $("#panel").querySelectorAll("[data-pt]").forEach(b=>b.onclick=()=>{const p=points.find(x=>x.id===b.dataset.pt);if(p)map.setView([p.lat,p.lon],Math.max(map.getZoom(),14));showDetail(b.dataset.pt);});
+  $("#rtEd").onclick=()=>routeEdit(r);$("#rtAll").onclick=routesDialog;
+  $("#rtGpx").onclick=()=>download(`IbexMap_Strecke_${(r.name||"Strecke").replace(/[^\wäöüÄÖÜ-]+/g,"_")}.gpx`,new Blob([rteGPX(r)],{type:"application/gpx+xml"}));}
+function rteGPX(r){const x=s=>esc(s);
+  const w=(r.pts||[]).map(i=>points.find(p=>p.id===i)).filter(Boolean).map(p=>`<wpt lat="${p.lat}" lon="${p.lon}"><name>${x(ptTitle(p))}</name><desc>${x([(CATS[p.cat]||CATS.other).n,rateText(p),p.desc].filter(Boolean).join("\n"))}</desc><type>${GROUP}</type></wpt>`).join("\n");
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="IbexMap" xmlns="http://www.topografix.com/GPX/1/1">\n<metadata><name>${x(r.name||"Strecke")}</name></metadata>\n${w}\n<trk><name>${x(r.name||"Strecke")}</name><desc>${x(r.note||"")}</desc><trkseg>${r.line.map(p=>`<trkpt lat="${p[0]}" lon="${p[1]}"/>`).join("")}</trkseg></trk>\n</gpx>`;}
+/* ---- Neue Strecke ---- */
+function rteNewObj(o){return Object.assign({id:"r"+uid(),name:"",status:"geplant",date:"",trip:curTrip||"",note:"",belag:"",stars:0,rate:{},mode:"punkte",wp:[],line:[],pts:[],created:Date.now(),updated:Date.now()},o);}
+function routeNew(){rteClearTemp();const days=trks.filter(t=>!t.del&&t.pts.length>1).length;
+  openPanel(`<h2>Neue Strecke</h2><p class="muted">Wie soll die Linie entstehen? Danach kannst du Name, Bewertung und die Punkte an der Strecke festlegen.</p>
+   <div class="mgrp">
+    <button class="mrow" id="rnGpx"><span class="mic">${mi("upload",20)}</span><span class="mtx"><b>GPX-Track laden</b><small>Geplant oder von anderen gefahren (Wikiloc, OsmAnd …) – genauer Verlauf. Wegpunkte im GPX werden als Punkte übernommen.</small></span><span class="mchev">${mi("chev",18)}</span></button>
+    <button class="mrow" id="rnSpur"><span class="mic">${mi("route",20)}</span><span class="mtx"><b>Aus der Fahrspur</b><small>${days?`Ein Stück aus einem aufgezeichneten Tag ausschneiden (${days} Tage vorhanden)`:"Noch keine Fahrspur aufgezeichnet"}</small></span><span class="mchev">${mi("chev",18)}</span></button>
+    <button class="mrow" id="rnPts"><span class="mic">${mi("pin",20)}</span><span class="mtx"><b>Punkte verbinden</b><small>Der Reihe nach auf die Karte oder auf eigene Punkte tippen – gerade Linien, später online an Wege anpassbar</small></span><span class="mchev">${mi("chev",18)}</span></button></div>`);
+  $("#rnGpx").onclick=()=>{const i=document.createElement("input");i.type="file";i.accept=".gpx,application/gpx+xml";i.onchange=async()=>{const f=i.files[0];if(f)routeFromGPX(await f.text(),f.name);};i.click();};
+  $("#rnSpur").onclick=()=>{if(!days)return toast("Noch keine Fahrspur – Menü › Unterwegs › Fahrspuren",4000);routeSpurDays();};
+  $("#rnPts").onclick=()=>rteDrawStart(null);}
+async function routeFromGPX(text,fname){const doc=new DOMParser().parseFromString(text,"application/xml");
+  let l=[...doc.getElementsByTagName("trkpt")];if(!l.length)l=[...doc.getElementsByTagName("rtept")];
+  const line=lineThin(l.map(e=>[+e.getAttribute("lat"),+e.getAttribute("lon")]).filter(p=>isFinite(p[0])&&isFinite(p[1])));
+  if(line.length<2)return toast("Im GPX ist kein Track (trkpt/rtept) – nur Wegpunkte? Diese über Menü › Import laden.",6000);
+  const nm=(doc.querySelector("trk > name")||doc.querySelector("rte > name")||doc.querySelector("metadata > name")||{}).textContent||fname.replace(/\.gpx$/i,"");
+  const tm=(doc.querySelector("trkpt > time")||{}).textContent||"";
+  const r=rteNewObj({name:nm.trim(),mode:"gpx",line,wp:[line[0],line[line.length-1]],date:tm?tm.slice(0,10):"",status:tm?"gefahren":"geplant"});
+  /* Wegpunkte als eigene Punkte übernehmen (doppelte nach Ort und Name werden übersprungen) */
+  let n=0;for(const e of doc.getElementsByTagName("wpt")){const lat=+e.getAttribute("lat"),lon=+e.getAttribute("lon");if(!isFinite(lat)||!isFinite(lon))continue;
+    const t=((e.getElementsByTagName("name")[0]||{}).textContent||"").trim();
+    const dup=points.find(p=>!p.deleted&&distKm(p,{lat,lon})<.03&&(!t||ptTitle(p)===t));if(dup){r.pts.push(dup.id);continue;}
+    const p=newPoint(lat,lon,{title:t,cat:"sight",desc:((e.getElementsByTagName("desc")[0]||{}).textContent||"").trim(),source:"GPX "+fname});await put("points",p);r.pts.push(p.id);n++;}
+  if(n){await loadPoints();toast(`${n} Wegpunkt${n>1?"e":""} als Punkt${n>1?"e":""} übernommen`,4000);}
+  routeEdit(r,true);}
+function routeSpurDays(){rteClearTemp();const l=trks.filter(t=>!t.del&&t.pts.length>1).sort((a,b)=>b.id.localeCompare(a.id));
+  openPanel(`<h2>Strecke aus der Fahrspur</h2><p class="muted">Tag wählen – danach Anfang und Ende der Strecke einstellen.</p>
+   <div class="mgrp">${l.map(t=>`<button class="mrow" data-tk="${t.id}"><span class="mic">${mi("route",20)}</span><span class="mtx"><b>${fmtD(new Date(t.id+"T12:00"))}</b><small>${trkKm(t).toFixed(1)} km</small></span><span class="mchev">${mi("chev",18)}</span></button>`).join("")}</div>`);
+  $("#panel").querySelectorAll("[data-tk]").forEach(b=>b.onclick=()=>routeSpurCut(b.dataset.tk));}
+let rteCutLine=null,rtePrev=null;
+function rteClearTemp(){if(rteCutLine){map.removeLayer(rteCutLine);rteCutLine=null;}if(rtePrev){map.removeLayer(rtePrev);rtePrev=null;}}
+function routeSpurCut(day){const t=trks.find(x=>x.id===day);if(!t)return;const P=t.pts,N=P.length;
+  const hm=s=>new Date(s*1000).toLocaleTimeString("de-CH",{hour:"2-digit",minute:"2-digit"});
+  openPanel(`<h2>Fahrspur ${fmtD(new Date(day+"T12:00"))}</h2><p class="muted">Mit den Reglern Anfang und Ende der Strecke einstellen – das gewählte Stück ist auf der Karte dick markiert.</p>
+   <label>Anfang <b id="rcA"></b></label><input type="range" id="rcFrom" min="0" max="${N-1}" value="0" style="width:100%">
+   <label>Ende <b id="rcB"></b></label><input type="range" id="rcTo" min="0" max="${N-1}" value="${N-1}" style="width:100%">
+   <p id="rcInfo" style="font-size:15px"></p>
+   <div class="actions"><button class="btn" id="rcOk">Weiter ›</button><button class="btn sec" id="rcCancel">Abbrechen</button></div>`);
+  const upd=(fit)=>{let a=+$("#rcFrom").value,b=+$("#rcTo").value;if(b<=a){b=Math.min(N-1,a+1);$("#rcTo").value=b;}
+    const seg=P.slice(a,b+1).map(p=>[p[0],p[1]]);$("#rcA").textContent=hm(P[a][2]);$("#rcB").textContent=hm(P[b][2]);
+    $("#rcInfo").textContent=`${lineKm(seg).toFixed(1)} km · ${hm(P[a][2])} – ${hm(P[b][2])}`;
+    if(rteCutLine)map.removeLayer(rteCutLine);rteCutLine=L.polyline(seg,{color:"#6a1b9a",weight:7,opacity:.9}).addTo(map);if(fit)try{map.fitBounds(rteCutLine.getBounds(),{padding:[30,30]});}catch(e){}};
+  const clr=()=>{if(rteCutLine){map.removeLayer(rteCutLine);rteCutLine=null;}};
+  $("#rcFrom").oninput=()=>upd(false);$("#rcTo").oninput=()=>upd(false);upd(true);
+  $("#rcCancel").onclick=()=>{clr();navBack();};
+  $("#rcOk").onclick=()=>{const a=+$("#rcFrom").value,b=+$("#rcTo").value;clr();const line=lineThin(P.slice(a,b+1).map(p=>[p[0],p[1]]));
+    const r=rteNewObj({name:"Strecke "+fmtD(new Date(day+"T12:00")),mode:"spur",line,wp:[line[0],line[line.length-1]],date:day,status:"gefahren",trip:t.trip||curTrip||""});
+    routeEdit(r,true);};}
+/* ---- Punkte verbinden: auf der Karte der Reihe nach antippen ---- */
+function rteDrawStart(r){closePanel();rteSetFocus("");
+  rteDraw={r,wp:r?(r.wp&&r.wp.length>1?r.wp.map(p=>[...p]):[]):[],ids:[]};
+  let bar=$("#rteBar");if(!bar){bar=document.createElement("div");bar.id="rteBar";bar.className="placebar";$("#map").appendChild(bar);L.DomEvent.disableClickPropagation(bar);}
+  bar.innerHTML=`<div id="rdInfo" style="font-size:14px"></div><div class="actions"><button class="btn sec" id="rdUndo">↶ Rückgängig</button><button class="btn" id="rdOk">Weiter ›</button><button class="btn sec" id="rdNo">Abbrechen</button></div>`;
+  bar.style.display="block";map.getContainer().classList.add("placing");
+  $("#rdUndo").onclick=()=>{rteDraw.wp.pop();rteDrawShow();};
+  $("#rdNo").onclick=()=>{const r0=rteDraw.r;rteDrawEnd();if(r0&&rtes.includes(r0))showRoute(r0.id);};
+  $("#rdOk").onclick=()=>{if(rteDraw.wp.length<2)return toast("Mindestens Start und Ende antippen",3000);
+    const d=rteDraw;rteDrawEnd();const wp=d.wp.map(p=>[+p[0].toFixed(5),+p[1].toFixed(5)]);
+    let r=d.r?Object.assign({},d.r):rteNewObj({});r.wp=wp;r.line=wp.map(p=>[...p]);r.mode="punkte";r.pts=[...new Set([...(r.pts||[]),...d.ids])];
+    if(!r.name)r.name="Strecke "+fmtD(new Date().toISOString().slice(0,10));routeEdit(r,!d.r);};
+  rteDrawShow();}
+function rteDrawShow(){rteDrawLayer.clearLayers();if(!rteDraw)return;const w=rteDraw.wp;
+  if(w.length>1)L.polyline(w,{color:"#1565c0",weight:4,dashArray:"9 7",interactive:false}).addTo(rteDrawLayer);
+  w.forEach((p,i)=>L.marker(p,{icon:i===0?endIcon("S","#2e7d32"):i===w.length-1&&w.length>1?endIcon("Z","#c62828"):endIcon(String(i),"#1565c0"),interactive:false,zIndexOffset:2000}).addTo(rteDrawLayer));
+  $("#rdInfo").innerHTML=w.length?`<b>${w.length} Punkte</b> · ${lineKm(w).toFixed(1)} km Luftlinie – weiter antippen, eigene Punkte werden zugeordnet`:"Start auf der Karte antippen (oder einen eigenen Punkt)";}
+function rteDrawAdd(lat,lon,pid){if(!rteDraw)return;rteDraw.wp.push([lat,lon]);if(pid&&!rteDraw.ids.includes(pid))rteDraw.ids.push(pid);rteDrawShow();}
+function rteDrawEnd(){rteDraw=null;rteDrawLayer.clearLayers();const b=$("#rteBar");if(b)b.style.display="none";map.getContainer().classList.remove("placing");}
+map.on("click",e=>{if(rteDraw)rteDrawAdd(e.latlng.lat,e.latlng.lng,null);});
+/* ---- Linie online an Wege anpassen (BRouter, kostenlos, OSM-Daten) ---- */
+const RTE_PROF={"car-fast":"Strassen (Auto)",trekking:"Auch Pisten und Feldwege"};
+async function rteRoute(wp,prof){if(!navigator.onLine)throw new Error("offline");
+  const ll=wp.map(p=>`${p[1].toFixed(6)},${p[0].toFixed(6)}`).join("|");
+  const ctl=new AbortController();const tm=setTimeout(()=>ctl.abort(),45000);
+  try{const res=await fetch(`https://brouter.de/brouter?lonlats=${ll}&profile=${prof}&alternativeidx=0&format=geojson`,{signal:ctl.signal});
+    const tx=await res.text();if(!res.ok)throw new Error(tx.slice(0,160)||("HTTP "+res.status));
+    const g=JSON.parse(tx);const c=g.features&&g.features[0]&&g.features[0].geometry.coordinates;if(!c||c.length<2)throw new Error("keine Route");
+    return lineThin(c.map(p=>[p[1],p[0]]));}finally{clearTimeout(tm);}}
+/* ---- Bearbeiten ---- */
+function routeEdit(r0,isNew){const r=JSON.parse(JSON.stringify(r0));rteSetFocus("");
+  const cand=()=>{const set=new Set(r.pts||[]);return points.filter(p=>!p.deleted&&(set.has(p.id)||lineNear(r.line,p.lat,p.lon).m<=200))
+    .map(p=>({p,pos:lineNear(r.line,p.lat,p.lon).pos,on:set.has(p.id)||(!!isNew&&lineNear(r.line,p.lat,p.lon).m<=200)})).sort((a,b)=>a.pos-b.pos);};
+  const showLine=()=>{rteClearTemp();rtePrev=L.polyline(r.line,{color:"#6a1b9a",weight:6,opacity:.9}).addTo(map);try{map.fitBounds(rtePrev.getBounds(),{padding:[30,30],maxZoom:15});}catch(e){}};
+  const render=()=>{const cl=cand();
+  openPanel(`<h2>${isNew?"Neue Strecke":"Strecke bearbeiten"}</h2>
+   <label>Name</label><input id="reName" value="${esc(r.name||"")}" placeholder="z. B. Piste Tizi n'Tichka – Telouet">
+   <div class="row"><div><label>Status</label><select id="reSt">${Object.entries(RTE_ST).map(([k,v])=>`<option value="${k}" ${r.status===k?"selected":""}>${v}</option>`).join("")}</select></div>
+    <div><label>Datum</label><input type="date" id="reDate" value="${esc(r.date||"")}"></div></div>
+   <div class="row"><div><label>Reise</label><select id="reTrip">${tripsSorted().map(t=>`<option value="${t.id}" ${r.trip===t.id?"selected":""}>${esc(t.name)}</option>`).join("")}<option value="" ${r.trip?"":"selected"}>– keine Reise –</option></select></div>
+    <div><label>Belag</label><select id="reBelag">${Object.entries(RTE_BELAG).map(([k,v])=>`<option value="${k}" ${(r.belag||"")===k?"selected":""}>${v}</option>`).join("")}</select></div></div>
+   <label>Linie · ${lineKm(r.line).toFixed(1)} km</label>
+   <div class="rate"><div class="muted" style="margin-bottom:6px">${esc(RTE_LINE[r.mode]||"")}</div>
+    <div class="actions" style="margin-top:0">${r.mode!=="gpx"&&r.mode!=="spur"?`<button class="btn sec" id="reWp">${mi("pin",16)} Punkte der Linie ändern</button>`:""}
+     ${(r.wp||[]).length>1&&r.mode!=="gpx"&&r.mode!=="spur"?`<button class="btn sec" id="reFit">${mi("route",16)} An Wege anpassen (online)</button>`:""}
+     ${r.mode==="wege"?`<button class="btn sec" id="reStraight">Wieder gerade Linien</button>`:""}</div>
+    ${(r.wp||[]).length>1&&r.mode!=="gpx"&&r.mode!=="spur"?`<label style="margin-top:6px">Wege für die Anpassung</label><select id="reProf">${Object.entries(RTE_PROF).map(([k,v])=>`<option value="${k}" ${ls("rb_rteprof")===k?"selected":""}>${v}</option>`).join("")}</select>
+     <div class="muted">Braucht Internet (Dienst BRouter, OpenStreetMap-Daten). Wo eine Piste nicht in OSM eingetragen ist, wird sie umfahren – dann Zwischenpunkte setzen oder gerade Linien lassen. Die angepasste Linie ist danach auch offline da.</div>`:""}</div>
+   <label>Bewertung</label><div class="rate" id="reRate"><div class="rrow"><b>Gesamt</b>${starsWidget("__all",r.stars)}</div>
+    ${RTE_RATE.map(([k,l,h])=>`<div class="rrow"><b>${l}</b>${starsWidget(k,(r.rate[k]||{}).s)}</div>${h?`<div class="muted">${h}</div>`:""}<input data-note="${k}" placeholder="Notiz zu ${l} (optional)" value="${esc((r.rate[k]||{}).t||"")}">`).join("")}
+    <div class="muted" style="margin-top:6px">Stern nochmals antippen = Bewertung entfernen.</div></div>
+   <label>Notiz</label><textarea id="reNote" placeholder="Fahrzeug, Wasserdurchfahrten, Schlüsselstellen, Zeitbedarf …">${esc(r.note||"")}</textarea>
+   <label>Punkte an der Strecke (bis 200 m neben der Linie)</label>
+   <div class="mgrp">${cl.length?cl.map(({p,on})=>`<label class="mrow" style="cursor:pointer"><span class="mic">${icoBadge(p.cat in CATS?p.cat:"other",(CATS[p.cat]||CATS.other).c,24)}</span><span class="mtx"><b>${esc(ptTitle(p))}</b><small>${lineNear(r.line,p.lat,p.lon).m<1000?Math.round(lineNear(r.line,p.lat,p.lon).m)+" m":(lineNear(r.line,p.lat,p.lon).m/1000).toFixed(1)+" km"} neben der Linie${(p.photos||[]).length?" · "+p.photos.length+" Fotos":""}</small></span><input type="checkbox" data-rp="${p.id}" style="width:22px;height:22px" ${on?"checked":""}></label>`).join("")
+     :`<div class="mrow" style="cursor:default"><span class="mtx"><small>Keine eigenen Punkte in der Nähe. Fotopunkte z. B. mit «Neue Punkte aus Fotos» erfassen – sie werden dann hier vorgeschlagen.</small></span></div>`}</div>
+   <div class="actions"><button class="btn" id="reSave">Speichern</button><button class="btn sec" id="reCancel">Abbrechen</button>${isNew?"":`<button class="btn warn" id="reDel">${mi("trash",16)} Löschen</button>`}</div>`);
+  bindStars($("#reRate"));showLine();
+  const read=()=>{r.name=$("#reName").value.trim();r.status=$("#reSt").value;r.date=$("#reDate").value;r.trip=$("#reTrip").value;r.belag=$("#reBelag").value;r.note=$("#reNote").value.trim();
+    const box=$("#reRate");r.stars=+box.querySelector('[data-name="__all"]').dataset.v||0;const rt={};
+    RTE_RATE.forEach(([k])=>{const s=+box.querySelector(`.stars[data-name="${k}"]`).dataset.v||0,t=box.querySelector(`[data-note="${k}"]`).value.trim();if(s||t)rt[k]={s,t};});r.rate=rt;
+    r.pts=[...$("#panel").querySelectorAll("[data-rp]")].filter(i=>i.checked).map(i=>i.dataset.rp);};
+  const clr=rteClearTemp;
+  const wpb=$("#reWp");if(wpb)wpb.onclick=()=>{read();clr();rteDrawStart(r);};
+  const pf=$("#reProf");if(pf)pf.onchange=()=>ls("rb_rteprof",pf.value);
+  const fb=$("#reFit");if(fb)fb.onclick=async()=>{read();const prof=$("#reProf").value;fb.disabled=true;fb.textContent="Wird berechnet …";
+    try{r.line=await rteRoute(r.wp,prof);r.mode="wege";toast(`Linie an Wege angepasst: ${lineKm(r.line).toFixed(1)} km`,4000);}
+    catch(e){toast(e.message==="offline"?"Kein Internet – Anpassung geht nur online":"Anpassung nicht möglich: "+(e.name==="AbortError"?"keine Antwort von BRouter":e.message),6000);}
+    render();};
+  const sb=$("#reStraight");if(sb)sb.onclick=()=>{read();r.line=r.wp.map(p=>[...p]);r.mode="punkte";render();};
+  $("#reCancel").onclick=()=>{clr();if(!isNew)showRoute(r.id);else navBack();};
+  const db=$("#reDel");if(db)db.onclick=()=>confirmBox(`Strecke «${r.name||"Strecke"}» löschen (auf allen Geräten)? Die Punkte bleiben erhalten.`,async()=>{clr();const o=rtes.find(x=>x.id===r.id);if(o){o.del=true;o.line=[];o.wp=[];o.pts=[];o.updated=Date.now();await put("routes",o);}drawRoutes();autoSyncSoon(5000);routesDialog();});
+  $("#reSave").onclick=async()=>{read();clr();if(!r.name)r.name="Strecke";r.updated=Date.now();rteOrder(r);
+    rtes=rtes.filter(x=>x.id!==r.id);rtes.push(r);await put("routes",r);autoSyncSoon(30000);syncDotSoon();toast("Strecke gespeichert",2500);showRoute(r.id);};};
+  render();}
+/* Abgleich: eine Datei rte_<id>.json pro Strecke auf Google Drive (neuere gewinnt) */
+async function rteSync(files){const rem={};files.forEach(f=>{const m=f.name.match(/^rte_(.+)\.json$/);if(m)rem[m[1]]={id:f.id,upd:+((f.appProperties||{}).upd)||0};});
+  for(const [id,x] of Object.entries(rem)){const l=rtes.find(r=>r.id===id);if(l&&(l.updated||0)>=x.upd)continue;
+    try{const d=await(await gd(`drive/v3/files/${x.id}?alt=media`)).json();if(!d||!d.id)continue;d.synced=d.updated;rtes=rtes.filter(r=>r.id!==id);rtes.push(d);await put("routes",d);}catch(e){}}
+  for(const r of rtes){const x=rem[r.id];if(x&&x.upd>=(r.updated||0))continue;if(x&&(r.synced||0)>=(r.updated||0))continue;
+    try{const {synced,...o}=r;await gdUpload(`rte_${r.id}.json`,new Blob([JSON.stringify(o)],{type:"application/json"}),x&&x.id,{upd:String(r.updated||0)});r.synced=r.updated;await put("routes",r);}catch(e){}}
+  drawRoutes();}
 /* ---------- Fahrmodus ----------
    Grosse Knöpfe für unterwegs: Karte folgt dem Standort, Bildschirm bleibt an, Punkt mit einem Tipp, Foto-Punkt, Fahne, Aufzeichnung. */
 let driveOn=false,driveWL=null;
@@ -4101,7 +4310,7 @@ function quickPoint(photo){if(!me){toast("Noch keine GPS-Position – kurz warte
   if(!localStorage.getItem("rb_view")&&points.length){const b=L.latLngBounds(points.map(p=>[p.lat,p.lon]));map.fitBounds(b,{padding:[30,30]});}
   map.on("moveend",()=>{const c=map.getCenter();try{localStorage.setItem("rb_view",JSON.stringify({lat:+c.lat.toFixed(5),lon:+c.lng.toFixed(5),z:map.getZoom()}));}catch(e){}});
   showHeaderTrip();$("#ver").textContent=VERSION;
-  await loadFlags();await loadTracks();wakeAcquire();if(surfOn&&!ADM)surfLayer.addTo(map);await loadOffPacks();drawOffAreas();
+  await loadFlags();await loadTracks();await loadRoutes();wakeAcquire();if(surfOn&&!ADM)surfLayer.addTo(map);await loadOffPacks();drawOffAreas();
   if(!ADM)startGPS();
   if(!ADM&&ls("rb_drive")==="1")driveMode(true);
   $("#driveBtn").onclick=()=>driveMode(true);if(ADM)$("#driveBtn").style.display="none";nightApply();setInterval(nightApply,300000);
