@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <!-- Sicherheitsregeln: Code nur von hier (Fingerabdruck), cdnjs und unpkg (mit Prüfsumme). Fingerabdruck setzt /home/claude/tools/csp.py -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-0J2IJf6fOgZghpxNGdH0EiGE2vkzmB/LZ3BeatZkcDA=' https://cdnjs.cloudflare.com https://unpkg.com; worker-src 'self' blob:; child-src blob:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; font-src 'self' data: https:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-eGGPskwkbi9Arsu/dcKQLJhcqyA1YK20B8Yl1OmabkU=' https://cdnjs.cloudflare.com https://unpkg.com; worker-src 'self' blob:; child-src blob:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; font-src 'self' data: https:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#92b78c">
 <title>IbexMap</title>
@@ -685,7 +685,7 @@ const ADM=(()=>{try{if(new URLSearchParams(location.search).has("admin")){sessio
   return sessionStorage.getItem("rb_admin")==="1"&&matchMedia("(min-width:900px)").matches;}catch(e){return false;}})();
 if(ADM)document.body.classList.add("adm");
 const GROUP="IbexMap";
-const VERSION="v9.6";
+const VERSION="v9.7";
 /* Startzeit-Messung: Sekunden seit dem Öffnen der App (im Menü › Gerät › Startzeit) */
 const ST_MARKS=[];function stMark(t){if(ST_MARKS.some(m=>m.t===t))return;ST_MARKS.push({t,s:performance.now()/1000});}
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
@@ -1295,7 +1295,10 @@ function drawOsm(){osmLayer.clearLayers();
   filtState();
   /* POI-Overlay aus den offline gespeicherten Ländern (Gruppen wie in der Suche) */
   if(poiShow.length&&poiOff.length&&map.getZoom()>=OSM_MINZOOM&&!ADM){const b=map.getBounds().pad(.2),big=map.getZoom()>=14;let n=0;
-    for(const p of poiOff)for(const x of p.items){if(n>1500)break;if(!b.contains([x.a,x.o]))continue;const k=x.m.find(poiVis);if(!k)continue;
+    /* nur die Rasterzellen im Bildausschnitt durchsuchen statt aller POI eines Landes (Frankreich: hunderttausende) */
+    const s0=Math.floor(b.getSouth()*5),s1=Math.floor(b.getNorth()*5),w0=Math.floor(b.getWest()*5),w1=Math.floor(b.getEast()*5);
+    const near=[];for(const p of poiOff){const g=poiGrid(p);for(let i=s0;i<=s1;i++)for(let j=w0;j<=w1;j++){const c=g.get(i*4000+j);if(c)near.push(c);}}
+    outer:for(const c of near)for(const x of c){if(n>1500)break outer;if(!b.contains([x.a,x.o]))continue;const k=x.m.find(poiVis);if(!k)continue;
       const g=poiInfo(k,x.t);n++;
       const mk=big?L.marker([x.a,x.o],{icon:L.divIcon({className:"",iconSize:[24,24],iconAnchor:[12,12],html:`<div class="osmpin" style="width:24px;height:24px;background:${g.c}">${svgI(g.i,15)}${g.no?`<span class="pinno"></span>`:""}</div>`})})
         :L.circleMarker([x.a,x.o],{renderer:osmCanvas,radius:6,color:"#fff",weight:2,fillColor:g.c,fillOpacity:.95});
@@ -1306,7 +1309,11 @@ function drawOsm(){osmLayer.clearLayers();
     const mk=map.getZoom()>=14?L.marker([x.lat,x.lon],{icon:L.divIcon({className:"",iconSize:[24,24],iconAnchor:[12,12],html:`<div class="osmpin" style="width:24px;height:24px;background:${c.c}">${svgI(x.ty,15)}</div>`})})
       :L.circleMarker([x.lat,x.lon],{renderer:osmCanvas,radius:6,color:"#fff",weight:2,fillColor:c.c,fillOpacity:.95});
     mk.addTo(osmLayer).on("click",ev=>{L.DomEvent.stopPropagation(ev);showOsm(x);});});}
-map.on("moveend zoomend",drawOsm);
+/* Raster 0.2° × 0.2° pro Land, einmal aufgebaut (nicht gespeichert) */
+const poiGridC=new WeakMap();
+function poiGrid(p){let g=poiGridC.get(p.items);if(g)return g;g=new Map();for(const x of p.items){const k=Math.floor(x.a*5)*4000+Math.floor(x.o*5);let c=g.get(k);if(!c)g.set(k,c=[]);c.push(x);}poiGridC.set(p.items,g);return g;}
+/* nach Zoom oder Verschieben einmal neu zeichnen (zoomend und moveend kommen beide – nur einmal rechnen) */
+let osmT=0;map.on("moveend",()=>{clearTimeout(osmT);osmT=setTimeout(drawOsm,60);});
 function showPoi(x){const k0=x.m.find(poiVis)||x.m[0],[gi,ii]=k0.split(".").map(Number),g=POI_GROUPS[gi],t=x.t,pi=poiInfo(k0,t),kind=pi.l;
   const nm=t.name||t["name:fr"]||t["name:de"]||t.brand||kind;const d="";
   const row=(l,v)=>v?`<div><b>${l}:</b> ${esc(v)}</div>`:"";
@@ -3510,7 +3517,7 @@ async function admRender2(soft){
   for(const id of [...admSel])if(!points.some(p=>p.id===id))admSel.delete(id);
   $("#aCount").textContent=`${list.length} von ${points.length} Punkten`;
   const allSel=list.length&&list.every(p=>admSel.has(p.id));
-  $("#admTable").innerHTML=`<table><thead><tr><th class="ack"><input type="checkbox" id="aAll" ${allSel?"checked":""} title="Alle angezeigten auswählen"></th>${ADM_COLS.map(([k,l])=>`<th data-sort="${k}" class="${admSort.k===k?"on":""}">${l}${admSort.k===k?(admSort.d>0?" ▲":" ▼"):""}</th>`).join("")}<th></th></tr></thead>
+  $("#admTable").innerHTML=`<table><thead><tr><th class="ack"><input type="checkbox" id="aAll" ${allSel?"checked":""} title="Alle angezeigten auswählen"></th>${ADM_COLS.map(([k,l])=>`<th data-sort="${k}" class="${admSort.k===k?"on":""}">${k==="story"?`<input type="checkbox" id="aStoryAll" ${list.length&&list.every(p=>p.story)?"checked":""} title="Storypoint für alle angezeigten Punkte ein/aus" style="vertical-align:-2px;margin-right:4px">`:""}${l}${admSort.k===k?(admSort.d>0?" ▲":" ▼"):""}</th>`).join("")}<th></th></tr></thead>
     <tbody>${list.slice(0,3000).map(admRow).join("")}</tbody></table>${list.length?"":`<p class="muted" style="padding:20px">Keine Punkte gefunden.</p>`}`;
   admBulk();drawPoints();
   for(const img of $("#admTable").querySelectorAll("img[data-ph]")){const u=await photoURL(img.dataset.ph);if(u)img.src=u;}}
@@ -3564,7 +3571,22 @@ function admInit(){
   $(".hname").insertAdjacentHTML("beforeend",` <span class="hadm">Verwaltung</span>`);
   document.addEventListener("click",()=>document.querySelectorAll("#admTools .adrop.open").forEach(x=>x.classList.remove("open")));
   const T=$("#admTable");
-  T.addEventListener("click",e=>{const th=e.target.closest("th[data-sort]");
+  let admStoryLast="";
+  const storySave=async(list,on)=>{for(const p of list){if(!!p.story===on)continue;p.story=on;p.updated=Date.now();await put("points",p);}syncDotSoon();autoSyncSoon();drawPoints();};
+  T.addEventListener("click",e=>{
+    /* Kopf «Story»: alle angezeigten Punkte als Storypoint ein/aus */
+    if(e.target.id==="aStoryAll"){e.stopPropagation();const on=e.target.checked;e.target.checked=!on;const l=admList();
+      openPanel(`<h2>Storypoint ${on?"einschalten":"ausschalten"}?</h2><p>Für alle <b>${l.length}</b> angezeigten Punkte${on?" – sie erscheinen beim nächsten Veröffentlichen auf der Familienseite":""}.</p>
+        <div class="actions"><button class="btn" id="asY">${on?"Einschalten":"Ausschalten"}</button><button class="btn sec" id="asN">Abbrechen</button></div>`);
+      $("#asN").onclick=closePanel;$("#asY").onclick=async()=>{closePanel();await storySave(l,on);admRender(true);toast(`${l.length} Punkte: Storypoint ${on?"an":"aus"}`,2500);};return;}
+    /* Shift + Klick in der Spalte Story: Bereich seit dem letzten Klick gleich setzen */
+    if(e.target.matches('input[data-e="story"]')){const tr=e.target.closest("tr[data-id]"),on=e.target.checked;
+      if(e.shiftKey&&admStoryLast&&admStoryLast!==tr.dataset.id){const ids=[...T.querySelectorAll("tr[data-id]")].map(r=>r.dataset.id);let i=ids.indexOf(admStoryLast),j=ids.indexOf(tr.dataset.id);
+        if(i>=0&&j>=0){if(i>j)[i,j]=[j,i];const rng=ids.slice(i,j+1).filter(id=>id!==tr.dataset.id);
+          rng.forEach(id=>{const c=T.querySelector(`tr[data-id="${id}"] input[data-e="story"]`);if(c)c.checked=on;});
+          storySave(rng.map(id=>points.find(p=>p.id===id)).filter(Boolean),on).then(()=>toast(`${rng.length+1} Punkte: Storypoint ${on?"an":"aus"}`,2500));}}
+      admStoryLast=tr.dataset.id;return;}
+    const th=e.target.closest("th[data-sort]");
     if(th){const k=th.dataset.sort;admSort=admSort.k===k?{k,d:-admSort.d}:{k,d:["updated","created","vis","stars","story","photos"].includes(k)?-1:1};ls("rb_asort",JSON.stringify(admSort));admRender(true);return;}
     if(e.target.id==="aAll"){const l=admList();if(e.target.checked)l.forEach(p=>admSel.add(p.id));else l.forEach(p=>admSel.delete(p.id));admRender(true);return;}
     const tr=e.target.closest("tr[data-id]");if(!tr)return;const p=points.find(x=>x.id===tr.dataset.id);if(!p)return;
@@ -3812,7 +3834,7 @@ function surfLegend(){let g=$("#surfLeg");if(!g){g=document.createElement("div")
 surfLayer.on("add",()=>{surfOn=true;ls("rb_surf","1");drawSurf();});
 surfLayer.on("remove",()=>{surfOn=false;ls("rb_surf","0");surfLayer.clearLayers();surfLegend();surfHint("");});
 layCtl.addOverlay(surfLayer,"Strassenoberfläche");
-map.on("moveend zoomend",()=>{if(surfOn)drawSurf();});
+map.on("moveend",()=>{if(surfOn)drawSurf();});
 /* Offline: Strassendaten für ein Gebiet speichern bzw. löschen */
 function packCells(pk){const set=new Set();for(const a of pk.areas){if(pk.kind==="points"&&a.z2<9)continue;cellsOf(a).forEach(k=>set.add(k));}return [...set];}
 /* Strassenoberfläche über Google Drive teilen: pro Offline-Gebiet eine gepackte Datei; andere Geräte holen sie dort statt bei Overpass */
