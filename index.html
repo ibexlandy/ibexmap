@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <!-- Sicherheitsregeln: Code nur von hier (Fingerabdruck), cdnjs und unpkg (mit Prüfsumme). Fingerabdruck setzt /home/claude/tools/csp.py -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-sNbxHbSXvyyoIdVlcPR0G/T4M9pKfk9NgOIxL5v8emA=' https://cdnjs.cloudflare.com https://unpkg.com; worker-src 'self' blob:; child-src blob:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; font-src 'self' data: https:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-0J2IJf6fOgZghpxNGdH0EiGE2vkzmB/LZ3BeatZkcDA=' https://cdnjs.cloudflare.com https://unpkg.com; worker-src 'self' blob:; child-src blob:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; font-src 'self' data: https:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#92b78c">
 <title>IbexMap</title>
@@ -685,7 +685,7 @@ const ADM=(()=>{try{if(new URLSearchParams(location.search).has("admin")){sessio
   return sessionStorage.getItem("rb_admin")==="1"&&matchMedia("(min-width:900px)").matches;}catch(e){return false;}})();
 if(ADM)document.body.classList.add("adm");
 const GROUP="IbexMap";
-const VERSION="v9.5";
+const VERSION="v9.6";
 /* Startzeit-Messung: Sekunden seit dem Öffnen der App (im Menü › Gerät › Startzeit) */
 const ST_MARKS=[];function stMark(t){if(ST_MARKS.some(m=>m.t===t))return;ST_MARKS.push({t,s:performance.now()/1000});}
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
@@ -730,7 +730,7 @@ const put=(st,v)=>tx(st,"readwrite",s=>s.put(v));
 const del=(st,id)=>tx(st,"readwrite",s=>s.delete(id));
 /* ---------- Reisen (jede Reise hat eigene Abschnitte) ---------- */
 let trips=[],curTrip="",sections=[],delTrips=[];
-let rtes=[],rteFocus="",rteDraw=null;/* Strecken, siehe unten */
+let rtes=[],rteFocus="",rteDraw=null,ptDrawn={z:-1,b:null};/* Strecken, siehe unten */
 const MIG_TRIP="t-marokko-2027";
 const tripOf=id=>trips.find(t=>t.id===id);
 const curTripObj=()=>tripOf(curTrip)||trips[0];
@@ -1181,7 +1181,10 @@ function drawPoints(){layer.clearLayers();
   const vis=ADM?points.filter(p=>admShown.has(p.id)):rteFocus?points.filter(p=>(rtes.find(r=>r.id===rteFocus)||{pts:[]}).pts.includes(p.id)):points.filter(p=>!hiddenCats.includes(p.cat in CATS?p.cat:"other")&&!hiddenStat.includes(p.status||"idee")&&(!mapTrip.length||mapTrip.includes(p.trip))&&(mapTrip.includes(p.trip)||!tripHidden(p.trip))&&(!mapCountry.length||mapCountry.includes(p.country))&&(!mapStars||(p.stars||0)>=mapStars));
   const rm=new Map();if(!ADM)rtes.filter(r=>!r.del&&r.line&&r.line.length>1).forEach(r=>(r.pts||[]).forEach(id=>{if(!rm.has(id)||r.id===rteFocus)rm.set(id,r);}));
   const z=map.getZoom(),single=p=>L.marker([p.lat,p.lon],{icon:pinIcon(p,rm.get(p.id)),zIndexOffset:p.imp?1000:rm.has(p.id)?800:0}).addTo(layer).on("click",()=>{if(rteDraw){rteDrawAdd(p.lat,p.lon,p.id);return;}if(ADM){const tr=admFocus(p.id,false);if(tr)tr.scrollIntoView({block:"center",behavior:"smooth"});}showDetail(p.id);});
-  if(z>=CLUSTER_MAXZOOM||!clusterOn){vis.forEach(single);return;}
+  /* nah dran (ab Stufe 13) bzw. ohne Gruppierung: nur Punkte im sichtbaren Bereich plus Rand zeichnen – beim Verschieben kommen die nächsten dazu */
+  if(z>=CLUSTER_MAXZOOM||!clusterOn){let bb=null;try{bb=map.getBounds().pad(.6);}catch(e){}ptDrawn={z,b:bb};
+    (bb&&vis.length>150?vis.filter(p=>p.imp||rm.has(p.id)||bb.contains([p.lat,p.lon])):vis).forEach(single);return;}
+  ptDrawn={z,b:null};
   /* Gruppieren nach Abstand (nicht nach festem Raster): Punkte bis 48 px auseinander kommen zusammen.
      Weit herausgezoomt (unter Stufe 9) alle Kategorien gemeinsam in einer neutralen Blase, darüber nur gleiche Kategorie. */
   vis.filter(p=>p.imp).forEach(single);/* wichtige Punkte werden nie gruppiert */
@@ -1196,7 +1199,8 @@ function drawPoints(){layer.clearLayers();
      .addTo(layer).on("click",()=>{const b=L.latLngBounds(list.map(p=>[p.lat,p.lon]));
        if(b.getNorthEast().equals(b.getSouthWest()))map.setView(b.getCenter(),CLUSTER_MAXZOOM);else map.fitBounds(b,{padding:[50,50],maxZoom:CLUSTER_MAXZOOM});});}}
 const CLUSTER_MAXZOOM=13,CLUSTER_MIXZOOM=9;let clusterOn=true;try{clusterOn=localStorage.getItem("rb_cluster")!=="0";}catch(e){}
-map.on("zoomend",()=>drawPoints());
+/* neu zeichnen nach Zoom; nah dran auch nach Verschieben, sobald der Bildausschnitt den gezeichneten Bereich verlässt */
+map.on("moveend",()=>{const z=map.getZoom();if(z!==ptDrawn.z){drawPoints();return;}if(ptDrawn.b){try{if(!ptDrawn.b.contains(map.getBounds()))drawPoints();}catch(e){}}});
 
 /* Abgleich-Erinnerung: oranger Punkt am ⟳, wenn Änderungen noch nicht abgeglichen sind oder der letzte Abgleich über einen Tag her ist */
 let syncDotT=null;function syncDotSoon(){clearTimeout(syncDotT);syncDotT=setTimeout(syncDot,2500);}
@@ -4127,9 +4131,21 @@ const trkLayer=L.layerGroup().addTo(map);
 async function loadTracks(){try{trks=await getAll("tracks");}catch(e){trks=[];}
   const t=trks.find(x=>x.id===dayKey(Date.now()));if(t&&t.pts.length){const p=t.pts[t.pts.length-1];trkLast={lat:p[0],lon:p[1],t:p[2]*1000};}drawTracks();}
 function trkKm(t){let k=0;for(let i=1;i<t.pts.length;i++)k+=distKm({lat:t.pts[i-1][0],lon:t.pts[i-1][1]},{lat:t.pts[i][0],lon:t.pts[i][1]});return k;}
-function drawTracks(){trkLayer.clearLayers();if(ls("rb_trkshow")==="0"||ADM)return;
+/* Fahrspur vereinfacht zeichnen (Douglas-Peucker): weit draussen grob, nah dran genau – die Aufzeichnung selbst bleibt vollständig */
+const trkTol=z=>z<7?400:z<9?120:z<11?30:z<13?8:0;
+function simplifyLL(pts,tolM){if(!tolM||pts.length<3)return pts;const n=pts.length,keep=new Uint8Array(n);keep[0]=keep[n-1]=1;
+  const ky=110540,kx=111320*Math.cos(pts[0][0]*Math.PI/180),t2=tolM*tolM,st=[[0,n-1]];
+  while(st.length){const [a,b]=st.pop();if(b<=a+1)continue;const ax=pts[a][1]*kx,ay=pts[a][0]*ky,dx=pts[b][1]*kx-ax,dy=pts[b][0]*ky-ay,L2=dx*dx+dy*dy;let md=-1,mi=-1;
+    for(let i=a+1;i<b;i++){const px=pts[i][1]*kx-ax,py=pts[i][0]*ky-ay;let t=L2?(px*dx+py*dy)/L2:0;t=t<0?0:t>1?1:t;const ex=px-t*dx,ey=py-t*dy,d=ex*ex+ey*ey;if(d>md){md=d;mi=i;}}
+    if(md>t2){keep[mi]=1;st.push([a,mi],[mi,b]);}}
+  const o=[];for(let i=0;i<n;i++)if(keep[i])o.push(pts[i]);return o;}
+const trkSimpC=new Map();let trkTolNow=-1;
+function trkLine(t,tol){const k=t.id+"|"+tol,c=trkSimpC.get(k);if(c&&c.n===t.pts.length)return c.l;
+  const l=simplifyLL(t.pts.map(p=>[p[0],p[1]]),tol);trkSimpC.set(k,{n:t.pts.length,l});return l;}
+map.on("zoomend",()=>{if(trkTol(map.getZoom())!==trkTolNow)drawTracks();});
+function drawTracks(){trkLayer.clearLayers();trkTolNow=trkTol(map.getZoom());if(ls("rb_trkshow")==="0"||ADM)return;
   for(const t of trks){if(t.del||t.pts.length<2)continue;if(mapTrip.length&&t.trip&&!mapTrip.includes(t.trip))continue;
-    const ll=t.pts.map(p=>[p[0],p[1]]);
+    const ll=trkLine(t,trkTolNow);
     L.polyline(ll,{color:"#fff",weight:7,opacity:.75,interactive:false}).addTo(trkLayer);
     L.polyline(ll,{color:"#d84315",weight:3.5,opacity:.95}).addTo(trkLayer).on("click",ev=>{L.DomEvent.stopPropagation(ev);showTrack(t.id);});}}
 function trkAdd(lat,lon,acc){if(!trkOn()||!(acc<=60))return;const now=Date.now();
