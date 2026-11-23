@@ -1,9 +1,10 @@
-const APP="reisebuch-app-v9.8",TILES="reisebuch-tiles-v4",OFFLINE="reisebuch-offline",DEM="reisebuch-dem",LIBS="reisebuch-libs",MAXTILES=3000;
+const APP="reisebuch-app-v10.1",TILES="reisebuch-tiles-v4",OFFLINE="reisebuch-offline",DEM="reisebuch-dem",LIBS="reisebuch-libs",MAXTILES=3000;
 const SHELL=["./","index.html","topo.svg","ibex-bg.webp","manifest.webmanifest","icon-192.png","icon-512.png","icon-maskable-512.png","favicon.png",
 "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css",
 "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(APP).then(c=>Promise.all(SHELL.map(u=>fetch(u,{cache:"no-store"}).then(r=>{if(r.ok)return c.put(u,r);})))).then(()=>self.skipWaiting()));});
-self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(n=>![APP,TILES,OFFLINE,DEM,LIBS].includes(n)).map(n=>caches.delete(n))))
+self.addEventListener("activate",e=>{/* nur eigene Caches («reisebuch-…») aufräumen – andere Apps auf derselben Herkunft (z. B. Boschor Map) nie anfassen */
+  e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(n=>n.startsWith("reisebuch-")&&![APP,TILES,OFFLINE,DEM,LIBS].includes(n)).map(n=>caches.delete(n))))
   /* alte Bausteine ohne feste Version (bis v7.4) entfernen – die App lädt nur noch Versionen mit Prüfsumme */
   .then(()=>caches.open(LIBS)).then(c=>c.keys().then(ks=>Promise.all(ks.filter(r=>{const u=new URL(r.url);return u.hostname==="unpkg.com"&&!/@\d+\.\d+\.\d+\//.test(u.pathname);}).map(r=>c.delete(r)))))
   .catch(()=>{}).then(()=>self.clients.claim()));});
