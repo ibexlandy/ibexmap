@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <!-- Sicherheitsregeln: Code nur von hier (Fingerabdruck), cdnjs und unpkg (mit Prüfsumme). Fingerabdruck setzt /home/claude/tools/csp.py -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-WULj+gKRrSJMpv2m1YzOshqsrKh9JMfkPBvSwNIYpig=' https://cdnjs.cloudflare.com https://unpkg.com; worker-src 'self' blob:; child-src blob:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; font-src 'self' data: https:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-EESGJqzmAaFBO5rXdclL+4DOCCPqLDrdSEZARKoFLX4=' https://cdnjs.cloudflare.com https://unpkg.com; worker-src 'self' blob:; child-src blob:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; font-src 'self' data: https:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#92b78c">
 <title>IbexMap</title>
@@ -721,7 +721,13 @@ function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open("reisebu
     if(!d.objectStoreNames.contains("meta"))d.createObjectStore("meta",{keyPath:"id"});
     if(!d.objectStoreNames.contains("tracks"))d.createObjectStore("tracks",{keyPath:"id"});
     if(!d.objectStoreNames.contains("routes"))d.createObjectStore("routes",{keyPath:"id"});};
-  r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+  /* Ein anderes Fenster/Tab mit älterer Version hält den Speicher offen → Aufrüsten blockiert. Hinweis zeigen;
+     sobald das andere Fenster zu ist, geht es von selbst weiter. */
+  r.onblocked=()=>{try{const d=document.createElement("div");d.id="dbBlocked";d.style.cssText="position:fixed;inset:auto 12px 90px 12px;z-index:9000;background:#13200f;color:#fff;padding:14px 16px;border-radius:14px;font:15px/1.4 system-ui,sans-serif;box-shadow:0 4px 16px rgba(0,0,0,.35)";
+    d.innerHTML="<b>IbexMap ist noch in einem anderen Fenster offen</b><br>(ältere Version, z. B. ein Chrome-Tab oder die App im Hintergrund). Bitte dort schliessen – danach startet IbexMap hier von selbst.";document.body.appendChild(d);}catch(e){}};
+  r.onsuccess=()=>{const d=r.result;const b=document.getElementById("dbBlocked");if(b)b.remove();
+    /* neuere Version in einem anderen Fenster will aufrüsten: hier loslassen und neu laden */
+    d.onversionchange=()=>{try{d.close();}catch(e){}location.reload();};res(d);};r.onerror=()=>rej(r.error);});}
 function tx(store,mode,fn){return new Promise((res,rej)=>{const t=db.transaction(store,mode);const s=t.objectStore(store);const out=fn(s);t.oncomplete=()=>res(out&&out.result!==undefined?out.result:out);t.onerror=()=>rej(t.error);});}
 const getAll=st=>new Promise((res,rej)=>{const r=db.transaction(st).objectStore(st).getAll();r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});
 const getOne=(st,id)=>new Promise((res,rej)=>{const r=db.transaction(st).objectStore(st).get(id);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});
