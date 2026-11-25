@@ -1,4 +1,4 @@
-IbexMap – v10.1 (privates Projekt)
+IbexMap – v11.1 (privates Projekt)
 ==========================================
 
 Inhalt des Ordners
@@ -376,6 +376,11 @@ NEU IN v6.8
 NEU IN v7.1
 - Vektorkarte erstellen per Doppelklick: Offline-Daten › Land › «Karte erstellen (PC)» › «Startdatei herunterladen». Die Datei <Land>_laden.bat holt das Programm pmtiles, sucht die neueste Weltkarte von Protomaps und schneidet das Land heraus (Ordner IbexMap-Karten im Benutzerordner); danach in IbexMap «Datei laden». Kein cmd, kein Befehl, kein Datum mehr. Der Befehl von Hand bleibt unter «Von Hand (für Fortgeschrittene)».
 - Geprüft: Ganz in der App geht es nicht – der Protomaps-Server sperrt den Zugriff aus dem Browser (CORS).
+
+NEU IN v11.1
+  - swisstopo: eine Stufe detaillierter (Kacheln der nächsten Stufe in halber Grösse, wie map.geo.admin.ch) – mehr
+    Details, kleinere Schrift, auf PC und Handy. Offline-Downloads laden dafür eine Stufe mehr.
+  - Übernachtungsorte: «Von» eingeben setzt «Bis» automatisch auf den Tag danach (wenn leer oder nicht später).
 
 NEU IN v10.1
   - Start hing mit leerer Karte, wenn IbexMap in einem anderen Fenster/Tab (ältere Version) offen war:

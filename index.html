@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <!-- Sicherheitsregeln: Code nur von hier (Fingerabdruck), cdnjs und unpkg (mit Prüfsumme). Fingerabdruck setzt /home/claude/tools/csp.py -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-EESGJqzmAaFBO5rXdclL+4DOCCPqLDrdSEZARKoFLX4=' https://cdnjs.cloudflare.com https://unpkg.com; worker-src 'self' blob:; child-src blob:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; font-src 'self' data: https:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-Cg4n6OQGXHLMr5Xwf9lhC3HDD9RxujJKDxDKVaYyA44=' https://cdnjs.cloudflare.com https://unpkg.com; worker-src 'self' blob:; child-src blob:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; font-src 'self' data: https:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#92b78c">
 <title>IbexMap</title>
@@ -672,6 +672,9 @@ function ptTitle(p){if(p.title)return p.title;const c=CATS[p.cat]||CATS.other;
   return c.n+" "+fmtD(p.visited||p.created);}
 const STAY=["wild","camp"];
 const nights=(a,b)=>a&&b?Math.round((new Date(b+"T12:00:00")-new Date(a+"T12:00:00"))/86400000):0;
+/* «Von» gesetzt: «Bis» auf den Tag danach, wenn leer oder nicht später */
+const dayAfter=d=>{const x=new Date(d+"T12:00:00");x.setDate(x.getDate()+1);return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0");};
+function visAutoTo(von,bis){if(!von||!bis||!von.value)return;if(!bis.value||bis.value<=von.value)bis.value=dayAfter(von.value);}
 function visTxt(p){if(!p.visited)return "";const n=STAY.includes(p.cat)?nights(p.visited,p.visitedTo):0;
   return n>0?`${fmtD(p.visited)} – ${fmtD(p.visitedTo)} (${n} ${n==1?"Nacht":"Nächte"})`:fmtD(p.visited);}
 const isOn=v=>!!v&&(v.b!==undefined?v.b:v.s>0);
@@ -685,7 +688,7 @@ const ADM=(()=>{try{if(new URLSearchParams(location.search).has("admin")){sessio
   return sessionStorage.getItem("rb_admin")==="1"&&matchMedia("(min-width:900px)").matches;}catch(e){return false;}})();
 if(ADM)document.body.classList.add("adm");
 const GROUP="IbexMap";
-const VERSION="v10.1";
+const VERSION="v11.1";
 /* Startzeit-Messung: Sekunden seit dem Öffnen der App (im Menü › Gerät › Startzeit) */
 const ST_MARKS=[];function stMark(t){if(ST_MARKS.some(m=>m.t===t))return;ST_MARKS.push({t,s:performance.now()/1000});}
 /* Vorschlag Marokko: Sektoren in Reihenfolge der Route. box=[Süd,West,Nord,Ost], erste passende Box gilt */
@@ -819,7 +822,9 @@ const BASE={
   "Strassen":L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,crossOrigin:"anonymous",attribution:"Karte © Esri, HERE, Garmin, OpenStreetMap-Mitwirkende"}),
   "Satellit":L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,crossOrigin:"anonymous",attribution:"Bilder © Esri, Maxar, Earthstar Geographics"}),
   "Topo":L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",{subdomains:"abc",maxZoom:17,crossOrigin:"anonymous",attribution:"© OpenStreetMap-Mitwirkende, SRTM | © OpenTopoMap (CC-BY-SA)"}),
-  "swisstopo (Schweiz)":L.tileLayer("https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg",{maxZoom:19,minZoom:6,crossOrigin:"anonymous",bounds:[[45.6,5.8],[47.95,10.65]],attribution:"© swisstopo"})
+  "swisstopo (Schweiz)":L.tileLayer("https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg",{maxZoom:19,minZoom:6,
+    /* eine Stufe detaillierter: Kacheln der nächsten Stufe in halber Grösse – mehr Details, kleinere Schrift (wie map.geo.admin.ch) */
+    tileSize:128,zoomOffset:1,maxNativeZoom:18,crossOrigin:"anonymous",bounds:[[45.6,5.8],[47.95,10.65]],attribution:"© swisstopo"})
 };
 /* Kartenbilder offline laden: nur noch Satellit und swisstopo – Strassen und Topo ersetzt offline die Vektorkarte */
 const OFF_LAYERS=["Satellit","swisstopo (Schweiz)"];
@@ -1971,7 +1976,7 @@ async function editPoint(p,isNew=false){await loadGeo();
   const updStay=()=>{const st=STAY.includes($("#fCat").value);$("#fVisLbl").textContent=st?"Von":"Besucht am";$("#fToWrap").style.display=st?"":"none";
     const v=$("#fVisited").value,t=$("#fVisTo").value;$("#fVisTo").min=v||"";const n=st?nights(v,t):0;
     $("#fNights").textContent=!st?"":t&&n<0?"«Bis» liegt vor «Von»":n>0?`${n} ${n==1?"Nacht":"Nächte"}`:"«Bis» leer lassen bei nur einer Nacht";};
-  $("#fVisited").addEventListener("change",updStay);$("#fVisTo").addEventListener("change",updStay);$("#fCat").addEventListener("change",updStay);updStay();
+  $("#fVisited").addEventListener("change",()=>{if(STAY.includes($("#fCat").value))visAutoTo($("#fVisited"),$("#fVisTo"));updStay();});$("#fVisTo").addEventListener("change",updStay);$("#fCat").addEventListener("change",updStay);updStay();
   $("#fStory").onchange=e=>{$("#fStoryHint").textContent=e.target.checked?"Wird beim Veröffentlichen geteilt.":"Wird nicht geteilt – der Text bleibt gespeichert.";};
   $("#fTrip").onchange=e=>{$("#fSection").innerHTML=secOpts(e.target.value,"");$("#fSectionNew").style.display="none";};
   $("#fSection").onchange=e=>{$("#fSectionNew").style.display=e.target.value==="__new"?"block":"none";if(e.target.value==="__new")$("#fSectionNew").focus();};
@@ -2539,6 +2544,7 @@ function wizForm(){const g=wz.groups[wz.i];const N=wz.groups.length;
   bindStars(F);
   growAll($("#wiz"));
   $("#wMode").onclick=()=>{wz.rd();ls("rb_wzSimple","1");wizForm();};
+  $("#wVis").addEventListener("change",()=>{if(STAY.includes(f.cat))visAutoTo($("#wVis"),$("#wTo"));});
   const rd=()=>{f.title=$("#wTitle").value;f.status=$("#wSt").value;f.visited=$("#wVis").value;f.visitedTo=$("#wTo").value;f.trip=$("#wTrip").value;f.section=$("#wSec").value;f.desc=$("#wDesc").value;f.note=$("#wNote").value;
     const s=F.querySelector('[data-name="__w"]');if(s)f.stars=+s.dataset.v;const r=$("#wRte");f.rte=r?r.value:"";};
   F.querySelectorAll("[data-cat]").forEach(b=>b.onclick=()=>{rd();f.cat=b.dataset.cat;wizForm();});
@@ -2819,13 +2825,13 @@ function tileKeys(areas,zmin,zmax){const set=new Set();
     for(let x=x1;x<=x2;x++)for(let y=y1;y<=y2;y++)set.add(z+"/"+x+"/"+y);}return set;}
 function tileURL(lay,k){const[z,x,y]=k.split("/");const sd=lay.options.subdomains||"abc";
   return lay._url.replace("{s}",sd[Math.abs(+x+ +y)%sd.length]).replace("{z}",z).replace("{x}",x).replace("{y}",y);}
-function offPlan(o){const lay=BASE[o.layer];const maxZ=Math.min(o.zmax,lay.options.maxZoom||19);
+function offPlan(o){const lay=BASE[o.layer];const maxZ=Math.min(o.zmax+layOff(lay),layMaxZ(lay));
   const src0=o.only==="all"?points:points.filter(p=>p.trip===curTrip);
   let box=MA_BOX;if(src0.length){const la=src0.map(p=>p.lat),lo=src0.map(p=>p.lon);box={s:Math.min(...la)-1,n:Math.max(...la)+1,w:Math.min(...lo)-1,e:Math.max(...lo)+1};}
   const keys=tileKeys([box],5,8);
   const km=o.radius,src=o.only==="all"?points:o.only==="fix"?src0.filter(p=>p.status!=="idee"):src0;
   const areas=src.map(p=>{const dy=km/111,dx=km/(111*Math.cos(p.lat*Math.PI/180));return {s:p.lat-dy,n:p.lat+dy,w:p.lon-dx,e:p.lon+dx};});
-  tileKeys(areas,9,maxZ).forEach(k=>keys.add(k));return {lay,keys:[...keys],n:src.length};}
+  tileKeys(areas,9+layOff(lay),maxZ).forEach(k=>keys.add(k));return {lay,keys:[...keys],n:src.length};}
 /* ---------- Offline-Karten als Pakete (wie OsmAnd): Übersicht, bewusst herunterladen, einzeln löschen ---------- */
 let offPacks=[];const offLayer=L.layerGroup().addTo(map);let offShow=ls("rb_offshow")==="1";
 async function loadOffPacks(){try{const m=await getOne("meta","offpacks");offPacks=m?m.list||[]:[];}catch(e){offPacks=[];}
@@ -2984,9 +2990,11 @@ function offSharedMerge(remote){const m=new Map();(remote||[]).concat(offShared(
 const offOther=()=>{const mine=new Set(offPacks.map(p=>p.id)),hid=new Set(offHide());
   const key=d=>d.kind==="country"?`${d.cc}|${d.layer}`:d.id;const mk=new Set(offPacks.map(key)),seen=new Set();
   return offShared().filter(d=>{const k=key(d);if(mine.has(d.id)||hid.has(d.id)||mk.has(k)||seen.has(k))return false;seen.add(k);return true;});};
-const layMaxZ=lay=>lay.options.maxZoom||19;
+const layOff=lay=>lay.options.zoomOffset||0;
+/* höchste Kachelstufe (URL) einer Kartenart – bei swisstopo eine Stufe über der Kartenstufe */
+const layMaxZ=lay=>(lay.options.maxNativeZoom!=null?lay.options.maxNativeZoom:lay.options.maxZoom||19)+layOff(lay);
 function packKeys(pk){const lay=TSRC(pk.layer);const set=new Set();if(!lay)return set;
-  for(const a of pk.areas)tileKeys([a],a.z1,Math.min(a.z2,layMaxZ(lay))).forEach(k=>set.add(k));return set;}
+  for(const a of pk.areas)tileKeys([a],a.z1+layOff(lay),Math.min(a.z2+layOff(lay),layMaxZ(lay))).forEach(k=>set.add(k));return set;}
 function packURLs(pk){const lay=TSRC(pk.layer);return [...packKeys(pk)].map(k=>tileURL(lay,k));}
 const ptBox=(p,km)=>{const dy=km/111,dx=km/(111*Math.cos(p.lat*Math.PI/180));return {s:p.lat-dy,n:p.lat+dy,w:p.lon-dx,e:p.lon+dx};};
 const fmtN=n=>Number(n).toLocaleString("de-CH");
@@ -3099,7 +3107,7 @@ function countryAreas(cc){const f=(countryData||[]).find(x=>x.c===cc);if(!f)retu
   for(let la=Math.floor(s0/T)*T;la<n;la+=T)for(let lo=Math.floor(w/T)*T;lo<e;lo+=T)if(hit(la,lo))out.push({s:+la.toFixed(3),w:+lo.toFixed(3),n:+(la+T).toFixed(3),e:+(lo+T).toFixed(3)});
   if(!out.length)out.push({s:s0,w,n,e});return out;}
 /* grobe Schätzung ohne alle Kacheln aufzuzählen (für sehr grosse Länder) */
-function tileEstimate(areas,lay){let t=0;const mz=layMaxZ(lay);for(const a of areas)for(let z=a.z1;z<=Math.min(a.z2,mz);z++){const[x1,y1]=tileXY(a.n,a.w,z),[x2,y2]=tileXY(a.s,a.e,z);t+=(x2-x1+1)*(y2-y1+1);}return t;}
+function tileEstimate(areas,lay){let t=0;const mz=layMaxZ(lay),o=layOff(lay);for(const a of areas)for(let z=a.z1+o;z<=Math.min(a.z2+o,mz);z++){const[x1,y1]=tileXY(a.n,a.w,z),[x2,y2]=tileXY(a.s,a.e,z);t+=(x2-x1+1)*(y2-y1+1);}return t;}
 /* Ausschnitt auf der Karte wählen */
 function offPickView(){closePanel();let bar=$("#offbar");
   if(!bar){bar=document.createElement("div");bar.id="offbar";bar.className="placebar";
